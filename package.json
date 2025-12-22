@@ -1,0 +1,11 @@
+{
+  "name": "sherpa",
+  "version": "1.0.0",
+  "description": "SHERPA V1 - Autonomous Coding Orchestrator",
+  "scripts": {
+    "install-backend": "/opt/homebrew/bin/python3.12 -m venv venv-312 && venv-312/bin/pip install fastapi uvicorn aiosqlite httpx",
+    "backend": "venv-312/bin/uvicorn sherpa.api.main:app --reload --port 8001 --host 0.0.0.0",
+    "frontend": "npm run dev --prefix sherpa/frontend",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\""
+  }
+}

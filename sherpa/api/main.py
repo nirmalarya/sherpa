@@ -17,12 +17,16 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# CORS configuration - allow frontend on port 3001
+# CORS configuration - allow frontend on ports 3001, 3002, 3003
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3001",
+        "http://localhost:3002",
+        "http://localhost:3003",
         "http://127.0.0.1:3001",
+        "http://127.0.0.1:3002",
+        "http://127.0.0.1:3003",
     ],
     allow_credentials=True,
     allow_methods=["*"],
