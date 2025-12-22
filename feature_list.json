@@ -1,0 +1,2109 @@
+[
+  {
+    "category": "functional",
+    "description": "Backend FastAPI server initialization - Server starts successfully on port 8000 with async/await support, proper CORS configuration, and health check endpoint",
+    "steps": [
+      "Step 1: Start FastAPI server with uvicorn on port 8000",
+      "Step 2: Verify server responds to GET /health with 200 status",
+      "Step 3: Verify CORS headers allow localhost:3001 origin",
+      "Step 4: Verify async/await handlers work correctly"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "SQLite database with aiosqlite - Database initializes with proper schema for sessions, snippets, work items, and configuration",
+    "steps": [
+      "Step 1: Initialize SQLite database in sherpa/data/sherpa.db",
+      "Step 2: Verify sessions table exists with proper columns",
+      "Step 3: Verify snippets table exists with proper columns",
+      "Step 4: Verify work_items table exists with proper columns",
+      "Step 5: Verify configuration table exists with proper columns",
+      "Step 6: Verify all async database operations work"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "AWS Bedrock Knowledge Base client - Client connects to AWS Bedrock and can query knowledge base for code snippets",
+    "steps": [
+      "Step 1: Initialize boto3 Bedrock client with proper credentials",
+      "Step 2: Verify connection to Bedrock Knowledge Base",
+      "Step 3: Execute test query for 'authentication' snippets",
+      "Step 4: Verify semantic search returns relevant results",
+      "Step 5: Verify results are properly formatted"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Built-in code snippets - System includes 7 built-in snippets (security/auth, python/error-handling, python/async, react/hooks, testing/unit, api/rest, git/commits)",
+    "steps": [
+      "Step 1: Verify security/auth snippet exists and contains authentication patterns",
+      "Step 2: Verify python/error-handling snippet exists with error handling patterns",
+      "Step 3: Verify python/async snippet exists with async/await patterns",
+      "Step 4: Verify react/hooks snippet exists with React hooks patterns",
+      "Step 5: Verify testing/unit snippet exists with unit test patterns",
+      "Step 6: Verify api/rest snippet exists with REST API patterns",
+      "Step 7: Verify git/commits snippet exists with git commit patterns",
+      "Step 8: Verify all snippets are accessible via API"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Snippet hierarchy resolution - System resolves snippets in order: local > project > org > built-in",
+    "steps": [
+      "Step 1: Create test snippet in ./sherpa/snippets.local/",
+      "Step 2: Create same-named snippet in ./sherpa/snippets/",
+      "Step 3: Query for the snippet",
+      "Step 4: Verify local snippet takes precedence",
+      "Step 5: Remove local snippet and verify project snippet is used",
+      "Step 6: Remove project snippet and verify org snippet is used",
+      "Step 7: Remove org snippet and verify built-in is used"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "CLI command: sherpa init - Initialize Bedrock KB configuration and setup",
+    "steps": [
+      "Step 1: Run 'sherpa init' command",
+      "Step 2: Verify configuration file created in ./sherpa/config.json",
+      "Step 3: Verify Bedrock KB ID is saved",
+      "Step 4: Verify AWS credentials are validated",
+      "Step 5: Verify success message displayed with Rich formatting"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "CLI command: sherpa generate - Create instruction files for interactive agents (.cursor/rules/, CLAUDE.md, copilot-instructions.md)",
+    "steps": [
+      "Step 1: Run 'sherpa generate' command",
+      "Step 2: Verify .cursor/rules/ directory created",
+      "Step 3: Verify CLAUDE.md file created with injected snippets",
+      "Step 4: Verify copilot-instructions.md file created",
+      "Step 5: Verify all files contain relevant knowledge snippets",
+      "Step 6: Verify success message with file paths displayed"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "CLI command: sherpa run --spec - Execute autonomous harness with spec file",
+    "steps": [
+      "Step 1: Create test spec file 'test_spec.txt'",
+      "Step 2: Run 'sherpa run --spec test_spec.txt'",
+      "Step 3: Verify session created in database",
+      "Step 4: Verify feature_list.json generated",
+      "Step 5: Verify initializer agent starts",
+      "Step 6: Verify progress tracked in database"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "CLI command: sherpa run --source azure-devops - Run autonomous harness with Azure DevOps work items",
+    "steps": [
+      "Step 1: Configure Azure DevOps connection",
+      "Step 2: Run 'sherpa run --source azure-devops'",
+      "Step 3: Verify work items fetched from Azure DevOps",
+      "Step 4: Verify work items converted to spec format",
+      "Step 5: Verify autonomous harness starts with converted spec",
+      "Step 6: Verify session linked to Azure DevOps work item"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "CLI command: sherpa query - Search Bedrock Knowledge Base for snippets",
+    "steps": [
+      "Step 1: Run 'sherpa query \"authentication patterns\"'",
+      "Step 2: Verify Bedrock KB is queried",
+      "Step 3: Verify results displayed with Rich formatting",
+      "Step 4: Verify relevance scores shown",
+      "Step 5: Verify snippet content preview displayed"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "CLI command: sherpa snippets list - List all available snippets",
+    "steps": [
+      "Step 1: Run 'sherpa snippets list'",
+      "Step 2: Verify built-in snippets listed",
+      "Step 3: Verify project snippets listed",
+      "Step 4: Verify local snippets listed",
+      "Step 5: Verify snippet categories and sources shown",
+      "Step 6: Verify output formatted with Rich tables"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "CLI command: sherpa status - Show active sessions",
+    "steps": [
+      "Step 1: Start test session",
+      "Step 2: Run 'sherpa status'",
+      "Step 3: Verify active session listed with ID",
+      "Step 4: Verify session status shown (active/complete/error)",
+      "Step 5: Verify progress percentage displayed",
+      "Step 6: Verify output formatted with Rich tables"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "CLI command: sherpa logs - View session logs",
+    "steps": [
+      "Step 1: Create test session with logs",
+      "Step 2: Run 'sherpa logs <session-id>'",
+      "Step 3: Verify logs displayed in chronological order",
+      "Step 4: Verify log levels (INFO, ERROR, DEBUG) shown",
+      "Step 5: Verify timestamps displayed",
+      "Step 6: Verify output formatted with Rich syntax"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "CLI command: sherpa serve - Start web dashboard with backend and frontend",
+    "steps": [
+      "Step 1: Run 'sherpa serve'",
+      "Step 2: Verify FastAPI backend starts on port 8000",
+      "Step 3: Verify Vite frontend starts on port 3001",
+      "Step 4: Verify both services are accessible",
+      "Step 5: Verify success message with URLs displayed"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Azure DevOps PAT authentication - Connect to Azure DevOps with Personal Access Token",
+    "steps": [
+      "Step 1: Provide Azure DevOps organization URL",
+      "Step 2: Provide Personal Access Token",
+      "Step 3: Verify connection established",
+      "Step 4: Verify credentials stored securely",
+      "Step 5: Verify test API call succeeds"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Azure DevOps pull work items - Fetch work items by project, area path, or query",
+    "steps": [
+      "Step 1: Connect to Azure DevOps",
+      "Step 2: Fetch work items by project name",
+      "Step 3: Verify work items retrieved with all fields",
+      "Step 4: Fetch work items by area path filter",
+      "Step 5: Fetch work items by custom query",
+      "Step 6: Verify results stored in database"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Azure DevOps convert to specs - Convert work items to app_spec.txt format",
+    "steps": [
+      "Step 1: Fetch test work item",
+      "Step 2: Convert work item to spec format",
+      "Step 3: Verify spec includes work item title as overview",
+      "Step 4: Verify spec includes acceptance criteria",
+      "Step 5: Verify spec includes description",
+      "Step 6: Verify spec saved as .txt file"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Azure DevOps update progress - Mark work items as Active or Resolved, add comments",
+    "steps": [
+      "Step 1: Start session from Azure DevOps work item",
+      "Step 2: Update work item status to 'Active'",
+      "Step 3: Verify status updated in Azure DevOps",
+      "Step 4: Add progress comment to work item",
+      "Step 5: Complete session and update to 'Resolved'",
+      "Step 6: Verify final status in Azure DevOps"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Azure DevOps link commits - Attach git commits to work items",
+    "steps": [
+      "Step 1: Create test commit in session",
+      "Step 2: Link commit to Azure DevOps work item",
+      "Step 3: Verify commit appears in work item",
+      "Step 4: Verify commit message includes work item ID",
+      "Step 5: Verify multiple commits can be linked"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Azure DevOps bidirectional sync - Changes sync between SHERPA and Azure DevOps",
+    "steps": [
+      "Step 1: Update work item in Azure DevOps",
+      "Step 2: Verify SHERPA detects change",
+      "Step 3: Update session in SHERPA",
+      "Step 4: Verify Azure DevOps reflects change",
+      "Step 5: Verify sync status tracked",
+      "Step 6: Verify conflicts handled gracefully"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Autonomous harness - Two-agent system (Initializer + coding agents) with fresh context",
+    "steps": [
+      "Step 1: Start autonomous harness",
+      "Step 2: Verify initializer agent spawns first",
+      "Step 3: Verify feature_list.json created by initializer",
+      "Step 4: Verify coding agent spawns after initializer",
+      "Step 5: Verify each agent gets fresh context",
+      "Step 6: Verify agents continue automatically"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Auto-continue mechanism - Agents automatically continue with 3 second delay",
+    "steps": [
+      "Step 1: Complete one agent iteration",
+      "Step 2: Verify 3 second delay before next iteration",
+      "Step 3: Verify next agent spawns automatically",
+      "Step 4: Verify continuation happens without manual intervention",
+      "Step 5: Verify delay is configurable"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Knowledge injection - Enhanced prompts with relevant code snippets",
+    "steps": [
+      "Step 1: Start agent with knowledge injection enabled",
+      "Step 2: Verify relevant snippets queried from Bedrock",
+      "Step 3: Verify snippets injected into system prompt",
+      "Step 4: Verify snippets match task context",
+      "Step 5: Verify agent uses injected knowledge in code"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Progress tracking with feature_list.json - Features marked as complete automatically",
+    "steps": [
+      "Step 1: Start session with feature_list.json",
+      "Step 2: Agent completes a feature",
+      "Step 3: Verify feature marked as 'passes: true'",
+      "Step 4: Verify feature_list.json updated on disk",
+      "Step 5: Verify progress percentage calculated",
+      "Step 6: Verify progress tracked in database"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Git integration - Automatic commit tracking and linking",
+    "steps": [
+      "Step 1: Initialize git repository in session",
+      "Step 2: Agent creates commit",
+      "Step 3: Verify commit tracked in database",
+      "Step 4: Verify commit linked to session",
+      "Step 5: Verify commit message follows conventions",
+      "Step 6: Verify commit history accessible via API"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Frontend React + Vite setup - Proper React 18.3.1 with Vite 5.0.0 configuration",
+    "steps": [
+      "Step 1: Verify package.json contains React 18.3.1",
+      "Step 2: Verify package.json contains Vite 5.0.0",
+      "Step 3: Verify vite.config.js has React plugin",
+      "Step 4: Verify vite.config.js sets port 3001",
+      "Step 5: Run 'npm install' successfully",
+      "Step 6: Run 'npm run dev' and server starts on port 3001"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Frontend Tailwind CSS setup - Tailwind CSS 3.4.0 properly configured",
+    "steps": [
+      "Step 1: Verify package.json contains Tailwind CSS 3.4.0",
+      "Step 2: Verify tailwind.config.js exists and configured",
+      "Step 3: Verify postcss.config.js exists",
+      "Step 4: Verify src/styles/index.css has @tailwind directives",
+      "Step 5: Verify Tailwind classes work in components",
+      "Step 6: Verify build generates proper CSS"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Frontend React Router setup - React Router 6.20.0 with client-side routing",
+    "steps": [
+      "Step 1: Verify package.json contains react-router-dom 6.20.0",
+      "Step 2: Verify App.jsx wraps routes in BrowserRouter",
+      "Step 3: Verify routes defined for all pages",
+      "Step 4: Navigate to different routes without page reload",
+      "Step 5: Verify browser back/forward buttons work",
+      "Step 6: Verify 404 handling for unknown routes"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Frontend Axios HTTP client - Axios 1.7.0 configured for API calls",
+    "steps": [
+      "Step 1: Verify package.json contains axios 1.7.0",
+      "Step 2: Verify src/lib/api.js creates Axios instance",
+      "Step 3: Verify base URL set to http://localhost:8000",
+      "Step 4: Verify request interceptors configured",
+      "Step 5: Verify error handling configured",
+      "Step 6: Test API call to backend succeeds"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Frontend Recharts visualization - Recharts 2.10.0 for progress charts",
+    "steps": [
+      "Step 1: Verify package.json contains recharts 2.10.0",
+      "Step 2: Verify ProgressChart.jsx component exists",
+      "Step 3: Verify chart renders with sample data",
+      "Step 4: Verify chart updates with new data",
+      "Step 5: Verify chart responsive to screen size",
+      "Step 6: Verify chart shows progress over time"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Frontend Lucide React icons - Icons library integrated",
+    "steps": [
+      "Step 1: Verify package.json contains lucide-react",
+      "Step 2: Import test icon in component",
+      "Step 3: Verify icon renders correctly",
+      "Step 4: Verify icon size configurable",
+      "Step 5: Verify icon color configurable",
+      "Step 6: Verify multiple icons used across UI"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Frontend file structure - Proper React app structure with src/, pages/, components/, lib/",
+    "steps": [
+      "Step 1: Verify sherpa/frontend/ directory exists",
+      "Step 2: Verify src/main.jsx entry point exists",
+      "Step 3: Verify src/App.jsx root component exists",
+      "Step 4: Verify src/pages/ directory with all page components",
+      "Step 5: Verify src/components/ directory with shared components",
+      "Step 6: Verify src/lib/ directory with utilities",
+      "Step 7: Verify src/styles/ directory with CSS files"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Frontend entry point - index.html and main.jsx properly configured",
+    "steps": [
+      "Step 1: Verify index.html has <div id='root'>",
+      "Step 2: Verify index.html loads src/main.jsx",
+      "Step 3: Verify main.jsx calls ReactDOM.createRoot",
+      "Step 4: Verify main.jsx renders <App />",
+      "Step 5: Verify app mounts to DOM successfully"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "HomePage component - Dashboard showing active sessions with progress bars",
+    "steps": [
+      "Step 1: Verify HomePage.jsx component exists",
+      "Step 2: Verify active sessions fetched from API",
+      "Step 3: Verify sessions displayed as cards",
+      "Step 4: Verify each card shows progress bar",
+      "Step 5: Verify quick actions: New session, Generate files",
+      "Step 6: Verify recent activity feed displayed"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "SessionsPage component - List all sessions with table, filters, and search",
+    "steps": [
+      "Step 1: Verify SessionsPage.jsx component exists",
+      "Step 2: Verify all sessions displayed in table",
+      "Step 3: Verify columns: status, started, features completed",
+      "Step 4: Verify filter by status (active, complete, error)",
+      "Step 5: Verify search functionality works",
+      "Step 6: Verify click row navigates to session detail"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "SessionDetailPage component - Real-time session monitoring with SSE",
+    "steps": [
+      "Step 1: Verify SessionDetailPage.jsx component exists",
+      "Step 2: Verify SSE connection to /api/sessions/:id/progress",
+      "Step 3: Verify real-time progress updates",
+      "Step 4: Verify feature list with checkboxes",
+      "Step 5: Verify passes:true features show as checked",
+      "Step 6: Verify live logs streaming",
+      "Step 7: Verify git commits list",
+      "Step 8: Verify stop/pause/resume controls"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "KnowledgePage component - Browse and search code snippets",
+    "steps": [
+      "Step 1: Verify KnowledgePage.jsx component exists",
+      "Step 2: Verify search input for snippets",
+      "Step 3: Verify browse by category (security, python, testing, etc.)",
+      "Step 4: Verify snippet content preview",
+      "Step 5: Verify add to project snippets button",
+      "Step 6: Verify snippets fetched from API"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "SourcesPage component - Configure Azure DevOps integration",
+    "steps": [
+      "Step 1: Verify SourcesPage.jsx component exists",
+      "Step 2: Verify Azure DevOps connector form (org, project, PAT)",
+      "Step 3: Verify test connection button",
+      "Step 4: Verify connection status displayed",
+      "Step 5: Verify sync status shown",
+      "Step 6: Verify file source configuration"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "SessionMonitor component - SSE connection for live progress updates",
+    "steps": [
+      "Step 1: Verify SessionMonitor.jsx component exists",
+      "Step 2: Verify EventSource connection established",
+      "Step 3: Verify progress events received and displayed",
+      "Step 4: Verify connection error handling",
+      "Step 5: Verify reconnection logic",
+      "Step 6: Verify cleanup on unmount"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "ProgressChart component - Recharts visualization of session progress",
+    "steps": [
+      "Step 1: Verify ProgressChart.jsx component exists",
+      "Step 2: Verify chart displays progress over time",
+      "Step 3: Verify X-axis shows time",
+      "Step 4: Verify Y-axis shows completion percentage",
+      "Step 5: Verify tooltip shows details on hover",
+      "Step 6: Verify chart updates with new data points"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "SnippetBrowser component - Search and browse code snippets",
+    "steps": [
+      "Step 1: Verify SnippetBrowser.jsx component exists",
+      "Step 2: Verify search input filters snippets",
+      "Step 3: Verify category filter works",
+      "Step 4: Verify snippet cards display title and preview",
+      "Step 5: Verify click snippet shows full content",
+      "Step 6: Verify copy to clipboard functionality"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "AzureDevOpsConnector component - Connect and configure Azure DevOps",
+    "steps": [
+      "Step 1: Verify AzureDevOpsConnector.jsx component exists",
+      "Step 2: Verify form fields: org URL, project, PAT",
+      "Step 3: Verify form validation",
+      "Step 4: Verify test connection button triggers API call",
+      "Step 5: Verify connection success/error messages",
+      "Step 6: Verify save configuration functionality"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "API endpoint: GET /health - Health check endpoint",
+    "steps": [
+      "Step 1: Send GET request to /health",
+      "Step 2: Verify 200 status code",
+      "Step 3: Verify response contains status: ok",
+      "Step 4: Verify response time under 100ms"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "API endpoint: POST /api/sessions - Create new session",
+    "steps": [
+      "Step 1: Send POST request with spec file",
+      "Step 2: Verify 201 status code",
+      "Step 3: Verify session ID returned",
+      "Step 4: Verify session stored in database",
+      "Step 5: Verify feature_list.json generated"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "API endpoint: GET /api/sessions - List all sessions",
+    "steps": [
+      "Step 1: Create test sessions",
+      "Step 2: Send GET request to /api/sessions",
+      "Step 3: Verify 200 status code",
+      "Step 4: Verify array of sessions returned",
+      "Step 5: Verify each session has required fields"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "API endpoint: GET /api/sessions/:id - Get session details",
+    "steps": [
+      "Step 1: Create test session",
+      "Step 2: Send GET request to /api/sessions/:id",
+      "Step 3: Verify 200 status code",
+      "Step 4: Verify session details returned",
+      "Step 5: Verify 404 for non-existent session"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "API endpoint: GET /api/sessions/:id/progress - SSE endpoint for real-time progress",
+    "steps": [
+      "Step 1: Create test session",
+      "Step 2: Connect SSE to /api/sessions/:id/progress",
+      "Step 3: Verify connection established",
+      "Step 4: Verify progress events streamed",
+      "Step 5: Verify events have proper format",
+      "Step 6: Verify connection closes gracefully"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "API endpoint: POST /api/sessions/:id/stop - Stop running session",
+    "steps": [
+      "Step 1: Start test session",
+      "Step 2: Send POST request to /api/sessions/:id/stop",
+      "Step 3: Verify 200 status code",
+      "Step 4: Verify session stops",
+      "Step 5: Verify status updated to 'stopped'"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "API endpoint: POST /api/sessions/:id/pause - Pause running session",
+    "steps": [
+      "Step 1: Start test session",
+      "Step 2: Send POST request to /api/sessions/:id/pause",
+      "Step 3: Verify 200 status code",
+      "Step 4: Verify session pauses",
+      "Step 5: Verify status updated to 'paused'"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "API endpoint: POST /api/sessions/:id/resume - Resume paused session",
+    "steps": [
+      "Step 1: Pause test session",
+      "Step 2: Send POST request to /api/sessions/:id/resume",
+      "Step 3: Verify 200 status code",
+      "Step 4: Verify session resumes",
+      "Step 5: Verify status updated to 'active'"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "API endpoint: GET /api/sessions/:id/logs - Get session logs",
+    "steps": [
+      "Step 1: Create test session with logs",
+      "Step 2: Send GET request to /api/sessions/:id/logs",
+      "Step 3: Verify 200 status code",
+      "Step 4: Verify logs array returned",
+      "Step 5: Verify logs in chronological order"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "API endpoint: GET /api/sessions/:id/commits - Get session git commits",
+    "steps": [
+      "Step 1: Create test session with commits",
+      "Step 2: Send GET request to /api/sessions/:id/commits",
+      "Step 3: Verify 200 status code",
+      "Step 4: Verify commits array returned",
+      "Step 5: Verify commit details include hash, message, timestamp"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "API endpoint: GET /api/snippets - List all snippets",
+    "steps": [
+      "Step 1: Send GET request to /api/snippets",
+      "Step 2: Verify 200 status code",
+      "Step 3: Verify snippets array returned",
+      "Step 4: Verify built-in snippets included",
+      "Step 5: Verify snippet metadata included"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "API endpoint: GET /api/snippets/:id - Get snippet details",
+    "steps": [
+      "Step 1: Send GET request to /api/snippets/:id",
+      "Step 2: Verify 200 status code",
+      "Step 3: Verify snippet content returned",
+      "Step 4: Verify snippet metadata included",
+      "Step 5: Verify 404 for non-existent snippet"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "API endpoint: POST /api/snippets/query - Query Bedrock KB for snippets",
+    "steps": [
+      "Step 1: Send POST request with query text",
+      "Step 2: Verify 200 status code",
+      "Step 3: Verify Bedrock KB queried",
+      "Step 4: Verify relevant snippets returned",
+      "Step 5: Verify relevance scores included"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "API endpoint: POST /api/snippets - Add new snippet to project",
+    "steps": [
+      "Step 1: Send POST request with snippet data",
+      "Step 2: Verify 201 status code",
+      "Step 3: Verify snippet saved to ./sherpa/snippets/",
+      "Step 4: Verify snippet ID returned",
+      "Step 5: Verify snippet accessible via GET"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "API endpoint: POST /api/azure-devops/connect - Connect to Azure DevOps",
+    "steps": [
+      "Step 1: Send POST request with org, project, PAT",
+      "Step 2: Verify connection established",
+      "Step 3: Verify 200 status code on success",
+      "Step 4: Verify credentials stored securely",
+      "Step 5: Verify connection status returned"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "API endpoint: GET /api/azure-devops/work-items - Fetch work items",
+    "steps": [
+      "Step 1: Connect to Azure DevOps",
+      "Step 2: Send GET request to /api/azure-devops/work-items",
+      "Step 3: Verify 200 status code",
+      "Step 4: Verify work items array returned",
+      "Step 5: Verify work item fields populated"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "API endpoint: POST /api/azure-devops/work-items/:id/update - Update work item status",
+    "steps": [
+      "Step 1: Fetch test work item",
+      "Step 2: Send POST request to update status",
+      "Step 3: Verify 200 status code",
+      "Step 4: Verify work item updated in Azure DevOps",
+      "Step 5: Verify new status reflected"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "API endpoint: POST /api/generate - Generate instruction files",
+    "steps": [
+      "Step 1: Send POST request to /api/generate",
+      "Step 2: Verify 200 status code",
+      "Step 3: Verify .cursor/rules/ created",
+      "Step 4: Verify CLAUDE.md created",
+      "Step 5: Verify copilot-instructions.md created",
+      "Step 6: Verify files contain injected snippets"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Local snippet cache - Query results cached to reduce API calls",
+    "steps": [
+      "Step 1: Query Bedrock KB for snippets",
+      "Step 2: Verify results cached locally",
+      "Step 3: Query same snippets again",
+      "Step 4: Verify cache hit (no API call)",
+      "Step 5: Verify cache expiration works",
+      "Step 6: Verify cache invalidation works"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Org snippets from S3 - Fetch organizational snippets from S3 bucket",
+    "steps": [
+      "Step 1: Configure S3 bucket for org snippets",
+      "Step 2: Query for snippets",
+      "Step 3: Verify S3 bucket accessed",
+      "Step 4: Verify org snippets downloaded",
+      "Step 5: Verify snippets cached locally",
+      "Step 6: Verify hierarchy resolution includes org snippets"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Project snippets directory - Load snippets from ./sherpa/snippets/",
+    "steps": [
+      "Step 1: Create test snippet in ./sherpa/snippets/",
+      "Step 2: Query for all snippets",
+      "Step 3: Verify project snippet loaded",
+      "Step 4: Verify snippet accessible via API",
+      "Step 5: Verify snippet higher priority than built-in",
+      "Step 6: Verify snippet updates detected"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Local snippets directory - Load snippets from ./sherpa/snippets.local/",
+    "steps": [
+      "Step 1: Create test snippet in ./sherpa/snippets.local/",
+      "Step 2: Query for all snippets",
+      "Step 3: Verify local snippet loaded",
+      "Step 4: Verify snippet highest priority",
+      "Step 5: Verify snippets.local/ in .gitignore",
+      "Step 6: Verify snippet updates detected"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "File watcher for repo scanning - Watchdog monitors repository for changes",
+    "steps": [
+      "Step 1: Start file watcher",
+      "Step 2: Create new file in repo",
+      "Step 3: Verify change detected",
+      "Step 4: Modify existing file",
+      "Step 5: Verify modification detected",
+      "Step 6: Verify events logged"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "GitPython integration - Track commits and repository state",
+    "steps": [
+      "Step 1: Initialize git repository",
+      "Step 2: Create test commit using GitPython",
+      "Step 3: Verify commit created successfully",
+      "Step 4: Fetch commit history",
+      "Step 5: Verify commit details accessible",
+      "Step 6: Verify branch operations work"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Concurrent operations with asyncio - Multiple sessions run concurrently",
+    "steps": [
+      "Step 1: Start first session",
+      "Step 2: Start second session",
+      "Step 3: Verify both run concurrently",
+      "Step 4: Verify no blocking between sessions",
+      "Step 5: Verify proper async/await usage",
+      "Step 6: Verify resource cleanup"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Session state management - Sessions persist across restarts",
+    "steps": [
+      "Step 1: Create test session",
+      "Step 2: Stop backend server",
+      "Step 3: Restart backend server",
+      "Step 4: Verify session state restored",
+      "Step 5: Verify session can resume",
+      "Step 6: Verify progress preserved"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Error handling and recovery - Graceful handling of errors",
+    "steps": [
+      "Step 1: Trigger API error",
+      "Step 2: Verify error logged",
+      "Step 3: Verify error returned to client",
+      "Step 4: Verify session continues after error",
+      "Step 5: Verify retry logic for transient errors",
+      "Step 6: Verify fatal errors stop session"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Configuration management - Config stored in ./sherpa/config.json",
+    "steps": [
+      "Step 1: Run sherpa init",
+      "Step 2: Verify config.json created",
+      "Step 3: Verify config values accessible",
+      "Step 4: Update config value",
+      "Step 5: Verify change persisted",
+      "Step 6: Verify config validation"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Security - Credentials stored securely, not in plaintext",
+    "steps": [
+      "Step 1: Save Azure DevOps PAT",
+      "Step 2: Verify PAT encrypted in storage",
+      "Step 3: Verify PAT not in logs",
+      "Step 4: Verify PAT not exposed in API responses",
+      "Step 5: Verify AWS credentials from environment",
+      "Step 6: Verify sensitive data redacted in UI"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Rich CLI formatting - Beautiful terminal output with Rich library",
+    "steps": [
+      "Step 1: Run sherpa status",
+      "Step 2: Verify output uses Rich formatting",
+      "Step 3: Verify tables formatted properly",
+      "Step 4: Verify colors used appropriately",
+      "Step 5: Verify progress bars displayed",
+      "Step 6: Verify emoji/icons used where helpful"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Click CLI framework - Commands properly structured with Click",
+    "steps": [
+      "Step 1: Run sherpa --help",
+      "Step 2: Verify all commands listed",
+      "Step 3: Verify command descriptions shown",
+      "Step 4: Run sherpa <command> --help",
+      "Step 5: Verify command options documented",
+      "Step 6: Verify argument validation works"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Package structure - Proper Python package with __init__.py files",
+    "steps": [
+      "Step 1: Verify sherpa/ package exists",
+      "Step 2: Verify sherpa/__init__.py exists",
+      "Step 3: Verify subpackages have __init__.py",
+      "Step 4: Verify imports work correctly",
+      "Step 5: Verify package installable with pip",
+      "Step 6: Verify entry points configured"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Setup.py / pyproject.toml - Package configuration for installation",
+    "steps": [
+      "Step 1: Verify setup.py or pyproject.toml exists",
+      "Step 2: Verify dependencies listed",
+      "Step 3: Verify entry points for CLI commands",
+      "Step 4: Run pip install -e .",
+      "Step 5: Verify sherpa command available",
+      "Step 6: Verify all dependencies installed"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Requirements.txt - All Python dependencies documented",
+    "steps": [
+      "Step 1: Verify requirements.txt exists",
+      "Step 2: Verify all dependencies listed with versions",
+      "Step 3: Verify FastAPI included",
+      "Step 4: Verify boto3 included",
+      "Step 5: Verify azure-devops included",
+      "Step 6: Verify all other required packages included"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Frontend npm scripts - Package.json scripts for dev, build, preview",
+    "steps": [
+      "Step 1: Verify package.json has 'dev' script",
+      "Step 2: Verify package.json has 'build' script",
+      "Step 3: Verify package.json has 'preview' script",
+      "Step 4: Run npm run dev successfully",
+      "Step 5: Run npm run build successfully",
+      "Step 6: Run npm run preview successfully"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Frontend build output - Vite builds production-ready assets",
+    "steps": [
+      "Step 1: Run npm run build",
+      "Step 2: Verify dist/ directory created",
+      "Step 3: Verify index.html in dist/",
+      "Step 4: Verify JS bundles generated",
+      "Step 5: Verify CSS bundles generated",
+      "Step 6: Verify assets optimized and minified"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Frontend environment variables - Vite env vars for API URL",
+    "steps": [
+      "Step 1: Create .env file with VITE_API_URL",
+      "Step 2: Access env var in src/lib/api.js",
+      "Step 3: Verify API URL used from env var",
+      "Step 4: Verify fallback to localhost:8000",
+      "Step 5: Verify .env.example exists",
+      "Step 6: Verify .env in .gitignore"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "CORS configuration - Backend allows frontend origin",
+    "steps": [
+      "Step 1: Start backend on port 8000",
+      "Step 2: Start frontend on port 3001",
+      "Step 3: Make API call from frontend",
+      "Step 4: Verify CORS headers present",
+      "Step 5: Verify request succeeds",
+      "Step 6: Verify preflight OPTIONS requests handled"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Real-time updates with SSE - Server-Sent Events for live progress",
+    "steps": [
+      "Step 1: Start session",
+      "Step 2: Connect frontend to SSE endpoint",
+      "Step 3: Verify connection established",
+      "Step 4: Update session progress",
+      "Step 5: Verify update received in frontend",
+      "Step 6: Verify reconnection on disconnect"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Loading states in UI - Proper loading indicators",
+    "steps": [
+      "Step 1: Trigger API call in frontend",
+      "Step 2: Verify loading spinner shown",
+      "Step 3: Verify UI disabled during load",
+      "Step 4: Verify data displayed after load",
+      "Step 5: Verify loading state cleared",
+      "Step 6: Verify error state shown on failure"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Error messages in UI - User-friendly error handling",
+    "steps": [
+      "Step 1: Trigger API error",
+      "Step 2: Verify error message displayed",
+      "Step 3: Verify message is user-friendly",
+      "Step 4: Verify error dismissible",
+      "Step 5: Verify retry option shown",
+      "Step 6: Verify technical details hidden by default"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Navigation menu - Consistent navigation across all pages",
+    "steps": [
+      "Step 1: Verify navigation component exists",
+      "Step 2: Verify navigation shows on all pages",
+      "Step 3: Verify links to all main pages",
+      "Step 4: Verify active page highlighted",
+      "Step 5: Verify navigation responsive on mobile",
+      "Step 6: Verify logo/branding present"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Responsive design - UI works on different screen sizes",
+    "steps": [
+      "Step 1: View UI on desktop (1920px)",
+      "Step 2: Verify layout looks good",
+      "Step 3: View UI on tablet (768px)",
+      "Step 4: Verify layout adapts",
+      "Step 5: View UI on mobile (375px)",
+      "Step 6: Verify layout usable on mobile"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Session list pagination - Large session lists paginated",
+    "steps": [
+      "Step 1: Create 50+ test sessions",
+      "Step 2: View sessions list",
+      "Step 3: Verify pagination controls shown",
+      "Step 4: Click next page",
+      "Step 5: Verify next page loaded",
+      "Step 6: Verify page number shown"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Session list sorting - Sort sessions by date, status, progress",
+    "steps": [
+      "Step 1: View sessions list",
+      "Step 2: Click sort by date",
+      "Step 3: Verify sessions sorted by date",
+      "Step 4: Click sort by status",
+      "Step 5: Verify sessions grouped by status",
+      "Step 6: Click sort by progress",
+      "Step 7: Verify sessions ordered by completion %"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Feature list checkboxes - Visual indication of completed features",
+    "steps": [
+      "Step 1: View session detail page",
+      "Step 2: Verify feature list displayed",
+      "Step 3: Verify incomplete features unchecked",
+      "Step 4: Mark feature as complete",
+      "Step 5: Verify checkbox checked",
+      "Step 6: Verify visual styling updated"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Live log streaming - Logs appear in real-time",
+    "steps": [
+      "Step 1: View session detail page",
+      "Step 2: Verify log viewer displayed",
+      "Step 3: Agent writes log message",
+      "Step 4: Verify log appears in UI immediately",
+      "Step 5: Verify logs auto-scroll to bottom",
+      "Step 6: Verify log levels color-coded"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Git commit history - View commits linked to session",
+    "steps": [
+      "Step 1: View session detail page",
+      "Step 2: Verify commits section displayed",
+      "Step 3: Verify commit list shows hash, message, timestamp",
+      "Step 4: Click commit hash",
+      "Step 5: Verify commit details shown",
+      "Step 6: Verify link to git diff"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Stop session control - Ability to stop running session",
+    "steps": [
+      "Step 1: Start test session",
+      "Step 2: View session detail page",
+      "Step 3: Click stop button",
+      "Step 4: Verify confirmation dialog",
+      "Step 5: Confirm stop",
+      "Step 6: Verify session stopped",
+      "Step 7: Verify status updated to 'stopped'"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Pause session control - Ability to pause running session",
+    "steps": [
+      "Step 1: Start test session",
+      "Step 2: View session detail page",
+      "Step 3: Click pause button",
+      "Step 4: Verify session paused",
+      "Step 5: Verify status updated to 'paused'",
+      "Step 6: Verify resume button shown"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Resume session control - Ability to resume paused session",
+    "steps": [
+      "Step 1: Pause test session",
+      "Step 2: View session detail page",
+      "Step 3: Click resume button",
+      "Step 4: Verify session resumes",
+      "Step 5: Verify status updated to 'active'",
+      "Step 6: Verify progress continues"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Recent activity feed - HomePage shows recent events",
+    "steps": [
+      "Step 1: Perform various actions (create session, complete feature)",
+      "Step 2: View HomePage",
+      "Step 3: Verify activity feed displayed",
+      "Step 4: Verify recent events shown in order",
+      "Step 5: Verify event timestamps shown",
+      "Step 6: Verify events link to relevant pages"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Quick actions - HomePage quick action buttons",
+    "steps": [
+      "Step 1: View HomePage",
+      "Step 2: Verify 'New Session' button present",
+      "Step 3: Click 'New Session' button",
+      "Step 4: Verify new session dialog opens",
+      "Step 5: Verify 'Generate Files' button present",
+      "Step 6: Click 'Generate Files' button",
+      "Step 7: Verify generate dialog opens"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Search functionality - Search sessions by name or description",
+    "steps": [
+      "Step 1: Create sessions with different names",
+      "Step 2: View sessions page",
+      "Step 3: Enter search term",
+      "Step 4: Verify results filtered",
+      "Step 5: Clear search",
+      "Step 6: Verify all sessions shown again"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Filter by status - Filter sessions by active/complete/error status",
+    "steps": [
+      "Step 1: Create sessions with different statuses",
+      "Step 2: View sessions page",
+      "Step 3: Select 'active' filter",
+      "Step 4: Verify only active sessions shown",
+      "Step 5: Select 'complete' filter",
+      "Step 6: Verify only complete sessions shown",
+      "Step 7: Select 'error' filter",
+      "Step 8: Verify only errored sessions shown"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Browse snippets by category - Category-based snippet navigation",
+    "steps": [
+      "Step 1: View KnowledgePage",
+      "Step 2: Verify categories listed (security, python, react, testing, etc.)",
+      "Step 3: Click 'security' category",
+      "Step 4: Verify security snippets shown",
+      "Step 5: Click 'python' category",
+      "Step 6: Verify python snippets shown"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Search snippets - Query snippets with search term",
+    "steps": [
+      "Step 1: View KnowledgePage",
+      "Step 2: Enter 'authentication' in search",
+      "Step 3: Verify relevant snippets shown",
+      "Step 4: Verify search highlights matches",
+      "Step 5: Clear search",
+      "Step 6: Verify all snippets shown"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Snippet preview - View snippet content before adding",
+    "steps": [
+      "Step 1: View KnowledgePage",
+      "Step 2: Click snippet card",
+      "Step 3: Verify preview modal opens",
+      "Step 4: Verify full snippet content shown",
+      "Step 5: Verify syntax highlighting applied",
+      "Step 6: Close preview"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Add snippet to project - Copy snippet to project snippets directory",
+    "steps": [
+      "Step 1: View snippet preview",
+      "Step 2: Click 'Add to Project' button",
+      "Step 3: Verify snippet copied to ./sherpa/snippets/",
+      "Step 4: Verify success message shown",
+      "Step 5: Verify snippet now in project snippets list"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Azure DevOps form validation - Validate connector form inputs",
+    "steps": [
+      "Step 1: View SourcesPage",
+      "Step 2: Submit form empty",
+      "Step 3: Verify validation errors shown",
+      "Step 4: Enter invalid URL",
+      "Step 5: Verify URL validation error",
+      "Step 6: Enter valid data",
+      "Step 7: Verify form submits successfully"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Test Azure DevOps connection - Verify credentials before saving",
+    "steps": [
+      "Step 1: View SourcesPage",
+      "Step 2: Enter Azure DevOps credentials",
+      "Step 3: Click 'Test Connection' button",
+      "Step 4: Verify API call made",
+      "Step 5: Verify success message on valid credentials",
+      "Step 6: Verify error message on invalid credentials"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Azure DevOps sync status - Show last sync time and status",
+    "steps": [
+      "Step 1: Connect to Azure DevOps",
+      "Step 2: View SourcesPage",
+      "Step 3: Verify last sync time displayed",
+      "Step 4: Verify sync status shown (success/error)",
+      "Step 5: Trigger manual sync",
+      "Step 6: Verify sync status updates"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "File source configuration - Configure file-based spec sources",
+    "steps": [
+      "Step 1: View SourcesPage",
+      "Step 2: Add file source path",
+      "Step 3: Verify path validated",
+      "Step 4: Save configuration",
+      "Step 5: Verify file source active",
+      "Step 6: Verify specs loaded from file source"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Progress percentage calculation - Accurate calculation of completion",
+    "steps": [
+      "Step 1: Create session with 10 features",
+      "Step 2: Mark 5 features complete",
+      "Step 3: Verify progress shows 50%",
+      "Step 4: Mark 3 more features complete",
+      "Step 5: Verify progress shows 80%",
+      "Step 6: Verify progress bar reflects percentage"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Session card on HomePage - Active session displayed as card",
+    "steps": [
+      "Step 1: Start test session",
+      "Step 2: View HomePage",
+      "Step 3: Verify session card displayed",
+      "Step 4: Verify card shows session name",
+      "Step 5: Verify card shows progress bar",
+      "Step 6: Verify card shows status",
+      "Step 7: Click card navigates to detail page"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Tooltips and help text - Helpful UI hints and explanations",
+    "steps": [
+      "Step 1: Hover over UI element",
+      "Step 2: Verify tooltip appears",
+      "Step 3: Verify tooltip text helpful",
+      "Step 4: View form field",
+      "Step 5: Verify help text below field",
+      "Step 6: Verify help text explains purpose"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Dark mode support - UI supports dark color scheme",
+    "steps": [
+      "Step 1: View UI in light mode",
+      "Step 2: Toggle dark mode",
+      "Step 3: Verify colors inverted",
+      "Step 4: Verify text readable",
+      "Step 5: Verify charts/graphs visible",
+      "Step 6: Verify preference persisted"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Keyboard shortcuts - Common actions accessible via keyboard",
+    "steps": [
+      "Step 1: Press Ctrl+K (or Cmd+K)",
+      "Step 2: Verify command palette opens",
+      "Step 3: Press Escape",
+      "Step 4: Verify dialogs close",
+      "Step 5: Use arrow keys in lists",
+      "Step 6: Verify navigation works"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Copy to clipboard - Copy snippets and commands",
+    "steps": [
+      "Step 1: View snippet content",
+      "Step 2: Click copy button",
+      "Step 3: Verify content copied to clipboard",
+      "Step 4: Verify success feedback shown",
+      "Step 5: Paste in editor",
+      "Step 6: Verify content pasted correctly"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Timestamp formatting - Relative time display (e.g., '2 hours ago')",
+    "steps": [
+      "Step 1: Create session",
+      "Step 2: View session created time",
+      "Step 3: Verify time shown as 'just now'",
+      "Step 4: Wait and refresh",
+      "Step 5: Verify time updates to relative format",
+      "Step 6: Hover to see absolute timestamp"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Empty states - Helpful messaging when no data",
+    "steps": [
+      "Step 1: View sessions page with no sessions",
+      "Step 2: Verify empty state message shown",
+      "Step 3: Verify call-to-action button present",
+      "Step 4: Verify helpful illustration/icon shown",
+      "Step 5: Click CTA creates first session"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Confirmation dialogs - Confirm destructive actions",
+    "steps": [
+      "Step 1: Click delete/stop button",
+      "Step 2: Verify confirmation dialog appears",
+      "Step 3: Verify action clearly stated",
+      "Step 4: Click cancel",
+      "Step 5: Verify action not performed",
+      "Step 6: Click confirm",
+      "Step 7: Verify action performed"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Form validation messages - Clear error messages on invalid input",
+    "steps": [
+      "Step 1: Submit form with invalid data",
+      "Step 2: Verify validation errors shown",
+      "Step 3: Verify errors next to relevant fields",
+      "Step 4: Verify errors clearly explain issue",
+      "Step 5: Fix error",
+      "Step 6: Verify error message clears"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Auto-refresh - Data updates automatically without manual refresh",
+    "steps": [
+      "Step 1: View session detail page",
+      "Step 2: Update session in background",
+      "Step 3: Verify UI updates automatically",
+      "Step 4: Verify no page reload required",
+      "Step 5: Verify polling interval reasonable"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Breadcrumb navigation - Show current location in hierarchy",
+    "steps": [
+      "Step 1: Navigate to session detail",
+      "Step 2: Verify breadcrumbs shown (Home > Sessions > Detail)",
+      "Step 3: Click breadcrumb link",
+      "Step 4: Verify navigation to clicked level",
+      "Step 5: Verify breadcrumbs update on navigation"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Performance optimization - Fast page loads and interactions",
+    "steps": [
+      "Step 1: Measure page load time",
+      "Step 2: Verify loads under 2 seconds",
+      "Step 3: Measure API response time",
+      "Step 4: Verify responses under 500ms",
+      "Step 5: Verify smooth animations",
+      "Step 6: Verify no janky scrolling"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Bundle size optimization - Frontend bundle optimized for size",
+    "steps": [
+      "Step 1: Run production build",
+      "Step 2: Verify bundle size under 500KB",
+      "Step 3: Verify code splitting used",
+      "Step 4: Verify lazy loading for routes",
+      "Step 5: Verify tree-shaking applied",
+      "Step 6: Verify dependencies minimized"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Accessibility - ARIA labels and keyboard navigation",
+    "steps": [
+      "Step 1: Navigate UI with keyboard only",
+      "Step 2: Verify all interactive elements reachable",
+      "Step 3: Verify focus indicators visible",
+      "Step 4: Use screen reader",
+      "Step 5: Verify ARIA labels present",
+      "Step 6: Verify semantic HTML used"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Logging - Comprehensive logging throughout system",
+    "steps": [
+      "Step 1: Perform various actions",
+      "Step 2: Check backend logs",
+      "Step 3: Verify actions logged with timestamps",
+      "Step 4: Verify log levels appropriate (DEBUG, INFO, ERROR)",
+      "Step 5: Verify sensitive data redacted",
+      "Step 6: Verify logs rotated/managed"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Database migrations - Schema updates handled gracefully",
+    "steps": [
+      "Step 1: Create initial database",
+      "Step 2: Modify schema",
+      "Step 3: Run migration",
+      "Step 4: Verify schema updated",
+      "Step 5: Verify existing data preserved",
+      "Step 6: Verify rollback possible"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "API versioning - API version in URL or header",
+    "steps": [
+      "Step 1: Make API call to /api/v1/sessions",
+      "Step 2: Verify version in URL",
+      "Step 3: Verify API version header returned",
+      "Step 4: Make call with old version",
+      "Step 5: Verify backward compatibility or clear error"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Rate limiting - Prevent API abuse",
+    "steps": [
+      "Step 1: Make rapid API calls",
+      "Step 2: Verify rate limit applied",
+      "Step 3: Verify 429 status returned",
+      "Step 4: Verify rate limit headers present",
+      "Step 5: Wait and retry",
+      "Step 6: Verify access restored"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Request validation - Validate all API request payloads",
+    "steps": [
+      "Step 1: Send malformed request",
+      "Step 2: Verify 400 status returned",
+      "Step 3: Verify validation errors listed",
+      "Step 4: Send request with extra fields",
+      "Step 5: Verify extra fields ignored or rejected",
+      "Step 6: Send valid request",
+      "Step 7: Verify accepted"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Response schema - Consistent API response format",
+    "steps": [
+      "Step 1: Make successful API call",
+      "Step 2: Verify response has consistent structure",
+      "Step 3: Verify data in 'data' field",
+      "Step 4: Make failing API call",
+      "Step 5: Verify error in 'error' field",
+      "Step 6: Verify status codes consistent"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "WebSocket support - Alternative to SSE for real-time updates",
+    "steps": [
+      "Step 1: Connect WebSocket to session",
+      "Step 2: Verify connection established",
+      "Step 3: Receive progress update",
+      "Step 4: Verify update pushed via WebSocket",
+      "Step 5: Close connection gracefully",
+      "Step 6: Verify cleanup"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Health check endpoint - /health returns system status",
+    "steps": [
+      "Step 1: Call GET /health",
+      "Step 2: Verify 200 status",
+      "Step 3: Verify response includes status: ok",
+      "Step 4: Verify response includes version",
+      "Step 5: Verify response includes dependencies status",
+      "Step 6: Simulate DB down, verify health check fails"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Metrics endpoint - /metrics for monitoring",
+    "steps": [
+      "Step 1: Call GET /metrics",
+      "Step 2: Verify response includes request count",
+      "Step 3: Verify response includes active sessions",
+      "Step 4: Verify response includes error rate",
+      "Step 5: Verify Prometheus format"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Documentation - API documentation available",
+    "steps": [
+      "Step 1: Navigate to /docs",
+      "Step 2: Verify Swagger UI loads",
+      "Step 3: Verify all endpoints documented",
+      "Step 4: Verify request/response schemas shown",
+      "Step 5: Test endpoint from Swagger UI",
+      "Step 6: Verify 'Try it out' works"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Environment configuration - Support for dev/staging/production",
+    "steps": [
+      "Step 1: Set environment to 'development'",
+      "Step 2: Verify debug mode enabled",
+      "Step 3: Set environment to 'production'",
+      "Step 4: Verify debug mode disabled",
+      "Step 5: Verify appropriate logging levels",
+      "Step 6: Verify config values differ by environment"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Docker support - Dockerfile for containerized deployment",
+    "steps": [
+      "Step 1: Build Docker image",
+      "Step 2: Verify image builds successfully",
+      "Step 3: Run container",
+      "Step 4: Verify application starts",
+      "Step 5: Verify API accessible from host",
+      "Step 6: Verify environment variables passed correctly"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Docker Compose - Multi-container setup for local development",
+    "steps": [
+      "Step 1: Run docker-compose up",
+      "Step 2: Verify backend container starts",
+      "Step 3: Verify frontend container starts",
+      "Step 4: Verify database container starts",
+      "Step 5: Verify containers can communicate",
+      "Step 6: Verify volumes mounted correctly"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "CI/CD pipeline - GitHub Actions or similar for automation",
+    "steps": [
+      "Step 1: Verify workflow file exists (.github/workflows/)",
+      "Step 2: Push commit",
+      "Step 3: Verify workflow triggers",
+      "Step 4: Verify tests run",
+      "Step 5: Verify build succeeds",
+      "Step 6: Verify deployment (if configured)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Unit tests - Comprehensive test coverage",
+    "steps": [
+      "Step 1: Run backend tests",
+      "Step 2: Verify tests execute",
+      "Step 3: Verify coverage report generated",
+      "Step 4: Verify coverage above 80%",
+      "Step 5: Run frontend tests",
+      "Step 6: Verify component tests pass"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Integration tests - Test API endpoints end-to-end",
+    "steps": [
+      "Step 1: Start test server",
+      "Step 2: Run integration tests",
+      "Step 3: Verify API calls succeed",
+      "Step 4: Verify database interactions work",
+      "Step 5: Verify test cleanup happens",
+      "Step 6: Verify all tests pass"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "E2E tests - Playwright tests for UI flows",
+    "steps": [
+      "Step 1: Start backend and frontend",
+      "Step 2: Run Playwright tests",
+      "Step 3: Verify browser automation works",
+      "Step 4: Verify user flows tested",
+      "Step 5: Verify screenshots captured on failure",
+      "Step 6: Verify all E2E tests pass"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Code linting - ESLint for frontend, flake8/black for backend",
+    "steps": [
+      "Step 1: Run eslint on frontend code",
+      "Step 2: Verify no linting errors",
+      "Step 3: Run flake8 on backend code",
+      "Step 4: Verify no linting errors",
+      "Step 5: Run black formatter",
+      "Step 6: Verify code formatted consistently"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Type checking - TypeScript for frontend, mypy for backend",
+    "steps": [
+      "Step 1: Run TypeScript compiler",
+      "Step 2: Verify no type errors",
+      "Step 3: Run mypy on backend",
+      "Step 4: Verify type annotations valid",
+      "Step 5: Verify type coverage sufficient"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Git hooks - Pre-commit hooks for linting and testing",
+    "steps": [
+      "Step 1: Install pre-commit hooks",
+      "Step 2: Make commit with linting errors",
+      "Step 3: Verify commit blocked",
+      "Step 4: Fix linting errors",
+      "Step 5: Verify commit succeeds",
+      "Step 6: Verify hooks run automatically"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "README.md - Comprehensive project documentation",
+    "steps": [
+      "Step 1: Open README.md",
+      "Step 2: Verify project overview present",
+      "Step 3: Verify installation instructions clear",
+      "Step 4: Verify usage examples included",
+      "Step 5: Verify API documentation linked",
+      "Step 6: Verify contribution guidelines present"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "LICENSE file - Open source license included",
+    "steps": [
+      "Step 1: Verify LICENSE file exists",
+      "Step 2: Verify license type appropriate (MIT/Apache/etc.)",
+      "Step 3: Verify copyright holder listed",
+      "Step 4: Verify year correct"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": ".gitignore - Proper exclusions for version control",
+    "steps": [
+      "Step 1: Verify .gitignore exists",
+      "Step 2: Verify node_modules/ excluded",
+      "Step 3: Verify __pycache__/ excluded",
+      "Step 4: Verify .env excluded",
+      "Step 5: Verify build artifacts excluded",
+      "Step 6: Verify IDE files excluded"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "CHANGELOG.md - Track version history and changes",
+    "steps": [
+      "Step 1: Verify CHANGELOG.md exists",
+      "Step 2: Verify versions listed in reverse chronological order",
+      "Step 3: Verify each version has date",
+      "Step 4: Verify changes categorized (Added, Changed, Fixed)",
+      "Step 5: Verify latest version matches package version"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "UI color scheme - Consistent, professional color palette",
+    "steps": [
+      "Step 1: Review UI color usage",
+      "Step 2: Verify primary color used consistently",
+      "Step 3: Verify secondary colors complement primary",
+      "Step 4: Verify sufficient contrast for accessibility",
+      "Step 5: Verify colors defined in Tailwind config"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "Typography - Consistent font usage and hierarchy",
+    "steps": [
+      "Step 1: Review typography across UI",
+      "Step 2: Verify heading hierarchy clear (h1, h2, h3)",
+      "Step 3: Verify font sizes consistent",
+      "Step 4: Verify line heights readable",
+      "Step 5: Verify font weights used appropriately"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "Spacing - Consistent padding and margins",
+    "steps": [
+      "Step 1: Review spacing across components",
+      "Step 2: Verify consistent padding within elements",
+      "Step 3: Verify consistent margins between elements",
+      "Step 4: Verify Tailwind spacing scale used",
+      "Step 5: Verify no magic numbers, use spacing tokens"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "Button styles - Consistent button design",
+    "steps": [
+      "Step 1: Review all button types",
+      "Step 2: Verify primary button style distinct",
+      "Step 3: Verify secondary button style clear",
+      "Step 4: Verify disabled state visible",
+      "Step 5: Verify hover states present",
+      "Step 6: Verify loading states implemented"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "Form inputs - Consistent input field styling",
+    "steps": [
+      "Step 1: Review form inputs",
+      "Step 2: Verify consistent input height",
+      "Step 3: Verify consistent border styling",
+      "Step 4: Verify focus states clear",
+      "Step 5: Verify error states visible",
+      "Step 6: Verify labels properly associated"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "Card components - Consistent card styling",
+    "steps": [
+      "Step 1: Review card components",
+      "Step 2: Verify consistent border radius",
+      "Step 3: Verify consistent shadow usage",
+      "Step 4: Verify consistent padding",
+      "Step 5: Verify hover effects appropriate"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "Icons - Consistent icon size and style",
+    "steps": [
+      "Step 1: Review icon usage",
+      "Step 2: Verify icons same style (Lucide)",
+      "Step 3: Verify icon sizes consistent within context",
+      "Step 4: Verify icon colors match text or theme",
+      "Step 5: Verify icons have proper spacing"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "Loading spinners - Consistent loading indicators",
+    "steps": [
+      "Step 1: Review loading states",
+      "Step 2: Verify spinner design consistent",
+      "Step 3: Verify spinner size appropriate for context",
+      "Step 4: Verify spinner color matches theme",
+      "Step 5: Verify smooth animation"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "Progress bars - Visually appealing progress indication",
+    "steps": [
+      "Step 1: Review progress bars",
+      "Step 2: Verify consistent height",
+      "Step 3: Verify consistent border radius",
+      "Step 4: Verify color indicates progress clearly",
+      "Step 5: Verify percentage label readable"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "Tables - Clean, readable table design",
+    "steps": [
+      "Step 1: Review table components",
+      "Step 2: Verify header row distinct",
+      "Step 3: Verify row hover states present",
+      "Step 4: Verify zebra striping if applicable",
+      "Step 5: Verify column alignment appropriate",
+      "Step 6: Verify responsive on mobile"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "Modal dialogs - Consistent modal styling",
+    "steps": [
+      "Step 1: Review modal dialogs",
+      "Step 2: Verify backdrop overlay present",
+      "Step 3: Verify modal centered on screen",
+      "Step 4: Verify close button visible",
+      "Step 5: Verify animations smooth",
+      "Step 6: Verify focus trapped in modal"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "Alerts and notifications - Clear visual hierarchy",
+    "steps": [
+      "Step 1: Review alert components",
+      "Step 2: Verify success alerts green",
+      "Step 3: Verify error alerts red",
+      "Step 4: Verify warning alerts yellow/orange",
+      "Step 5: Verify info alerts blue",
+      "Step 6: Verify icons used appropriately"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "Code blocks - Syntax highlighting and formatting",
+    "steps": [
+      "Step 1: Review code block rendering",
+      "Step 2: Verify syntax highlighting present",
+      "Step 3: Verify monospace font used",
+      "Step 4: Verify line numbers if appropriate",
+      "Step 5: Verify copy button present",
+      "Step 6: Verify scrolling for long code"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "Animations and transitions - Smooth, purposeful motion",
+    "steps": [
+      "Step 1: Review animations throughout UI",
+      "Step 2: Verify transitions smooth (not jarring)",
+      "Step 3: Verify animation duration appropriate",
+      "Step 4: Verify animations enhance UX (not distract)",
+      "Step 5: Verify reduced motion preference respected"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "White space - Adequate breathing room in UI",
+    "steps": [
+      "Step 1: Review overall layout",
+      "Step 2: Verify UI not cramped",
+      "Step 3: Verify sections clearly separated",
+      "Step 4: Verify adequate padding in containers",
+      "Step 5: Verify white space enhances readability"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "Visual hierarchy - Clear importance levels",
+    "steps": [
+      "Step 1: Review page layouts",
+      "Step 2: Verify most important content prominent",
+      "Step 3: Verify headings larger than body text",
+      "Step 4: Verify CTAs stand out",
+      "Step 5: Verify user eye drawn to key actions"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "Responsive breakpoints - Proper mobile/tablet/desktop layouts",
+    "steps": [
+      "Step 1: Test at mobile breakpoint (375px)",
+      "Step 2: Verify layout optimized for mobile",
+      "Step 3: Test at tablet breakpoint (768px)",
+      "Step 4: Verify layout optimized for tablet",
+      "Step 5: Test at desktop breakpoint (1920px)",
+      "Step 6: Verify layout optimized for desktop"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "Image optimization - Properly sized and compressed images",
+    "steps": [
+      "Step 1: Review image usage",
+      "Step 2: Verify images appropriately sized",
+      "Step 3: Verify images compressed",
+      "Step 4: Verify lazy loading for images",
+      "Step 5: Verify alt text present"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "Logo and branding - SHERPA branding consistent",
+    "steps": [
+      "Step 1: Review logo usage",
+      "Step 2: Verify logo visible in nav",
+      "Step 3: Verify logo links to home",
+      "Step 4: Verify branding colors used",
+      "Step 5: Verify brand voice in copy"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "Favicon - Browser tab icon present",
+    "steps": [
+      "Step 1: Open app in browser",
+      "Step 2: Verify favicon appears in tab",
+      "Step 3: Verify favicon appropriate size",
+      "Step 4: Verify favicon matches branding"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "404 page - Custom not found page",
+    "steps": [
+      "Step 1: Navigate to non-existent route",
+      "Step 2: Verify custom 404 page shown",
+      "Step 3: Verify helpful message displayed",
+      "Step 4: Verify link back to home",
+      "Step 5: Verify matches overall design"
+    ],
+    "passes": false
+  }
+]
