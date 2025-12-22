@@ -1,12 +1,27 @@
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
 import { Mountain } from 'lucide-react'
 
-// Pages (to be implemented)
-import HomePage from './pages/HomePage'
-import SessionsPage from './pages/SessionsPage'
-import SessionDetailPage from './pages/SessionDetailPage'
-import KnowledgePage from './pages/KnowledgePage'
-import SourcesPage from './pages/SourcesPage'
+// Pages
+import HomePage from './pages/HomePage-simple'
+// TODO: These pages have API dependencies that need debugging
+// import SessionsPage from './pages/SessionsPage'
+// import SessionDetailPage from './pages/SessionDetailPage'
+// import KnowledgePage from './pages/KnowledgePage'
+// import SourcesPage from './pages/SourcesPage'
+
+// Placeholder pages
+function SessionsPage() {
+  return <div className="p-8"><h1 className="text-3xl font-bold">Sessions Page - Coming Soon</h1></div>
+}
+function SessionDetailPage() {
+  return <div className="p-8"><h1 className="text-3xl font-bold">Session Detail - Coming Soon</h1></div>
+}
+function KnowledgePage() {
+  return <div className="p-8"><h1 className="text-3xl font-bold">Knowledge Page - Coming Soon</h1></div>
+}
+function SourcesPage() {
+  return <div className="p-8"><h1 className="text-3xl font-bold">Sources Page - Coming Soon</h1></div>
+}
 
 function App() {
   return (
