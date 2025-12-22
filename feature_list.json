@@ -585,7 +585,7 @@
       "Step 4: Verify session details returned",
       "Step 5: Verify 404 for non-existent session"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
