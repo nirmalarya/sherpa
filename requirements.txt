@@ -30,14 +30,13 @@ httpx==0.26.0
 requests==2.31.0
 
 # Data Validation
-pydantic==2.5.3
-pydantic-settings==2.1.0
+pydantic==2.10.3
+pydantic-settings==2.6.1
 
 # Environment Variables
 python-dotenv==1.0.0
 
 # Async Support
-asyncio==3.4.3
 aiofiles==23.2.1
 
 # Testing

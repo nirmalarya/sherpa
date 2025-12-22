@@ -63,10 +63,14 @@ source venv/bin/activate
 # Install Python dependencies
 echo "Installing Python dependencies..."
 if [ -f "requirements.txt" ]; then
+    # Set compatibility flag for Python 3.14 with PyO3
+    export PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1
     pip install -q -r requirements.txt
 elif [ -f "setup.py" ]; then
+    export PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1
     pip install -q -e .
 elif [ -f "pyproject.toml" ]; then
+    export PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1
     pip install -q -e .
 else
     echo "${YELLOW}⚠️  No requirements.txt, setup.py, or pyproject.toml found. Skipping Python dependencies.${NC}"
