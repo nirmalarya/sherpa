@@ -573,7 +573,7 @@
       "Step 4: Verify array of sessions returned",
       "Step 5: Verify each session has required fields"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
