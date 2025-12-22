@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test POST /api/sessions Endpoint</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #0066cc;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #555;
+            margin-top: 30px;
+        }
+        .section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            margin: 5px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        button:hover {
+            background: #0052a3;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: 600;
+            margin: 10px 0;
+        }
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        pre {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            overflow-x: auto;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .input-group {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            max-width: 500px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test POST /api/sessions Endpoint</h1>
+
+    <div class="section">
+        <h2>Step 1: Create New Session with POST Request</h2>
+        <p>Test creating a new session with different parameters</p>
+
+        <div class="input-group">
+            <label for="specFile">Spec File (optional):</label>
+            <input type="text" id="specFile" value="test_app_spec.txt" placeholder="Enter spec file name">
+        </div>
+
+        <div class="input-group">
+            <label for="totalFeatures">Total Features:</label>
+            <input type="number" id="totalFeatures" value="150" placeholder="Enter total features">
+        </div>
+
+        <button onclick="createSession()">Create Session</button>
+        <button onclick="createSessionMinimal()">Create Session (No Params)</button>
+
+        <div id="createResult"></div>
+    </div>
+
+    <div class="section">
+        <h2>Step 2: Verify Session Created in Database</h2>
+        <p>After creating a session, verify it exists by fetching all sessions</p>
+
+        <button onclick="getAllSessions()">Get All Sessions</button>
+
+        <div id="verifyResult"></div>
+    </div>
+
+    <div class="section">
+        <h2>Step 3: Verify Session ID Returned</h2>
+        <p>Check that the response includes a valid session ID</p>
+
+        <div id="sessionIdCheck"></div>
+    </div>
+
+    <div class="section">
+        <h2>Step 4: Verify Session Details</h2>
+        <p>Fetch the created session by ID to verify all fields</p>
+
+        <button onclick="getSessionById()">Get Session by ID</button>
+
+        <div id="sessionDetailResult"></div>
+    </div>
+
+    <div class="section">
+        <h2>Step 5: Test Error Handling</h2>
+        <p>Test POST with invalid data</p>
+
+        <button onclick="testInvalidData()">Test Invalid Total Features (-1)</button>
+
+        <div id="errorTestResult"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8001';
+        let lastCreatedSessionId = null;
+
+        async function createSession() {
+            const specFile = document.getElementById('specFile').value;
+            const totalFeatures = parseInt(document.getElementById('totalFeatures').value);
+
+            try {
+                const response = await fetch(`${API_URL}/api/sessions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        spec_file: specFile,
+                        total_features: totalFeatures
+                    })
+                });
+
+                const data = await response.json();
+                const resultDiv = document.getElementById('createResult');
+
+                if (response.ok) {
+                    lastCreatedSessionId = data.id;
+                    resultDiv.innerHTML = `
+                        <div class="status status-success">✅ Status: ${response.status}</div>
+                        <p><strong>Session Created Successfully!</strong></p>
+                        <p><strong>Session ID:</strong> ${data.id}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+
+                    // Update Step 3
+                    checkSessionId(data);
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="status status-error">❌ Status: ${response.status}</div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('createResult').innerHTML = `
+                    <div class="status status-error">❌ Error</div>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+
+        async function createSessionMinimal() {
+            try {
+                const response = await fetch(`${API_URL}/api/sessions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({})
+                });
+
+                const data = await response.json();
+                const resultDiv = document.getElementById('createResult');
+
+                if (response.ok) {
+                    lastCreatedSessionId = data.id;
+                    resultDiv.innerHTML = `
+                        <div class="status status-success">✅ Status: ${response.status}</div>
+                        <p><strong>Session Created Successfully (No Params)!</strong></p>
+                        <p><strong>Session ID:</strong> ${data.id}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+
+                    checkSessionId(data);
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="status status-error">❌ Status: ${response.status}</div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('createResult').innerHTML = `
+                    <div class="status status-error">❌ Error</div>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+
+        function checkSessionId(data) {
+            const checkDiv = document.getElementById('sessionIdCheck');
+            const hasId = data && data.id;
+            const isValidFormat = hasId && data.id.startsWith('session-');
+
+            checkDiv.innerHTML = `
+                <div class="status ${hasId && isValidFormat ? 'status-success' : 'status-error'}">
+                    ${hasId && isValidFormat ? '✅' : '❌'} Session ID Check
+                </div>
+                <p><strong>Has ID:</strong> ${hasId ? 'Yes' : 'No'}</p>
+                <p><strong>Valid Format (session-*):</strong> ${isValidFormat ? 'Yes' : 'No'}</p>
+                <p><strong>ID Value:</strong> ${data.id || 'N/A'}</p>
+            `;
+        }
+
+        async function getAllSessions() {
+            try {
+                const response = await fetch(`${API_URL}/api/sessions`);
+                const data = await response.json();
+                const resultDiv = document.getElementById('verifyResult');
+
+                if (response.ok) {
+                    const sessions = data.sessions || [];
+                    const hasLastCreated = lastCreatedSessionId && sessions.some(s => s.id === lastCreatedSessionId);
+
+                    resultDiv.innerHTML = `
+                        <div class="status status-success">✅ Status: ${response.status}</div>
+                        <p><strong>Total sessions:</strong> ${data.total}</p>
+                        ${lastCreatedSessionId ? `
+                            <p><strong>Last created session found:</strong> ${hasLastCreated ? '✅ Yes' : '❌ No'}</p>
+                        ` : ''}
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="status status-error">❌ Status: ${response.status}</div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('verifyResult').innerHTML = `
+                    <div class="status status-error">❌ Error</div>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+
+        async function getSessionById() {
+            if (!lastCreatedSessionId) {
+                document.getElementById('sessionDetailResult').innerHTML = `
+                    <div class="status status-error">❌ No session created yet</div>
+                    <p>Please create a session first using Step 1</p>
+                `;
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/sessions/${lastCreatedSessionId}`);
+                const data = await response.json();
+                const resultDiv = document.getElementById('sessionDetailResult');
+
+                if (response.ok) {
+                    const hasRequiredFields = data.id && data.status && data.spec_file !== undefined;
+
+                    resultDiv.innerHTML = `
+                        <div class="status status-success">✅ Status: ${response.status}</div>
+                        <p><strong>Session found:</strong> ${data.id}</p>
+                        <p><strong>Has required fields:</strong> ${hasRequiredFields ? '✅ Yes' : '❌ No'}</p>
+                        <p><strong>Status:</strong> ${data.status}</p>
+                        <p><strong>Spec File:</strong> ${data.spec_file || 'null'}</p>
+                        <p><strong>Total Features:</strong> ${data.total_features}</p>
+                        <p><strong>Completed Features:</strong> ${data.completed_features}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="status status-error">❌ Status: ${response.status}</div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('sessionDetailResult').innerHTML = `
+                    <div class="status status-error">❌ Error</div>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+
+        async function testInvalidData() {
+            try {
+                const response = await fetch(`${API_URL}/api/sessions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        total_features: -1
+                    })
+                });
+
+                const data = await response.json();
+                const resultDiv = document.getElementById('errorTestResult');
+
+                // This might succeed depending on backend validation
+                resultDiv.innerHTML = `
+                    <div class="status ${response.ok ? 'status-success' : 'status-error'}">
+                        Status: ${response.status}
+                    </div>
+                    <p><strong>Response:</strong></p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                    <p><em>Note: Backend may or may not validate negative values. This tests error handling.</em></p>
+                `;
+            } catch (error) {
+                document.getElementById('errorTestResult').innerHTML = `
+                    <div class="status status-error">❌ Error</div>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

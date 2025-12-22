@@ -3,8 +3,9 @@ SHERPA V1 - Main FastAPI Application
 Backend API server for the autonomous coding orchestrator
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 import asyncio
 from datetime import datetime
 from typing import Optional
@@ -15,6 +16,15 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from sherpa.core.db import get_db
+
+
+# Pydantic models
+class CreateSessionRequest(BaseModel):
+    spec_file: Optional[str] = None
+    total_features: int = 0
+    work_item_id: Optional[str] = None
+    git_branch: Optional[str] = None
+
 
 # Create FastAPI app
 app = FastAPI(
@@ -100,18 +110,20 @@ async def get_sessions(status: Optional[str] = None):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/sessions")
-async def create_session(spec_file: Optional[str] = None, total_features: int = 0):
+@app.post("/api/sessions", status_code=201)
+async def create_session(request: CreateSessionRequest):
     """Create a new coding session"""
     try:
         db = await get_db()
         session_id = f"session-{int(datetime.utcnow().timestamp() * 1000)}"
         await db.create_session({
             'id': session_id,
-            'spec_file': spec_file,
+            'spec_file': request.spec_file,
             'status': 'active',
-            'total_features': total_features,
-            'completed_features': 0
+            'total_features': request.total_features,
+            'completed_features': 0,
+            'work_item_id': request.work_item_id,
+            'git_branch': request.git_branch
         })
         return {
             "id": session_id,

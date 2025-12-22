@@ -561,7 +561,7 @@
       "Step 4: Verify session stored in database",
       "Step 5: Verify feature_list.json generated"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
