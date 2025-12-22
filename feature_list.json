@@ -8,7 +8,7 @@
       "Step 3: Verify CORS headers allow localhost:3001 origin",
       "Step 4: Verify async/await handlers work correctly"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -21,7 +21,7 @@
       "Step 5: Verify configuration table exists with proper columns",
       "Step 6: Verify all async database operations work"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -48,7 +48,7 @@
       "Step 7: Verify git/commits snippet exists with git commit patterns",
       "Step 8: Verify all snippets are accessible via API"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

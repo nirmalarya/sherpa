@@ -3,10 +3,18 @@ SHERPA V1 - Main FastAPI Application
 Backend API server for the autonomous coding orchestrator
 """
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import asyncio
 from datetime import datetime
+from typing import Optional
+import sys
+from pathlib import Path
+
+# Add parent directory to path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+from sherpa.core.db import get_db
 
 # Create FastAPI app
 app = FastAPI(
@@ -41,6 +49,13 @@ async def startup_event():
     print("📊 API Documentation: http://localhost:8000/docs")
     print("⚛️  Frontend: http://localhost:3001")
 
+    # Initialize database
+    try:
+        db = await get_db()
+        print("✅ Database initialized successfully")
+    except Exception as e:
+        print(f"❌ Database initialization failed: {e}")
+
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -71,58 +86,87 @@ async def health_check():
 
 
 @app.get("/api/sessions")
-async def get_sessions():
+async def get_sessions(status: Optional[str] = None):
     """Get all coding sessions"""
-    # TODO: Implement actual session retrieval from database
-    return {
-        "sessions": [],
-        "total": 0,
-        "timestamp": datetime.utcnow().isoformat()
-    }
+    try:
+        db = await get_db()
+        sessions = await db.get_sessions(status=status)
+        return {
+            "sessions": sessions,
+            "total": len(sessions),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/api/sessions")
-async def create_session():
+async def create_session(spec_file: Optional[str] = None, total_features: int = 0):
     """Create a new coding session"""
-    # TODO: Implement session creation
-    return {
-        "id": "session-1",
-        "status": "created",
-        "timestamp": datetime.utcnow().isoformat()
-    }
+    try:
+        db = await get_db()
+        session_id = f"session-{int(datetime.utcnow().timestamp() * 1000)}"
+        await db.create_session({
+            'id': session_id,
+            'spec_file': spec_file,
+            'status': 'active',
+            'total_features': total_features,
+            'completed_features': 0
+        })
+        return {
+            "id": session_id,
+            "status": "created",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/sessions/{session_id}")
 async def get_session(session_id: str):
     """Get specific session details"""
-    # TODO: Implement session retrieval
-    return {
-        "id": session_id,
-        "status": "active",
-        "timestamp": datetime.utcnow().isoformat()
-    }
+    try:
+        db = await get_db()
+        session = await db.get_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        return session
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/snippets")
-async def get_snippets():
+async def get_snippets(category: Optional[str] = None):
     """Get all code snippets"""
-    # TODO: Implement snippet retrieval
-    return {
-        "snippets": [],
-        "total": 0,
-        "timestamp": datetime.utcnow().isoformat()
-    }
+    try:
+        db = await get_db()
+        snippets = await db.get_snippets(category=category)
+        return {
+            "snippets": snippets,
+            "total": len(snippets),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/config")
 async def get_config():
     """Get configuration"""
-    # TODO: Implement config retrieval
-    return {
-        "bedrock_configured": False,
-        "azure_devops_configured": False,
-        "timestamp": datetime.utcnow().isoformat()
-    }
+    try:
+        db = await get_db()
+        config = await db.get_all_config()
+
+        return {
+            "bedrock_configured": bool(config.get('bedrock_kb_id')),
+            "azure_devops_configured": bool(config.get('azure_devops_org')),
+            "config": config,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":
