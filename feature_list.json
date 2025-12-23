@@ -1463,7 +1463,7 @@
       "Step 6: Click confirm",
       "Step 7: Verify action performed"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

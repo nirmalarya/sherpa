@@ -4,6 +4,7 @@ import { Play, Pause, Square, CheckCircle } from 'lucide-react'
 import api from '../lib/api'
 import SessionMonitor from '../components/SessionMonitor'
 import ProgressChart from '../components/ProgressChart'
+import ConfirmDialog from '../components/ConfirmDialog'
 
 function SessionDetailPage() {
   const { id } = useParams()
@@ -13,6 +14,7 @@ function SessionDetailPage() {
   const [commits, setCommits] = useState([])
   const [loading, setLoading] = useState(true)
   const [progressData, setProgressData] = useState([])
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, action: null, title: '', message: '' })
 
   useEffect(() => {
     fetchSessionDetails()
@@ -75,22 +77,40 @@ function SessionDetailPage() {
     }
   }
 
-  const handleStop = async () => {
+  const handleStopClick = () => {
+    setConfirmDialog({
+      isOpen: true,
+      action: 'stop',
+      title: 'Stop Session',
+      message: 'Are you sure you want to stop this session? This will terminate the coding process and cannot be resumed.'
+    })
+  }
+
+  const handlePauseClick = () => {
+    setConfirmDialog({
+      isOpen: true,
+      action: 'pause',
+      title: 'Pause Session',
+      message: 'Are you sure you want to pause this session? You can resume it later from where it left off.'
+    })
+  }
+
+  const handleConfirmAction = async () => {
+    const action = confirmDialog.action
     try {
-      await api.post(`/api/sessions/${id}/stop`)
+      if (action === 'stop') {
+        await api.post(`/api/sessions/${id}/stop`)
+      } else if (action === 'pause') {
+        await api.post(`/api/sessions/${id}/pause`)
+      }
       fetchSessionDetails()
     } catch (error) {
-      console.error('Error stopping session:', error)
+      console.error(`Error ${action}ing session:`, error)
     }
   }
 
-  const handlePause = async () => {
-    try {
-      await api.post(`/api/sessions/${id}/pause`)
-      fetchSessionDetails()
-    } catch (error) {
-      console.error('Error pausing session:', error)
-    }
+  const handleCancelDialog = () => {
+    setConfirmDialog({ isOpen: false, action: null, title: '', message: '' })
   }
 
   const handleResume = async () => {
@@ -124,11 +144,11 @@ function SessionDetailPage() {
         <div className="flex gap-2">
           {session?.status === 'active' && (
             <>
-              <button onClick={handlePause} className="btn-secondary flex items-center gap-2">
+              <button onClick={handlePauseClick} className="btn-secondary flex items-center gap-2">
                 <Pause className="h-4 w-4" />
                 Pause
               </button>
-              <button onClick={handleStop} className="btn-secondary flex items-center gap-2">
+              <button onClick={handleStopClick} className="btn-secondary flex items-center gap-2">
                 <Square className="h-4 w-4" />
                 Stop
               </button>
@@ -231,6 +251,17 @@ function SessionDetailPage() {
           ))}
         </div>
       </div>
+
+      {/* Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={handleCancelDialog}
+        onConfirm={handleConfirmAction}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmText={confirmDialog.action === 'stop' ? 'Stop Session' : 'Pause Session'}
+        confirmButtonClass={confirmDialog.action === 'stop' ? 'bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg' : 'btn-primary'}
+      />
     </div>
   )
 }
