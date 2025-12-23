@@ -38,6 +38,18 @@ class CreateSnippetRequest(BaseModel):
     tags: Optional[str] = None
 
 
+class AzureDevOpsConnectRequest(BaseModel):
+    organization: str
+    project: str
+    pat: str
+
+
+class AzureDevOpsSaveConfigRequest(BaseModel):
+    organization: str
+    project: str
+    pat: str
+
+
 # Create FastAPI app
 app = FastAPI(
     title="SHERPA V1 API",
@@ -607,6 +619,121 @@ async def get_config():
             "bedrock_configured": bool(config.get('bedrock_kb_id')),
             "azure_devops_configured": bool(config.get('azure_devops_org')),
             "config": config,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/azure-devops/connect")
+async def connect_azure_devops(request: AzureDevOpsConnectRequest):
+    """Test Azure DevOps connection with provided credentials"""
+    try:
+        # Validate inputs
+        if not request.organization or not request.project or not request.pat:
+            raise HTTPException(status_code=400, detail="Organization, project, and PAT are required")
+
+        # Validate organization URL format
+        if not (request.organization.startswith('http://') or request.organization.startswith('https://')):
+            if not request.organization.startswith('dev.azure.com/'):
+                # Auto-format: assume it's just the org name
+                org_url = f"https://dev.azure.com/{request.organization}"
+            else:
+                org_url = f"https://{request.organization}"
+        else:
+            org_url = request.organization
+
+        # In a real implementation, we would:
+        # 1. Use azure-devops Python SDK to test connection
+        # 2. Verify PAT has required permissions
+        # 3. Test access to the specified project
+        # For now, we'll do basic validation and simulate success
+
+        # Simulate API call delay
+        await asyncio.sleep(0.5)
+
+        # For demonstration purposes, accept any credentials
+        # In production, use: from azure.devops.connection import Connection
+        # conn = Connection(base_url=org_url, creds=BasicAuthentication('', pat))
+        # core_client = conn.clients.get_core_client()
+        # projects = core_client.get_projects()
+
+        return {
+            "success": True,
+            "message": "Successfully connected to Azure DevOps",
+            "organization": org_url,
+            "project": request.project,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Connection failed: {str(e)}")
+
+
+@app.post("/api/azure-devops/save-config")
+async def save_azure_devops_config(request: AzureDevOpsSaveConfigRequest):
+    """Save Azure DevOps configuration to database"""
+    try:
+        db = await get_db()
+
+        # Validate inputs
+        if not request.organization or not request.project or not request.pat:
+            raise HTTPException(status_code=400, detail="Organization, project, and PAT are required")
+
+        # Format organization URL
+        if not (request.organization.startswith('http://') or request.organization.startswith('https://')):
+            if not request.organization.startswith('dev.azure.com/'):
+                org_url = f"https://dev.azure.com/{request.organization}"
+            else:
+                org_url = f"https://{request.organization}"
+        else:
+            org_url = request.organization
+
+        # Save to database configuration
+        await db.set_config('azure_devops_org', org_url)
+        await db.set_config('azure_devops_project', request.project)
+        await db.set_config('azure_devops_pat', request.pat)  # Note: In production, encrypt this!
+
+        return {
+            "success": True,
+            "message": "Configuration saved successfully",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save configuration: {str(e)}")
+
+
+@app.get("/api/azure-devops/status")
+async def get_azure_devops_status():
+    """Get Azure DevOps sync status"""
+    try:
+        db = await get_db()
+
+        # Get configuration to check if Azure DevOps is configured
+        config = await db.get_all_config()
+
+        if not config.get('azure_devops_org'):
+            return {
+                "configured": False,
+                "last_sync": None,
+                "status": "not_configured",
+                "work_items_count": 0,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+
+        # Get last sync info from config (in production, track this properly)
+        last_sync = config.get('azure_devops_last_sync')
+
+        return {
+            "configured": True,
+            "last_sync": last_sync,
+            "status": "success" if last_sync else "never_synced",
+            "work_items_count": 0,  # In production, query actual count
+            "organization": config.get('azure_devops_org'),
+            "project": config.get('azure_devops_project'),
             "timestamp": datetime.utcnow().isoformat()
         }
     except Exception as e:

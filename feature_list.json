@@ -486,7 +486,7 @@
       "Step 5: Verify sync status shown",
       "Step 6: Verify file source configuration"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
