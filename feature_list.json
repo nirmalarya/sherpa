@@ -1028,7 +1028,7 @@
       "Step 5: Verify update received in frontend",
       "Step 6: Verify reconnection on disconnect"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
