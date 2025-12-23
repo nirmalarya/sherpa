@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Test Sessions for Pagination</title>
+</head>
+<body>
+    <h1>Adding Test Sessions...</h1>
+    <div id="status"></div>
+
+    <script>
+        const API_URL = 'http://localhost:8001';
+        const statusDiv = document.getElementById('status');
+
+        async function addTestSessions() {
+            const statuses = ['active', 'stopped', 'paused', 'complete', 'error'];
+            let successCount = 0;
+            let errorCount = 0;
+
+            statusDiv.innerHTML = '<p>Starting to add 55 test sessions...</p>';
+
+            for (let i = 1; i <= 55; i++) {
+                try {
+                    const status = statuses[Math.floor(Math.random() * statuses.length)];
+                    const totalFeatures = Math.floor(Math.random() * 150) + 50;
+                    const completedFeatures = Math.floor(Math.random() * totalFeatures);
+                    const daysAgo = Math.floor(Math.random() * 30);
+                    const hoursAgo = Math.floor(Math.random() * 24);
+
+                    const createdAt = new Date();
+                    createdAt.setDate(createdAt.getDate() - daysAgo);
+                    createdAt.setHours(createdAt.getHours() - hoursAgo);
+
+                    const sessionData = {
+                        spec_file: `test_pagination_spec_${i}.txt`,
+                        status: status,
+                        total_features: totalFeatures,
+                        completed_features: completedFeatures,
+                        created_at: createdAt.toISOString()
+                    };
+
+                    const response = await fetch(`${API_URL}/api/sessions`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(sessionData)
+                    });
+
+                    if (response.ok) {
+                        successCount++;
+                        if (i % 10 === 0) {
+                            statusDiv.innerHTML += `<p>Progress: ${i}/55 sessions created...</p>`;
+                        }
+                    } else {
+                        errorCount++;
+                    }
+                } catch (error) {
+                    console.error('Error creating session:', error);
+                    errorCount++;
+                }
+
+                // Small delay to avoid overwhelming the server
+                await new Promise(resolve => setTimeout(resolve, 50));
+            }
+
+            statusDiv.innerHTML += `<h2>✅ Complete!</h2>`;
+            statusDiv.innerHTML += `<p>Successfully created: ${successCount} sessions</p>`;
+            statusDiv.innerHTML += `<p>Errors: ${errorCount}</p>`;
+
+            // Fetch total count
+            const countResponse = await fetch(`${API_URL}/api/sessions`);
+            const countData = await countResponse.json();
+            statusDiv.innerHTML += `<p>Total sessions in database: ${countData.total || countData.sessions.length}</p>`;
+        }
+
+        // Run on page load
+        addTestSessions();
+    </script>
+</body>
+</html>

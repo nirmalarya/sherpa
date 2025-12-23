@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, Filter, ArrowUp, ArrowDown } from 'lucide-react'
+import { Search, Filter, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import api from '../lib/api'
 import ErrorMessage from '../components/ErrorMessage'
 
@@ -12,6 +12,8 @@ function SessionsPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [sortBy, setSortBy] = useState('date') // 'date', 'status', 'progress'
   const [sortDirection, setSortDirection] = useState('desc') // 'asc' or 'desc'
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(10) // Sessions per page
 
   useEffect(() => {
     fetchSessions()
@@ -71,6 +73,61 @@ function SessionsPage() {
 
     return sortDirection === 'asc' ? comparison : -comparison
   })
+
+  // Pagination calculations
+  const totalPages = Math.ceil(sortedSessions.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedSessions = sortedSessions.slice(startIndex, endIndex)
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search, statusFilter, sortBy, sortDirection])
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage)
+      // Scroll to top of page when changing pages
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
+  const getPageNumbers = () => {
+    const pages = []
+    const maxVisiblePages = 5
+
+    if (totalPages <= maxVisiblePages) {
+      // Show all pages if total is small
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i)
+      }
+    } else {
+      // Show first, last, current and nearby pages
+      if (currentPage <= 3) {
+        // Near beginning
+        for (let i = 1; i <= 4; i++) pages.push(i)
+        pages.push('...')
+        pages.push(totalPages)
+      } else if (currentPage >= totalPages - 2) {
+        // Near end
+        pages.push(1)
+        pages.push('...')
+        for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i)
+      } else {
+        // Middle
+        pages.push(1)
+        pages.push('...')
+        pages.push(currentPage - 1)
+        pages.push(currentPage)
+        pages.push(currentPage + 1)
+        pages.push('...')
+        pages.push(totalPages)
+      }
+    }
+
+    return pages
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -184,7 +241,7 @@ function SessionsPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {sortedSessions.map((session) => {
+              {paginatedSessions.map((session) => {
                 const progress = session.total_features > 0
                   ? Math.round((session.completed_features / session.total_features) * 100)
                   : 0
@@ -228,6 +285,72 @@ function SessionsPage() {
               })}
             </tbody>
           </table>
+        )}
+
+        {/* Pagination Controls */}
+        {!loading && sortedSessions.length > itemsPerPage && (
+          <div className="px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Results info */}
+            <div className="text-sm text-gray-600">
+              Showing {startIndex + 1} to {Math.min(endIndex, sortedSessions.length)} of {sortedSessions.length} sessions
+            </div>
+
+            {/* Pagination buttons */}
+            <div className="flex items-center gap-2">
+              {/* Previous button */}
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`p-2 rounded border ${
+                  currentPage === 1
+                    ? 'border-gray-200 text-gray-400 cursor-not-allowed'
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+                aria-label="Previous page"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+
+              {/* Page numbers */}
+              <div className="flex items-center gap-1">
+                {getPageNumbers().map((page, index) => (
+                  page === '...' ? (
+                    <span key={`ellipsis-${index}`} className="px-3 py-2 text-gray-500">
+                      ...
+                    </span>
+                  ) : (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`px-3 py-2 rounded border ${
+                        currentPage === page
+                          ? 'bg-primary-600 text-white border-primary-600'
+                          : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                      }`}
+                      aria-label={`Go to page ${page}`}
+                      aria-current={currentPage === page ? 'page' : undefined}
+                    >
+                      {page}
+                    </button>
+                  )
+                ))}
+              </div>
+
+              {/* Next button */}
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className={`p-2 rounded border ${
+                  currentPage === totalPages
+                    ? 'border-gray-200 text-gray-400 cursor-not-allowed'
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+                aria-label="Next page"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </div>

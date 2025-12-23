@@ -1093,7 +1093,7 @@
       "Step 5: Verify next page loaded",
       "Step 6: Verify page number shown"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
