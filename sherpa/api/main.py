@@ -946,19 +946,46 @@ async def get_session_commits(session_id: str):
 
 
 @app.get("/api/snippets")
-async def get_snippets(category: Optional[str] = None):
-    """Get all code snippets"""
+async def get_snippets(
+    category: Optional[str] = None,
+    source: Optional[str] = None
+):
+    """Get all code snippets from snippet manager"""
     try:
-        db = await get_db()
-        snippets = await db.get_snippets(category=category)
-        return success_response(
-            data={
-                "snippets": snippets,
-                "total": len(snippets)
-            },
-            message=f"Retrieved {len(snippets)} snippets"
-        )
+        from sherpa.core.snippet_manager import get_snippet_manager
+
+        # Get snippet manager
+        snippet_manager = get_snippet_manager()
+
+        # Load snippets if not already loaded
+        snippet_manager.load_snippets()
+
+        # Get snippets
+        if source:
+            snippets = snippet_manager.get_snippets_by_source(source)
+        elif category:
+            snippets = snippet_manager.get_snippets_by_category(category)
+        else:
+            snippets = snippet_manager.get_all_snippets()
+
+        # Convert to dict format
+        snippets_data = [
+            {
+                "id": s.id,
+                "title": s.title,
+                "category": s.category,
+                "content": s.content,
+                "source": s.source,
+                "file_path": s.file_path,
+                "language": s.language,
+                "tags": s.tags
+            }
+            for s in snippets
+        ]
+
+        return snippets_data
     except Exception as e:
+        logger.error(f"Error getting snippets: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -1263,6 +1290,29 @@ async def set_config_value(request: Request):
         raise
     except Exception as e:
         logger.error(f"Error setting config: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.put("/api/config")
+async def update_config(request: Request):
+    """Update configuration with config manager"""
+    try:
+        from sherpa.core.config_manager import get_config_manager
+
+        body = await request.json()
+
+        # Get config manager
+        config_manager = get_config_manager()
+
+        # Update configuration
+        config_manager.update(body)
+
+        return success_response(
+            data=config_manager.get().dict(),
+            message="Configuration updated successfully"
+        )
+    except Exception as e:
+        logger.error(f"Error updating config: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 

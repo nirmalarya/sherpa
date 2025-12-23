@@ -781,7 +781,7 @@
       "Step 5: Verify snippets cached locally",
       "Step 6: Verify hierarchy resolution includes org snippets"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

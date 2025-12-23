@@ -16,6 +16,8 @@ from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 
 from sherpa.core.logging_config import get_logger
+from sherpa.core.config_manager import get_config_manager
+from sherpa.core.s3_client import get_s3_client
 
 logger = get_logger("sherpa.snippet_manager")
 
@@ -59,6 +61,7 @@ class SnippetManager:
         # Load in hierarchy order (lowest priority first)
         self.snippets = []
         self.snippets.extend(self._load_built_in_snippets())
+        self.snippets.extend(self._load_org_snippets())
         self.snippets.extend(self._load_project_snippets())
         self.snippets.extend(self._load_local_snippets())
 
@@ -92,6 +95,67 @@ class SnippetManager:
                 logger.error(f"Error loading built-in snippet {snippet_file}: {e}")
 
         logger.info(f"Loaded {len(snippets)} built-in snippets")
+        return snippets
+
+    def _load_org_snippets(self) -> List[Snippet]:
+        """Load organizational snippets from S3 bucket"""
+        snippets = []
+
+        try:
+            # Get S3 configuration from config manager
+            config_manager = get_config_manager()
+            if not config_manager.exists():
+                logger.debug("No configuration found, skipping org snippets")
+                return snippets
+
+            config = config_manager.get()
+            s3_config = config.s3
+
+            # Check if S3 is enabled and configured
+            if not s3_config or not s3_config.enabled:
+                logger.debug("S3 not enabled, skipping org snippets")
+                return snippets
+
+            if not s3_config.bucket_name:
+                logger.warning("S3 enabled but no bucket_name configured")
+                return snippets
+
+            # Initialize S3 client
+            try:
+                s3_client = get_s3_client(
+                    bucket_name=s3_config.bucket_name,
+                    prefix=s3_config.prefix or "snippets/",
+                    region=getattr(config.bedrock, 'region', 'us-east-1') if config.bedrock else 'us-east-1'
+                )
+
+                if not s3_client:
+                    logger.error("Failed to initialize S3 client")
+                    return snippets
+            except ImportError as e:
+                logger.warning(f"S3 client not available: {e}")
+                return snippets
+            except Exception as e:
+                logger.error(f"Error initializing S3 client: {e}")
+                return snippets
+
+            # Fetch snippet files from S3
+            snippet_files = s3_client.fetch_snippets(use_cache=True)
+
+            # Load each snippet file
+            for snippet_file in snippet_files:
+                try:
+                    snippet = self._parse_snippet_file(snippet_file, source="org")
+                    if snippet:
+                        snippets.append(snippet)
+                        logger.debug(f"Loaded org snippet: {snippet.title}")
+                except Exception as e:
+                    logger.error(f"Error loading org snippet {snippet_file}: {e}")
+
+            logger.info(f"Loaded {len(snippets)} org snippets from S3")
+
+        except Exception as e:
+            logger.error(f"Error loading org snippets from S3: {e}")
+
         return snippets
 
     def _load_project_snippets(self) -> List[Snippet]:
