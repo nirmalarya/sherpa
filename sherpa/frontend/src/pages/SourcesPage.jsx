@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import api from '../lib/api'
 import AzureDevOpsConnector from '../components/AzureDevOpsConnector'
+import WorkItemsList from '../components/WorkItemsList'
 import FileSourceConfig from '../components/FileSourceConfig'
 import Breadcrumb from '../components/Breadcrumb'
 
@@ -39,6 +40,11 @@ function SourcesPage() {
       {/* Azure DevOps Configuration */}
       <div className="mb-6">
         <AzureDevOpsConnector />
+      </div>
+
+      {/* Work Items List */}
+      <div className="mb-6">
+        <WorkItemsList />
       </div>
 
       {/* Sync Status */}
