@@ -130,6 +130,29 @@ class Database:
             )
         """)
 
+        # Sync status table for Azure DevOps bidirectional sync
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS sync_status (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                entity_type TEXT NOT NULL,
+                entity_id TEXT NOT NULL,
+                source TEXT NOT NULL,
+                destination TEXT NOT NULL,
+                sync_direction TEXT NOT NULL,
+                status TEXT NOT NULL,
+                last_synced_at TEXT NOT NULL,
+                last_sync_hash TEXT,
+                conflict_data TEXT,
+                error_message TEXT,
+                metadata TEXT
+            )
+        """)
+
+        # Create index for faster lookups
+        await conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_sync_entity ON sync_status(entity_type, entity_id)
+        """)
+
         await conn.commit()
         print(f"✅ Database initialized: {self.db_path}")
 
@@ -354,6 +377,50 @@ class Database:
 
         rows = await cursor.fetchall()
         return [dict(row) for row in rows]
+
+    # Sync operations
+    async def record_sync(self, entity_type: str, entity_id: str, source: str, destination: str,
+                         sync_direction: str, status: str, sync_hash: Optional[str] = None,
+                         conflict_data: Optional[str] = None, error_message: Optional[str] = None,
+                         metadata: Optional[str] = None):
+        """Record a sync operation"""
+        conn = await self.connect()
+
+        await conn.execute("""
+            INSERT INTO sync_status (entity_type, entity_id, source, destination, sync_direction,
+                                   status, last_synced_at, last_sync_hash, conflict_data,
+                                   error_message, metadata)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (entity_type, entity_id, source, destination, sync_direction, status,
+              datetime.utcnow().isoformat(), sync_hash, conflict_data, error_message, metadata))
+
+        await conn.commit()
+
+    async def get_sync_status(self, entity_type: str, entity_id: str) -> List[Dict[str, Any]]:
+        """Get sync status for an entity"""
+        conn = await self.connect()
+        cursor = await conn.execute("""
+            SELECT * FROM sync_status
+            WHERE entity_type = ? AND entity_id = ?
+            ORDER BY last_synced_at DESC
+        """, (entity_type, entity_id))
+
+        rows = await cursor.fetchall()
+        return [dict(row) for row in rows]
+
+    async def get_last_sync(self, entity_type: str, entity_id: str, sync_direction: str) -> Optional[Dict[str, Any]]:
+        """Get last sync record for an entity and direction"""
+        conn = await self.connect()
+        cursor = await conn.execute("""
+            SELECT * FROM sync_status
+            WHERE entity_type = ? AND entity_id = ? AND sync_direction = ?
+            ORDER BY last_synced_at DESC LIMIT 1
+        """, (entity_type, entity_id, sync_direction))
+
+        row = await cursor.fetchone()
+        if row:
+            return dict(row)
+        return None
 
     async def _migrate_snippets_table_if_needed(self, conn):
         """Migrate snippets table to support composite primary key (id, source)"""

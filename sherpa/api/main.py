@@ -2162,7 +2162,7 @@ async def get_azure_devops_status():
 
 @app.post("/api/azure-devops/sync")
 async def sync_azure_devops():
-    """Trigger manual sync with Azure DevOps"""
+    """Trigger manual sync with Azure DevOps (legacy endpoint)"""
     try:
         db = await get_db()
 
@@ -2190,6 +2190,208 @@ async def sync_azure_devops():
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Sync failed: {str(e)}")
+
+
+@app.get("/api/azure-devops/work-items/{work_item_id}/detect-changes")
+async def detect_work_item_changes(work_item_id: int):
+    """Detect if a work item has changed since last sync"""
+    try:
+        db = await get_db()
+        azure_client = get_azure_devops_client()
+
+        # Check if connected
+        if not azure_client.is_connected:
+            # Try to auto-reconnect using saved config
+            config = await db.get_all_config()
+            if config.get('azure_devops_org') and config.get('azure_devops_project') and config.get('azure_devops_pat'):
+                await azure_client.connect(
+                    config['azure_devops_org'],
+                    config['azure_devops_project'],
+                    config['azure_devops_pat']
+                )
+            else:
+                raise HTTPException(status_code=400, detail="Azure DevOps not connected. Please connect first.")
+
+        # Get last sync record
+        last_sync = await db.get_last_sync("work_item", str(work_item_id), "azure_to_sherpa")
+        last_sync_hash = last_sync['last_sync_hash'] if last_sync else None
+
+        # Detect changes
+        result = await azure_client.detect_work_item_changes(work_item_id, last_sync_hash)
+
+        return {
+            "success": True,
+            "work_item_id": work_item_id,
+            "has_changed": result["has_changed"],
+            "current_hash": result["current_hash"],
+            "last_sync_hash": last_sync_hash,
+            "last_synced_at": last_sync['last_synced_at'] if last_sync else None,
+            "work_item": result["work_item"],
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to detect changes for work item {work_item_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to detect changes: {str(e)}")
+
+
+@app.post("/api/azure-devops/work-items/{work_item_id}/sync-to-sherpa")
+async def sync_work_item_to_sherpa(work_item_id: int, session_id: str = Body(..., embed=True)):
+    """Sync work item from Azure DevOps to SHERPA"""
+    try:
+        db = await get_db()
+        azure_client = get_azure_devops_client()
+
+        # Check if connected
+        if not azure_client.is_connected:
+            # Try to auto-reconnect using saved config
+            config = await db.get_all_config()
+            if config.get('azure_devops_org') and config.get('azure_devops_project') and config.get('azure_devops_pat'):
+                await azure_client.connect(
+                    config['azure_devops_org'],
+                    config['azure_devops_project'],
+                    config['azure_devops_pat']
+                )
+            else:
+                raise HTTPException(status_code=400, detail="Azure DevOps not connected. Please connect first.")
+
+        # Verify session exists
+        session = await db.get_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail=f"Session not found: {session_id}")
+
+        # Perform sync
+        result = await azure_client.sync_work_item_to_sherpa(work_item_id, session_id)
+
+        # Record sync
+        if result["success"]:
+            await db.record_sync(
+                entity_type="work_item",
+                entity_id=str(work_item_id),
+                source="azure_devops",
+                destination="sherpa",
+                sync_direction="azure_to_sherpa",
+                status="success",
+                sync_hash=result.get("sync_hash"),
+                metadata=json.dumps({"session_id": session_id})
+            )
+        else:
+            await db.record_sync(
+                entity_type="work_item",
+                entity_id=str(work_item_id),
+                source="azure_devops",
+                destination="sherpa",
+                sync_direction="azure_to_sherpa",
+                status="error",
+                error_message=result.get("error"),
+                metadata=json.dumps({"session_id": session_id})
+            )
+
+        return {
+            **result,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to sync work item {work_item_id} to SHERPA: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to sync: {str(e)}")
+
+
+@app.post("/api/azure-devops/sessions/{session_id}/sync-to-azure")
+async def sync_session_to_azure(session_id: str, work_item_id: int = Body(..., embed=True)):
+    """Sync SHERPA session to Azure DevOps work item"""
+    try:
+        db = await get_db()
+        azure_client = get_azure_devops_client()
+
+        # Check if connected
+        if not azure_client.is_connected:
+            # Try to auto-reconnect using saved config
+            config = await db.get_all_config()
+            if config.get('azure_devops_org') and config.get('azure_devops_project') and config.get('azure_devops_pat'):
+                await azure_client.connect(
+                    config['azure_devops_org'],
+                    config['azure_devops_project'],
+                    config['azure_devops_pat']
+                )
+            else:
+                raise HTTPException(status_code=400, detail="Azure DevOps not connected. Please connect first.")
+
+        # Get session
+        session = await db.get_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail=f"Session not found: {session_id}")
+
+        # Perform sync
+        result = await azure_client.sync_sherpa_to_work_item(work_item_id, session)
+
+        # Record sync
+        if result["success"]:
+            await db.record_sync(
+                entity_type="session",
+                entity_id=session_id,
+                source="sherpa",
+                destination="azure_devops",
+                sync_direction="sherpa_to_azure",
+                status="success",
+                metadata=json.dumps({"work_item_id": work_item_id})
+            )
+        else:
+            await db.record_sync(
+                entity_type="session",
+                entity_id=session_id,
+                source="sherpa",
+                destination="azure_devops",
+                sync_direction="sherpa_to_azure",
+                status="error",
+                error_message=result.get("error"),
+                metadata=json.dumps({"work_item_id": work_item_id})
+            )
+
+        return {
+            **result,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to sync session {session_id} to Azure DevOps: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to sync: {str(e)}")
+
+
+@app.get("/api/sync-status/{entity_type}/{entity_id}")
+async def get_entity_sync_status(entity_type: str, entity_id: str):
+    """Get sync status for an entity"""
+    try:
+        db = await get_db()
+
+        # Validate entity_type
+        valid_types = ["work_item", "session"]
+        if entity_type not in valid_types:
+            raise HTTPException(status_code=400, detail=f"Invalid entity_type. Must be one of: {valid_types}")
+
+        # Get sync status
+        sync_records = await db.get_sync_status(entity_type, entity_id)
+
+        return {
+            "entity_type": entity_type,
+            "entity_id": entity_id,
+            "sync_records": sync_records,
+            "total": len(sync_records),
+            "last_sync": sync_records[0] if sync_records else None,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get sync status for {entity_type}/{entity_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get sync status: {str(e)}")
 
 
 @app.get("/api/activity")

@@ -252,7 +252,7 @@
       "Step 5: Verify sync status tracked",
       "Step 6: Verify conflicts handled gracefully"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

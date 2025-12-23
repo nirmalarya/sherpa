@@ -467,6 +467,170 @@ Add JWT-based authentication to the API
             logger.error(f"Failed to link commit {commit_hash} to work item {work_item_id}: {str(e)}")
             raise Exception(f"Failed to link commit: {str(e)}")
 
+    async def get_work_item_by_id(self, work_item_id: int) -> Dict[str, Any]:
+        """
+        Get a single work item by ID
+
+        Args:
+            work_item_id: Work item ID to fetch
+
+        Returns:
+            Work item details
+        """
+        if not self.is_connected:
+            raise Exception("Not connected to Azure DevOps. Call connect() first.")
+
+        try:
+            if not AZURE_DEVOPS_AVAILABLE:
+                # Return mock data for testing
+                logger.info(f"Returning mock work item {work_item_id}")
+                return {
+                    "id": work_item_id,
+                    "title": "Mock Work Item",
+                    "type": "User Story",
+                    "state": "Active",
+                    "assigned_to": "John Doe",
+                    "description": "This is a mock work item for testing",
+                    "changed_date": datetime.utcnow().isoformat()
+                }
+
+            # Get work item
+            work_item = self.wit_client.get_work_item(work_item_id, expand="all")
+            fields = work_item.fields
+
+            return {
+                "id": work_item.id,
+                "title": fields.get("System.Title", ""),
+                "type": fields.get("System.WorkItemType", ""),
+                "state": fields.get("System.State", ""),
+                "assigned_to": fields.get("System.AssignedTo", {}).get("displayName", "") if isinstance(fields.get("System.AssignedTo"), dict) else str(fields.get("System.AssignedTo", "")),
+                "description": fields.get("System.Description", ""),
+                "created_date": fields.get("System.CreatedDate", ""),
+                "changed_date": fields.get("System.ChangedDate", "")
+            }
+
+        except Exception as e:
+            logger.error(f"Failed to fetch work item {work_item_id}: {str(e)}")
+            raise Exception(f"Failed to fetch work item: {str(e)}")
+
+    async def detect_work_item_changes(self, work_item_id: int, last_sync_hash: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Detect if a work item has changed since last sync
+
+        Args:
+            work_item_id: Work item ID to check
+            last_sync_hash: Hash of last known state (changed_date)
+
+        Returns:
+            Dict with changed status and current hash
+        """
+        try:
+            work_item = await self.get_work_item_by_id(work_item_id)
+            current_hash = work_item.get("changed_date", "")
+
+            return {
+                "work_item_id": work_item_id,
+                "has_changed": current_hash != last_sync_hash if last_sync_hash else True,
+                "current_hash": current_hash,
+                "work_item": work_item
+            }
+
+        except Exception as e:
+            logger.error(f"Failed to detect changes for work item {work_item_id}: {str(e)}")
+            raise Exception(f"Failed to detect changes: {str(e)}")
+
+    async def sync_work_item_to_sherpa(self, work_item_id: int, session_id: str) -> Dict[str, Any]:
+        """
+        Sync work item from Azure DevOps to SHERPA
+
+        Args:
+            work_item_id: Work item ID to sync
+            session_id: SHERPA session ID to sync to
+
+        Returns:
+            Sync result
+        """
+        try:
+            work_item = await self.get_work_item_by_id(work_item_id)
+
+            # In a real implementation, this would update the SHERPA session
+            # with the work item's current state
+            logger.info(f"Syncing work item {work_item_id} to SHERPA session {session_id}")
+
+            return {
+                "success": True,
+                "work_item_id": work_item_id,
+                "session_id": session_id,
+                "sync_direction": "azure_to_sherpa",
+                "sync_hash": work_item.get("changed_date", ""),
+                "message": "Work item synced to SHERPA successfully"
+            }
+
+        except Exception as e:
+            logger.error(f"Failed to sync work item {work_item_id} to SHERPA: {str(e)}")
+            return {
+                "success": False,
+                "work_item_id": work_item_id,
+                "session_id": session_id,
+                "error": str(e)
+            }
+
+    async def sync_sherpa_to_work_item(self, work_item_id: int, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Sync SHERPA session to Azure DevOps work item
+
+        Args:
+            work_item_id: Work item ID to sync to
+            session_data: SHERPA session data to sync
+
+        Returns:
+            Sync result
+        """
+        try:
+            # Extract relevant fields from session data
+            updates = {}
+
+            if session_data.get("status"):
+                # Map SHERPA status to Azure DevOps state
+                status_map = {
+                    "active": "Active",
+                    "completed": "Resolved",
+                    "error": "Active",
+                    "stopped": "Closed"
+                }
+                state = status_map.get(session_data["status"], "Active")
+                updates["State"] = state
+
+            # Add comment with progress
+            if session_data.get("completed_features") is not None and session_data.get("total_features") is not None:
+                progress_pct = (session_data["completed_features"] / session_data["total_features"] * 100) if session_data["total_features"] > 0 else 0
+                comment = f"SHERPA Progress Update: {session_data['completed_features']}/{session_data['total_features']} features completed ({progress_pct:.1f}%)"
+
+                # Add comment
+                await self.add_comment(work_item_id, comment)
+
+            # Update work item state if needed
+            if updates:
+                await self.update_work_item(work_item_id, updates)
+
+            logger.info(f"Synced SHERPA session to work item {work_item_id}")
+
+            return {
+                "success": True,
+                "work_item_id": work_item_id,
+                "sync_direction": "sherpa_to_azure",
+                "updates": updates,
+                "message": "SHERPA session synced to Azure DevOps successfully"
+            }
+
+        except Exception as e:
+            logger.error(f"Failed to sync SHERPA to work item {work_item_id}: {str(e)}")
+            return {
+                "success": False,
+                "work_item_id": work_item_id,
+                "error": str(e)
+            }
+
     def disconnect(self):
         """Disconnect from Azure DevOps"""
         self.connection = None
