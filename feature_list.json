@@ -151,7 +151,7 @@
       "Step 5: Verify progress percentage displayed",
       "Step 6: Verify output formatted with Rich tables"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

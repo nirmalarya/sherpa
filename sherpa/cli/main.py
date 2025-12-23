@@ -71,7 +71,8 @@ def snippets_list(category, source):
 @cli.command()
 def status():
     """Show active sessions"""
-    console.print("[yellow]Command 'status' not yet implemented[/yellow]")
+    from sherpa.cli.commands.status import status_command
+    status_command()
 
 
 @cli.command()
