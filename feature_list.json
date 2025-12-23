@@ -2104,6 +2104,6 @@
       "Step 4: Verify link back to home",
       "Step 5: Verify matches overall design"
     ],
-    "passes": false
+    "passes": true
   }
 ]
