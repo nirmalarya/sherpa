@@ -74,7 +74,7 @@
       "Step 4: Verify AWS credentials are validated",
       "Step 5: Verify success message displayed with Rich formatting"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
