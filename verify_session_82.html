@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session 82 - Verification Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .pass {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        .fail {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+        .pending {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .summary {
+            background: #e8f4f8;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏔️ SHERPA V1 - Session 82 Verification Test</h1>
+
+        <div class="info">
+            <strong>📋 Purpose:</strong> Verify that previously passing features still work before implementing new features.
+            <br><br>
+            <strong>🎯 Test Strategy:</strong> Test core functionality - health endpoint and homepage API
+            <br><br>
+            <strong>✅ Expected Result:</strong> Both tests should pass, confirming no regressions from previous session
+        </div>
+
+        <div class="summary">
+            <h3>Current Status</h3>
+            <p><strong>Total Features:</strong> 165</p>
+            <p><strong>Passing:</strong> 103 (62.4%)</p>
+            <p><strong>Failing:</strong> 62</p>
+            <p><strong>Last Session:</strong> Session 81 - Enhanced health check endpoint</p>
+        </div>
+
+        <h2>Test 1: Health Endpoint (Feature from Session 81)</h2>
+        <div class="test-section">
+            <button onclick="testHealthEndpoint()">Run Health Endpoint Test</button>
+            <div id="health-result"></div>
+        </div>
+
+        <h2>Test 2: Homepage API</h2>
+        <div class="test-section">
+            <button onclick="testHomepageAPI()">Run Homepage API Test</button>
+            <div id="homepage-result"></div>
+        </div>
+
+        <h2>Test 3: Frontend Loading</h2>
+        <div class="test-section">
+            <button onclick="testFrontend()">Test Frontend at http://localhost:3003</button>
+            <div id="frontend-result"></div>
+        </div>
+
+        <div id="overall-summary"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8001';
+        const FRONTEND_URL = 'http://localhost:3003';
+        let testResults = {
+            health: null,
+            homepage: null,
+            frontend: null
+        };
+
+        async function testHealthEndpoint() {
+            const resultDiv = document.getElementById('health-result');
+            resultDiv.innerHTML = '<div class="test-result pending">⏳ Testing health endpoint...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+
+                let result = '<div class="test-result pass">✅ Health endpoint test PASSED</div>';
+                result += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+
+                // Verify structure
+                const checks = [];
+                checks.push(`Status Code: ${response.status} ${response.status === 200 ? '✅' : '❌'}`);
+                checks.push(`Has 'success' field: ${data.success !== undefined ? '✅' : '❌'}`);
+                checks.push(`Has 'data' field: ${data.data !== undefined ? '✅' : '❌'}`);
+                checks.push(`Has 'status' in data: ${data.data?.status !== undefined ? '✅' : '❌'}`);
+                checks.push(`Status is 'ok': ${data.data?.status === 'ok' ? '✅' : '❌'}`);
+                checks.push(`Has 'version' field: ${data.data?.version !== undefined ? '✅' : '❌'}`);
+                checks.push(`Has 'dependencies': ${data.data?.dependencies !== undefined ? '✅' : '❌'}`);
+                checks.push(`Database status: ${data.data?.dependencies?.database?.status || 'N/A'} ${data.data?.dependencies?.database?.status === 'ok' ? '✅' : '❌'}`);
+
+                result += '<div style="margin-top: 10px;"><strong>Verification Checks:</strong><br>';
+                checks.forEach(check => {
+                    result += check + '<br>';
+                });
+                result += '</div>';
+
+                const allPass = response.status === 200 &&
+                              data.success &&
+                              data.data?.status === 'ok' &&
+                              data.data?.version &&
+                              data.data?.dependencies?.database?.status === 'ok';
+
+                testResults.health = allPass;
+                resultDiv.innerHTML = result;
+                updateOverallSummary();
+
+            } catch (error) {
+                testResults.health = false;
+                resultDiv.innerHTML = `<div class="test-result fail">❌ Health endpoint test FAILED: ${error.message}</div>`;
+                updateOverallSummary();
+            }
+        }
+
+        async function testHomepageAPI() {
+            const resultDiv = document.getElementById('homepage-result');
+            resultDiv.innerHTML = '<div class="test-result pending">⏳ Testing homepage API...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/sessions`);
+                const data = await response.json();
+
+                let result = '<div class="test-result pass">✅ Homepage API test PASSED</div>';
+                result += `<p>Status Code: ${response.status}</p>`;
+                result += `<p>Sessions found: ${data.data?.length || 0}</p>`;
+                result += '<pre>' + JSON.stringify(data, null, 2).substring(0, 500) + '...</pre>';
+
+                const checks = [];
+                checks.push(`Status Code: ${response.status} ${response.status === 200 ? '✅' : '❌'}`);
+                checks.push(`Has 'success' field: ${data.success !== undefined ? '✅' : '❌'}`);
+                checks.push(`Has 'data' array: ${Array.isArray(data.data) ? '✅' : '❌'}`);
+
+                result += '<div style="margin-top: 10px;"><strong>Verification Checks:</strong><br>';
+                checks.forEach(check => {
+                    result += check + '<br>';
+                });
+                result += '</div>';
+
+                const allPass = response.status === 200 && data.success && Array.isArray(data.data);
+                testResults.homepage = allPass;
+                resultDiv.innerHTML = result;
+                updateOverallSummary();
+
+            } catch (error) {
+                testResults.homepage = false;
+                resultDiv.innerHTML = `<div class="test-result fail">❌ Homepage API test FAILED: ${error.message}</div>`;
+                updateOverallSummary();
+            }
+        }
+
+        function testFrontend() {
+            const resultDiv = document.getElementById('frontend-result');
+            resultDiv.innerHTML = `
+                <div class="test-result pending">
+                    ⏳ Opening frontend in new tab...<br>
+                    <strong>Manual Verification Required:</strong><br>
+                    1. Check if the page loads without errors<br>
+                    2. Check if the homepage displays correctly<br>
+                    3. Check browser console for errors<br>
+                    4. Come back here and mark the result below
+                </div>
+                <button onclick="markFrontendPass()">✅ Frontend Loads Correctly</button>
+                <button onclick="markFrontendFail()">❌ Frontend Has Issues</button>
+            `;
+            window.open(FRONTEND_URL, '_blank');
+        }
+
+        function markFrontendPass() {
+            testResults.frontend = true;
+            document.getElementById('frontend-result').innerHTML =
+                '<div class="test-result pass">✅ Frontend test PASSED (manual verification)</div>';
+            updateOverallSummary();
+        }
+
+        function markFrontendFail() {
+            testResults.frontend = false;
+            document.getElementById('frontend-result').innerHTML =
+                '<div class="test-result fail">❌ Frontend test FAILED (manual verification)</div>';
+            updateOverallSummary();
+        }
+
+        function updateOverallSummary() {
+            const summaryDiv = document.getElementById('overall-summary');
+            const completed = Object.values(testResults).filter(r => r !== null).length;
+            const passed = Object.values(testResults).filter(r => r === true).length;
+            const failed = Object.values(testResults).filter(r => r === false).length;
+
+            if (completed === 0) return;
+
+            let summary = '<div class="summary"><h2>📊 Verification Summary</h2>';
+            summary += `<p><strong>Tests Completed:</strong> ${completed}/3</p>`;
+            summary += `<p><strong>Tests Passed:</strong> ${passed}</p>`;
+            summary += `<p><strong>Tests Failed:</strong> ${failed}</p>`;
+
+            if (completed === 3) {
+                if (failed === 0) {
+                    summary += '<div class="test-result pass" style="margin-top: 15px; font-size: 18px;">';
+                    summary += '🎉 <strong>ALL VERIFICATION TESTS PASSED!</strong><br>';
+                    summary += 'No regressions detected. Safe to implement new features.';
+                    summary += '</div>';
+                } else {
+                    summary += '<div class="test-result fail" style="margin-top: 15px; font-size: 18px;">';
+                    summary += '⚠️ <strong>REGRESSIONS DETECTED!</strong><br>';
+                    summary += 'Fix failing tests before implementing new features.';
+                    summary += '</div>';
+                }
+            }
+
+            summary += '</div>';
+            summaryDiv.innerHTML = summary;
+        }
+
+        // Auto-run tests on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testHealthEndpoint();
+                setTimeout(() => {
+                    testHomepageAPI();
+                }, 1000);
+            }, 500);
+        });
+    </script>
+</body>
+</html>

@@ -26,6 +26,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from sherpa.core.db import get_db, DB_PATH
 from sherpa.core.logging_config import get_logger
 from sherpa.core.migrations import run_migrations, rollback_migrations, get_migration_status
+from sherpa.core.config import get_settings
 
 # Initialize logger
 logger = get_logger("sherpa.api")
@@ -1131,6 +1132,77 @@ async def get_config():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/environment")
+async def get_environment():
+    """
+    Get current environment configuration
+
+    Returns environment settings including:
+    - environment: current environment (development, staging, production)
+    - debug: debug mode enabled/disabled
+    - log_level: logging level
+    - cors_origins: allowed CORS origins
+    - api_rate_limit: API rate limit settings
+    - database_path: database file path
+    """
+    try:
+        settings = get_settings()
+        config = settings.get_config_dict()
+
+        logger.info(f"GET /api/environment - Current environment: {settings.environment.value}")
+
+        return success_response(
+            data=config,
+            message=f"Environment configuration retrieved: {settings.environment.value}"
+        )
+    except Exception as e:
+        logger.error(f"Error getting environment config: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/environment")
+async def set_environment(request: Request):
+    """
+    Set environment configuration programmatically
+
+    Request body:
+    {
+        "environment": "development" | "staging" | "production"
+    }
+
+    This endpoint allows changing the environment at runtime for testing purposes.
+    In production, environment should be set via SHERPA_ENV environment variable.
+    """
+    try:
+        body = await request.json()
+        env = body.get('environment')
+
+        if not env:
+            raise HTTPException(status_code=400, detail="environment field is required")
+
+        settings = get_settings()
+        old_env = settings.environment.value
+
+        # Set new environment
+        try:
+            settings.set_environment(env)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+        new_env = settings.environment.value
+        logger.info(f"POST /api/environment - Changed environment from {old_env} to {new_env}")
+
+        return success_response(
+            data=settings.get_config_dict(),
+            message=f"Environment changed from {old_env} to {new_env}"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error setting environment: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/azure-devops/connect")
 async def connect_azure_devops(request: AzureDevOpsConnectRequest):
     """Test Azure DevOps connection with provided credentials"""
@@ -1701,6 +1773,10 @@ v1_router.add_api_route("/snippets/load-builtin", load_builtin_snippets, methods
 
 # Config endpoints
 v1_router.add_api_route("/config", get_config, methods=["GET"])
+
+# Environment endpoints
+v1_router.add_api_route("/environment", get_environment, methods=["GET"])
+v1_router.add_api_route("/environment", set_environment, methods=["POST"])
 
 # Azure DevOps endpoints
 v1_router.add_api_route("/azure-devops/connect", connect_azure_devops, methods=["POST"])

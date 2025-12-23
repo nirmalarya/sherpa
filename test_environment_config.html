@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Environment Configuration Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 4px solid #3498db;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 4px;
+            background: #ecf0f1;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .pass {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .fail {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏔️ Environment Configuration Test</h1>
+
+        <!-- Step 1: Set environment to 'development' -->
+        <div class="test-section">
+            <h3>Step 1: Set environment to 'development'</h3>
+            <button onclick="setDevelopment()">Set to Development</button>
+            <div id="step1-result" class="result"></div>
+        </div>
+
+        <!-- Step 2: Verify debug mode enabled -->
+        <div class="test-section">
+            <h3>Step 2: Verify debug mode enabled</h3>
+            <button onclick="verifyDebugEnabled()">Verify Debug Enabled</button>
+            <div id="step2-result" class="result"></div>
+        </div>
+
+        <!-- Step 3: Set environment to 'production' -->
+        <div class="test-section">
+            <h3>Step 3: Set environment to 'production'</h3>
+            <button onclick="setProduction()">Set to Production</button>
+            <div id="step3-result" class="result"></div>
+        </div>
+
+        <!-- Step 4: Verify debug mode disabled -->
+        <div class="test-section">
+            <h3>Step 4: Verify debug mode disabled</h3>
+            <button onclick="verifyDebugDisabled()">Verify Debug Disabled</button>
+            <div id="step4-result" class="result"></div>
+        </div>
+
+        <!-- Step 5: Verify appropriate logging levels -->
+        <div class="test-section">
+            <h3>Step 5: Verify appropriate logging levels</h3>
+            <button onclick="verifyLoggingLevels()">Verify Logging Levels</button>
+            <div id="step5-result" class="result"></div>
+        </div>
+
+        <!-- Step 6: Verify config values differ by environment -->
+        <div class="test-section">
+            <h3>Step 6: Verify config values differ by environment</h3>
+            <button onclick="verifyConfigDifferences()">Verify Config Differences</button>
+            <div id="step6-result" class="result"></div>
+        </div>
+
+        <!-- Run All Tests -->
+        <div class="test-section" style="border-left-color: #27ae60; background: #f0f9f4;">
+            <h3>Run All Tests</h3>
+            <button onclick="runAllTests()" style="background: #27ae60;">Run All Tests Sequentially</button>
+            <div id="all-tests-result" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8001';
+
+        async function setDevelopment() {
+            const resultDiv = document.getElementById('step1-result');
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Setting environment to development...';
+
+            try {
+                const response = await fetch(`${API_URL}/api/environment`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ environment: 'development' })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ PASS: ${data.message}\n\nEnvironment: ${data.data.environment}\nDebug: ${data.data.debug}\nLog Level: ${data.data.log_level}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ FAIL: ${data.message || 'Unknown error'}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ ERROR: ${error.message}`;
+            }
+        }
+
+        async function verifyDebugEnabled() {
+            const resultDiv = document.getElementById('step2-result');
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Verifying debug mode is enabled...';
+
+            try {
+                const response = await fetch(`${API_URL}/api/environment`);
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    const isDebugEnabled = data.data.debug === true;
+                    const isDevelopment = data.data.environment === 'development';
+
+                    if (isDebugEnabled && isDevelopment) {
+                        resultDiv.className = 'result success';
+                        resultDiv.textContent = `✅ PASS: Debug mode is enabled in development\n\nDebug: ${data.data.debug}\nEnvironment: ${data.data.environment}\nLog Level: ${data.data.log_level}`;
+                    } else {
+                        resultDiv.className = 'result error';
+                        resultDiv.textContent = `❌ FAIL: Debug mode not properly enabled\n\nDebug: ${data.data.debug} (expected: true)\nEnvironment: ${data.data.environment}`;
+                    }
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ FAIL: ${data.message || 'Unknown error'}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ ERROR: ${error.message}`;
+            }
+        }
+
+        async function setProduction() {
+            const resultDiv = document.getElementById('step3-result');
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Setting environment to production...';
+
+            try {
+                const response = await fetch(`${API_URL}/api/environment`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ environment: 'production' })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ PASS: ${data.message}\n\nEnvironment: ${data.data.environment}\nDebug: ${data.data.debug}\nLog Level: ${data.data.log_level}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ FAIL: ${data.message || 'Unknown error'}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ ERROR: ${error.message}`;
+            }
+        }
+
+        async function verifyDebugDisabled() {
+            const resultDiv = document.getElementById('step4-result');
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Verifying debug mode is disabled...';
+
+            try {
+                const response = await fetch(`${API_URL}/api/environment`);
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    const isDebugDisabled = data.data.debug === false;
+                    const isProduction = data.data.environment === 'production';
+
+                    if (isDebugDisabled && isProduction) {
+                        resultDiv.className = 'result success';
+                        resultDiv.textContent = `✅ PASS: Debug mode is disabled in production\n\nDebug: ${data.data.debug}\nEnvironment: ${data.data.environment}\nLog Level: ${data.data.log_level}`;
+                    } else {
+                        resultDiv.className = 'result error';
+                        resultDiv.textContent = `❌ FAIL: Debug mode not properly disabled\n\nDebug: ${data.data.debug} (expected: false)\nEnvironment: ${data.data.environment}`;
+                    }
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ FAIL: ${data.message || 'Unknown error'}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ ERROR: ${error.message}`;
+            }
+        }
+
+        async function verifyLoggingLevels() {
+            const resultDiv = document.getElementById('step5-result');
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Verifying logging levels for all environments...';
+
+            try {
+                // Test development
+                let response = await fetch(`${API_URL}/api/environment`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ environment: 'development' })
+                });
+                let data = await response.json();
+                const devLogLevel = data.data.log_level;
+
+                // Test staging
+                response = await fetch(`${API_URL}/api/environment`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ environment: 'staging' })
+                });
+                data = await response.json();
+                const stagingLogLevel = data.data.log_level;
+
+                // Test production
+                response = await fetch(`${API_URL}/api/environment`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ environment: 'production' })
+                });
+                data = await response.json();
+                const prodLogLevel = data.data.log_level;
+
+                const expectedLevels = {
+                    development: 'DEBUG',
+                    staging: 'INFO',
+                    production: 'WARNING'
+                };
+
+                const devCorrect = devLogLevel === expectedLevels.development;
+                const stagingCorrect = stagingLogLevel === expectedLevels.staging;
+                const prodCorrect = prodLogLevel === expectedLevels.production;
+
+                if (devCorrect && stagingCorrect && prodCorrect) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ PASS: Logging levels are appropriate for each environment\n\nDevelopment: ${devLogLevel} ✓\nStaging: ${stagingLogLevel} ✓\nProduction: ${prodLogLevel} ✓`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ FAIL: Logging levels incorrect\n\nDevelopment: ${devLogLevel} (expected: DEBUG) ${devCorrect ? '✓' : '✗'}\nStaging: ${stagingLogLevel} (expected: INFO) ${stagingCorrect ? '✓' : '✗'}\nProduction: ${prodLogLevel} (expected: WARNING) ${prodCorrect ? '✓' : '✗'}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ ERROR: ${error.message}`;
+            }
+        }
+
+        async function verifyConfigDifferences() {
+            const resultDiv = document.getElementById('step6-result');
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Verifying config values differ by environment...';
+
+            try {
+                // Get development config
+                let response = await fetch(`${API_URL}/api/environment`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ environment: 'development' })
+                });
+                let data = await response.json();
+                const devConfig = data.data;
+
+                // Get production config
+                response = await fetch(`${API_URL}/api/environment`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ environment: 'production' })
+                });
+                data = await response.json();
+                const prodConfig = data.data;
+
+                // Verify differences
+                const debugDiffers = devConfig.debug !== prodConfig.debug;
+                const logLevelDiffers = devConfig.log_level !== prodConfig.log_level;
+                const rateLimitDiffers = devConfig.api_rate_limit !== prodConfig.api_rate_limit;
+                const dbPathDiffers = devConfig.database_path !== prodConfig.database_path;
+
+                const allDiffer = debugDiffers && logLevelDiffers && rateLimitDiffers && dbPathDiffers;
+
+                if (allDiffer) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ PASS: Config values differ appropriately by environment\n\nDevelopment vs Production:\n- Debug: ${devConfig.debug} vs ${prodConfig.debug} ✓\n- Log Level: ${devConfig.log_level} vs ${prodConfig.log_level} ✓\n- Rate Limit: ${devConfig.api_rate_limit} vs ${prodConfig.api_rate_limit} ✓\n- DB Path: ${devConfig.database_path} vs ${prodConfig.database_path} ✓`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ FAIL: Some config values don't differ\n\n- Debug differs: ${debugDiffers}\n- Log Level differs: ${logLevelDiffers}\n- Rate Limit differs: ${rateLimitDiffers}\n- DB Path differs: ${dbPathDiffers}`;
+                }
+
+                // Reset to development
+                await fetch(`${API_URL}/api/environment`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ environment: 'development' })
+                });
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ ERROR: ${error.message}`;
+            }
+        }
+
+        async function runAllTests() {
+            const resultDiv = document.getElementById('all-tests-result');
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Running all tests sequentially...\n';
+
+            const tests = [
+                { name: 'Step 1: Set to Development', fn: setDevelopment },
+                { name: 'Step 2: Verify Debug Enabled', fn: verifyDebugEnabled },
+                { name: 'Step 3: Set to Production', fn: setProduction },
+                { name: 'Step 4: Verify Debug Disabled', fn: verifyDebugDisabled },
+                { name: 'Step 5: Verify Logging Levels', fn: verifyLoggingLevels },
+                { name: 'Step 6: Verify Config Differences', fn: verifyConfigDifferences }
+            ];
+
+            for (const test of tests) {
+                resultDiv.textContent += `\nRunning: ${test.name}...`;
+                await test.fn();
+                await new Promise(resolve => setTimeout(resolve, 500)); // Small delay between tests
+            }
+
+            resultDiv.className = 'result success';
+            resultDiv.textContent += '\n\n✅ All tests completed! Check individual sections for results.';
+        }
+    </script>
+</body>
+</html>
