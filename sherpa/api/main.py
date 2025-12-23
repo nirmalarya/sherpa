@@ -1336,6 +1336,72 @@ async def connect_azure_devops(request: AzureDevOpsConnectRequest):
         raise HTTPException(status_code=500, detail=f"Connection error: {str(e)}")
 
 
+@app.get("/api/azure-devops/work-items")
+async def get_azure_devops_work_items(query: Optional[str] = None, top: int = 100):
+    """Fetch work items from Azure DevOps"""
+    try:
+        logger.info(f"GET /api/azure-devops/work-items - query={query}, top={top}")
+
+        # Get Azure DevOps client
+        azure_client = get_azure_devops_client()
+
+        # Check if connected
+        if not azure_client.is_connected:
+            # Try to restore connection from database
+            db = await get_db()
+            org = await db.get_config('azure_devops_org')
+            project = await db.get_config('azure_devops_project')
+            pat = await db.get_config('azure_devops_pat')
+
+            if not org or not project or not pat:
+                logger.warning("Azure DevOps not configured - credentials not found in database")
+                raise HTTPException(
+                    status_code=401,
+                    detail="Azure DevOps not configured. Please connect first using POST /api/azure-devops/connect"
+                )
+
+            # Reconnect using stored credentials
+            try:
+                await azure_client.connect(
+                    organization=org,
+                    project=project,
+                    pat=pat
+                )
+                logger.info(f"Reconnected to Azure DevOps: {org}/{project}")
+            except Exception as conn_error:
+                logger.error(f"Failed to reconnect to Azure DevOps: {str(conn_error)}")
+                raise HTTPException(
+                    status_code=401,
+                    detail=f"Failed to reconnect to Azure DevOps: {str(conn_error)}"
+                )
+
+        # Fetch work items
+        try:
+            work_items = await azure_client.get_work_items(query=query, top=top)
+
+            logger.info(f"Successfully fetched {len(work_items)} work items from Azure DevOps")
+
+            return {
+                "success": True,
+                "work_items": work_items,
+                "count": len(work_items),
+                "timestamp": datetime.utcnow().isoformat()
+            }
+
+        except Exception as fetch_error:
+            logger.error(f"Failed to fetch work items: {str(fetch_error)}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to fetch work items: {str(fetch_error)}"
+            )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching work items: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error fetching work items: {str(e)}")
+
+
 @app.post("/api/azure-devops/save-config")
 async def save_azure_devops_config(request: AzureDevOpsSaveConfigRequest):
     """Save Azure DevOps configuration to database"""

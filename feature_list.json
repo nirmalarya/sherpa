@@ -730,7 +730,7 @@
       "Step 4: Verify work items array returned",
       "Step 5: Verify work item fields populated"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
