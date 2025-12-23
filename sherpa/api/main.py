@@ -98,6 +98,64 @@ class AzureDevOpsSaveConfigRequest(BaseModel):
         return v
 
 
+# Response Schema Classes for consistent API responses
+class SuccessResponse(BaseModel):
+    """Standard success response wrapper"""
+    success: bool = True
+    data: Any
+    message: Optional[str] = None
+    timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+
+
+class ErrorResponse(BaseModel):
+    """Standard error response wrapper"""
+    success: bool = False
+    error: str
+    message: str
+    details: Optional[Any] = None
+    timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+
+
+def success_response(data: Any, message: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Create a consistent success response
+
+    Args:
+        data: The response data (can be dict, list, or any serializable type)
+        message: Optional success message
+
+    Returns:
+        Dictionary following the standard success response format
+    """
+    return {
+        "success": True,
+        "data": data,
+        "message": message,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+
+def error_response(error: str, message: str, details: Optional[Any] = None) -> Dict[str, Any]:
+    """
+    Create a consistent error response
+
+    Args:
+        error: Error type/category
+        message: Human-readable error message
+        details: Optional additional error details
+
+    Returns:
+        Dictionary following the standard error response format
+    """
+    return {
+        "success": False,
+        "error": error,
+        "message": message,
+        "details": details,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+
 # Create FastAPI app
 app = FastAPI(
     title="SHERPA V1 API",
@@ -223,12 +281,11 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
     return JSONResponse(
         status_code=400,
-        content={
-            "error": "Validation Error",
-            "message": "Request validation failed",
-            "details": errors,
-            "timestamp": datetime.utcnow().isoformat()
-        }
+        content=error_response(
+            error="Validation Error",
+            message="Request validation failed",
+            details=errors
+        )
     )
 
 
@@ -238,13 +295,30 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     """
     Handle HTTP exceptions with consistent response format
     """
+    # Map common status codes to error types
+    error_type_map = {
+        400: "Bad Request",
+        401: "Unauthorized",
+        403: "Forbidden",
+        404: "Not Found",
+        405: "Method Not Allowed",
+        409: "Conflict",
+        422: "Unprocessable Entity",
+        429: "Rate Limit Exceeded",
+        500: "Internal Server Error",
+        502: "Bad Gateway",
+        503: "Service Unavailable"
+    }
+
+    error_type = error_type_map.get(exc.status_code, f"HTTP {exc.status_code}")
+
     return JSONResponse(
         status_code=exc.status_code,
-        content={
-            "error": exc.detail,
-            "status_code": exc.status_code,
-            "timestamp": datetime.utcnow().isoformat()
-        }
+        content=error_response(
+            error=error_type,
+            message=str(exc.detail),
+            details={"status_code": exc.status_code}
+        )
     )
 
 
@@ -272,23 +346,27 @@ async def shutdown_event():
 @app.get("/")
 async def root():
     """Root endpoint"""
-    return {
-        "name": "SHERPA V1 API",
-        "version": "1.0.0",
-        "status": "running",
-        "timestamp": datetime.utcnow().isoformat()
-    }
+    return success_response(
+        data={
+            "name": "SHERPA V1 API",
+            "version": "1.0.0",
+            "status": "running"
+        },
+        message="SHERPA V1 API is running"
+    )
 
 
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
-    return {
-        "status": "ok",
-        "service": "sherpa-api",
-        "timestamp": datetime.utcnow().isoformat(),
-        "version": "1.0.0"
-    }
+    return success_response(
+        data={
+            "status": "ok",
+            "service": "sherpa-api",
+            "version": "1.0.0"
+        },
+        message="Service is healthy"
+    )
 
 
 @app.get("/api/sessions")
@@ -299,11 +377,13 @@ async def get_sessions(status: Optional[str] = None):
         db = await get_db()
         sessions = await db.get_sessions(status=status)
         logger.info(f"Retrieved {len(sessions)} sessions (status={status})")
-        return {
-            "sessions": sessions,
-            "total": len(sessions),
-            "timestamp": datetime.utcnow().isoformat()
-        }
+        return success_response(
+            data={
+                "sessions": sessions,
+                "total": len(sessions)
+            },
+            message=f"Retrieved {len(sessions)} sessions"
+        )
     except Exception as e:
         logger.error(f"Error retrieving sessions: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
@@ -326,11 +406,13 @@ async def create_session(request: CreateSessionRequest):
             'git_branch': request.git_branch
         })
         logger.info(f"Successfully created session: {session_id}")
-        return {
-            "id": session_id,
-            "status": "created",
-            "timestamp": datetime.utcnow().isoformat()
-        }
+        return success_response(
+            data={
+                "id": session_id,
+                "status": "created"
+            },
+            message="Session created successfully"
+        )
     except Exception as e:
         logger.error(f"Error creating session: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
@@ -347,7 +429,10 @@ async def get_session(session_id: str):
             logger.warning(f"Session not found: {session_id}")
             raise HTTPException(status_code=404, detail="Session not found")
         logger.info(f"Retrieved session: {session_id}")
-        return session
+        return success_response(
+            data=session,
+            message="Session retrieved successfully"
+        )
     except HTTPException:
         raise
     except Exception as e:
@@ -386,11 +471,10 @@ async def update_session(session_id: str, request: Request):
         # Get updated session
         updated_session = await db.get_session(session_id)
 
-        return {
-            "message": "Session updated successfully",
-            "session": updated_session,
-            "timestamp": datetime.utcnow().isoformat()
-        }
+        return success_response(
+            data=updated_session,
+            message="Session updated successfully"
+        )
     except HTTPException:
         raise
     except Exception as e:
@@ -624,11 +708,13 @@ async def get_snippets(category: Optional[str] = None):
     try:
         db = await get_db()
         snippets = await db.get_snippets(category=category)
-        return {
-            "snippets": snippets,
-            "total": len(snippets),
-            "timestamp": datetime.utcnow().isoformat()
-        }
+        return success_response(
+            data={
+                "snippets": snippets,
+                "total": len(snippets)
+            },
+            message=f"Retrieved {len(snippets)} snippets"
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -643,10 +729,10 @@ async def get_snippet(snippet_id: str):
         if not snippet:
             raise HTTPException(status_code=404, detail=f"Snippet not found: {snippet_id}")
 
-        return {
-            "snippet": snippet,
-            "timestamp": datetime.utcnow().isoformat()
-        }
+        return success_response(
+            data=snippet,
+            message="Snippet retrieved successfully"
+        )
     except HTTPException:
         raise
     except Exception as e:

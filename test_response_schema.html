@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Response Schema Test - SHERPA V1</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-step {
+            margin: 15px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-left: 4px solid #2196F3;
+            border-radius: 4px;
+        }
+        .test-step h3 {
+            margin-top: 0;
+            color: #2196F3;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .pass {
+            background: #4CAF50;
+            color: white;
+        }
+        .fail {
+            background: #f44336;
+            color: white;
+        }
+        .pending {
+            background: #FF9800;
+            color: white;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #1976D2;
+        }
+        .button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .summary {
+            background: #E3F2FD;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .summary h2 {
+            margin-top: 0;
+            color: #1976D2;
+        }
+        .schema-check {
+            margin: 5px 0;
+            padding: 5px;
+            font-family: monospace;
+        }
+        .schema-pass {
+            color: #4CAF50;
+        }
+        .schema-fail {
+            color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Response Schema Consistency Test</h1>
+
+    <div class="summary" id="summary">
+        <h2>Test Summary</h2>
+        <p><strong>Total Tests:</strong> 6</p>
+        <p><strong>Passed:</strong> <span id="passCount">0</span></p>
+        <p><strong>Failed:</strong> <span id="failCount">0</span></p>
+        <p><strong>Pending:</strong> <span id="pendingCount">6</span></p>
+    </div>
+
+    <button class="button" onclick="runAllTests()">Run All Tests</button>
+    <button class="button" onclick="clearResults()">Clear Results</button>
+
+    <div class="test-section">
+        <h2>Success Response Tests</h2>
+
+        <div class="test-step" id="step1">
+            <h3>Step 1: Make successful API call <span class="status pending" id="status1">PENDING</span></h3>
+            <p>Call GET /health endpoint (should succeed)</p>
+            <button class="button" onclick="runStep1()">Run Step 1</button>
+            <div class="result" id="result1"></div>
+        </div>
+
+        <div class="test-step" id="step2">
+            <h3>Step 2: Verify response has consistent structure <span class="status pending" id="status2">PENDING</span></h3>
+            <p>Check for success, data, message, timestamp fields</p>
+            <button class="button" onclick="runStep2()">Run Step 2</button>
+            <div class="result" id="result2"></div>
+        </div>
+
+        <div class="test-step" id="step3">
+            <h3>Step 3: Verify data in 'data' field <span class="status pending" id="status3">PENDING</span></h3>
+            <p>Ensure actual response data is wrapped in 'data' field</p>
+            <button class="button" onclick="runStep3()">Run Step 3</button>
+            <div class="result" id="result3"></div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Error Response Tests</h2>
+
+        <div class="test-step" id="step4">
+            <h3>Step 4: Make failing API call <span class="status pending" id="status4">PENDING</span></h3>
+            <p>Call endpoint with invalid session ID (should fail with 404)</p>
+            <button class="button" onclick="runStep4()">Run Step 4</button>
+            <div class="result" id="result4"></div>
+        </div>
+
+        <div class="test-step" id="step5">
+            <h3>Step 5: Verify error in 'error' field <span class="status pending" id="status5">PENDING</span></h3>
+            <p>Check error response structure: success=false, error, message, timestamp</p>
+            <button class="button" onclick="runStep5()">Run Step 5</button>
+            <div class="result" id="result5"></div>
+        </div>
+
+        <div class="test-step" id="step6">
+            <h3>Step 6: Verify status codes consistent <span class="status pending" id="status6">PENDING</span></h3>
+            <p>Verify 200 for success, 404 for not found, proper HTTP codes</p>
+            <button class="button" onclick="runStep6()">Run Step 6</button>
+            <div class="result" id="result6"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8001';
+        let testData = {};
+
+        function updateSummary() {
+            const statuses = [1, 2, 3, 4, 5, 6].map(i =>
+                document.getElementById(`status${i}`).textContent
+            );
+            const passed = statuses.filter(s => s === 'PASS').length;
+            const failed = statuses.filter(s => s === 'FAIL').length;
+            const pending = statuses.filter(s => s === 'PENDING').length;
+
+            document.getElementById('passCount').textContent = passed;
+            document.getElementById('failCount').textContent = failed;
+            document.getElementById('pendingCount').textContent = pending;
+        }
+
+        function setStatus(step, status) {
+            const el = document.getElementById(`status${step}`);
+            el.textContent = status;
+            el.className = `status ${status.toLowerCase()}`;
+            updateSummary();
+        }
+
+        function log(step, message) {
+            const el = document.getElementById(`result${step}`);
+            el.innerHTML += message + '<br>';
+        }
+
+        function clearLog(step) {
+            document.getElementById(`result${step}`).innerHTML = '';
+        }
+
+        async function runStep1() {
+            clearLog(1);
+            log(1, '🔄 Testing GET /health...');
+
+            try {
+                const response = await fetch(`${API_URL}/health`);
+                const data = await response.json();
+
+                testData.successResponse = { status: response.status, data };
+
+                log(1, `✅ Status: ${response.status}`);
+                log(1, `📦 Response: ${JSON.stringify(data, null, 2)}`);
+
+                if (response.status === 200) {
+                    setStatus(1, 'PASS');
+                    log(1, '✅ Step 1 PASSED: API call succeeded');
+                } else {
+                    setStatus(1, 'FAIL');
+                    log(1, `❌ Step 1 FAILED: Expected status 200, got ${response.status}`);
+                }
+            } catch (error) {
+                setStatus(1, 'FAIL');
+                log(1, `❌ Error: ${error.message}`);
+            }
+        }
+
+        async function runStep2() {
+            clearLog(2);
+
+            if (!testData.successResponse) {
+                await runStep1();
+            }
+
+            const { data } = testData.successResponse;
+            log(2, '🔍 Checking response structure...');
+
+            const checks = [
+                { field: 'success', expected: true, actual: data.success },
+                { field: 'data', expected: 'object', actual: typeof data.data },
+                { field: 'message', expected: 'string or null', actual: data.message !== undefined },
+                { field: 'timestamp', expected: 'string', actual: typeof data.timestamp }
+            ];
+
+            let allPass = true;
+            checks.forEach(check => {
+                const pass = check.field === 'success' ?
+                    check.actual === check.expected :
+                    check.field === 'message' ?
+                    check.actual :
+                    typeof data[check.field] === check.expected;
+
+                const icon = pass ? '✅' : '❌';
+                const className = pass ? 'schema-pass' : 'schema-fail';
+                log(2, `<div class="schema-check ${className}">${icon} ${check.field}: ${pass ? 'PASS' : 'FAIL'} (${JSON.stringify(data[check.field])})</div>`);
+                if (!pass) allPass = false;
+            });
+
+            if (allPass) {
+                setStatus(2, 'PASS');
+                log(2, '✅ Step 2 PASSED: Response structure is consistent');
+            } else {
+                setStatus(2, 'FAIL');
+                log(2, '❌ Step 2 FAILED: Response structure missing required fields');
+            }
+        }
+
+        async function runStep3() {
+            clearLog(3);
+
+            if (!testData.successResponse) {
+                await runStep1();
+            }
+
+            const { data } = testData.successResponse;
+            log(3, '🔍 Verifying data field...');
+
+            if (data.data && typeof data.data === 'object') {
+                log(3, `✅ data field exists and is an object`);
+                log(3, `📦 data contents: ${JSON.stringify(data.data, null, 2)}`);
+
+                // Check if data field has meaningful content
+                const hasContent = Object.keys(data.data).length > 0;
+                if (hasContent) {
+                    setStatus(3, 'PASS');
+                    log(3, '✅ Step 3 PASSED: Data is properly wrapped in data field');
+                } else {
+                    setStatus(3, 'FAIL');
+                    log(3, '❌ Step 3 FAILED: Data field is empty');
+                }
+            } else {
+                setStatus(3, 'FAIL');
+                log(3, '❌ Step 3 FAILED: data field missing or invalid');
+            }
+        }
+
+        async function runStep4() {
+            clearLog(4);
+            log(4, '🔄 Testing GET /api/sessions/invalid-session-id...');
+
+            try {
+                const response = await fetch(`${API_URL}/api/sessions/invalid-session-id-12345`);
+                const data = await response.json();
+
+                testData.errorResponse = { status: response.status, data };
+
+                log(4, `📍 Status: ${response.status}`);
+                log(4, `📦 Response: ${JSON.stringify(data, null, 2)}`);
+
+                if (response.status === 404) {
+                    setStatus(4, 'PASS');
+                    log(4, '✅ Step 4 PASSED: API returned 404 for invalid ID');
+                } else {
+                    setStatus(4, 'FAIL');
+                    log(4, `❌ Step 4 FAILED: Expected status 404, got ${response.status}`);
+                }
+            } catch (error) {
+                setStatus(4, 'FAIL');
+                log(4, `❌ Error: ${error.message}`);
+            }
+        }
+
+        async function runStep5() {
+            clearLog(5);
+
+            if (!testData.errorResponse) {
+                await runStep4();
+            }
+
+            const { data } = testData.errorResponse;
+            log(5, '🔍 Checking error response structure...');
+
+            const checks = [
+                { field: 'success', expected: false, actual: data.success },
+                { field: 'error', expected: 'string', actual: typeof data.error },
+                { field: 'message', expected: 'string', actual: typeof data.message },
+                { field: 'timestamp', expected: 'string', actual: typeof data.timestamp }
+            ];
+
+            let allPass = true;
+            checks.forEach(check => {
+                const pass = check.field === 'success' ?
+                    check.actual === check.expected :
+                    typeof data[check.field] === check.expected;
+
+                const icon = pass ? '✅' : '❌';
+                const className = pass ? 'schema-pass' : 'schema-fail';
+                log(5, `<div class="schema-check ${className}">${icon} ${check.field}: ${pass ? 'PASS' : 'FAIL'} (${JSON.stringify(data[check.field])})</div>`);
+                if (!pass) allPass = false;
+            });
+
+            if (allPass) {
+                setStatus(5, 'PASS');
+                log(5, '✅ Step 5 PASSED: Error response structure is consistent');
+            } else {
+                setStatus(5, 'FAIL');
+                log(5, '❌ Step 5 FAILED: Error response structure missing required fields');
+            }
+        }
+
+        async function runStep6() {
+            clearLog(6);
+            log(6, '🔍 Verifying HTTP status codes...');
+
+            const tests = [
+                { url: '/health', expectedStatus: 200, description: 'Health check' },
+                { url: '/api/sessions/invalid-id', expectedStatus: 404, description: 'Invalid session' }
+            ];
+
+            let allPass = true;
+
+            for (const test of tests) {
+                try {
+                    const response = await fetch(`${API_URL}${test.url}`);
+                    const pass = response.status === test.expectedStatus;
+                    const icon = pass ? '✅' : '❌';
+                    const className = pass ? 'schema-pass' : 'schema-fail';
+                    log(6, `<div class="schema-check ${className}">${icon} ${test.description}: ${response.status} (expected ${test.expectedStatus})</div>`);
+                    if (!pass) allPass = false;
+                } catch (error) {
+                    log(6, `❌ Error testing ${test.url}: ${error.message}`);
+                    allPass = false;
+                }
+            }
+
+            if (allPass) {
+                setStatus(6, 'PASS');
+                log(6, '✅ Step 6 PASSED: Status codes are consistent');
+            } else {
+                setStatus(6, 'FAIL');
+                log(6, '❌ Step 6 FAILED: Some status codes incorrect');
+            }
+        }
+
+        async function runAllTests() {
+            for (let i = 1; i <= 6; i++) {
+                await window[`runStep${i}`]();
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+        }
+
+        function clearResults() {
+            for (let i = 1; i <= 6; i++) {
+                clearLog(i);
+                setStatus(i, 'PENDING');
+            }
+            testData = {};
+        }
+    </script>
+</body>
+</html>

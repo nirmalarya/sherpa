@@ -1617,7 +1617,7 @@
       "Step 5: Verify error in 'error' field",
       "Step 6: Verify status codes consistent"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
