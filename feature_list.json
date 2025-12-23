@@ -1120,7 +1120,7 @@
       "Step 5: Verify checkbox checked",
       "Step 6: Verify visual styling updated"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
