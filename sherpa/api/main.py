@@ -29,6 +29,7 @@ from sherpa.core.migrations import run_migrations, rollback_migrations, get_migr
 from sherpa.core.config import get_settings
 from sherpa.core.bedrock_client import get_bedrock_client
 from sherpa.core.integrations.azure_devops_client import get_azure_devops_client
+from sherpa.core.file_watcher import get_file_watcher, reset_file_watcher
 
 # Initialize logger
 logger = get_logger("sherpa.api")
@@ -2757,6 +2758,118 @@ async def remove_file_source(request: Request):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/file-watcher/start")
+async def start_file_watcher(request: Request):
+    """Start file watcher service"""
+    try:
+        logger.info("POST /api/file-watcher/start - Starting file watcher")
+
+        body = await request.json() if request.headers.get("content-length") else {}
+        watch_path = body.get('watch_path', '.')
+
+        # Get or create watcher instance
+        watcher = get_file_watcher(watch_path=watch_path)
+
+        # Start if not already running
+        if not watcher.is_running():
+            watcher.start()
+            logger.info(f"File watcher started for path: {watch_path}")
+            message = "File watcher started successfully"
+        else:
+            logger.info("File watcher already running")
+            message = "File watcher already running"
+
+        return {
+            "success": True,
+            "message": message,
+            "watch_path": str(watcher.watch_path),
+            "is_running": watcher.is_running()
+        }
+    except ImportError as e:
+        logger.error(f"Watchdog not installed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Watchdog library not installed. Install with: pip install watchdog"
+        )
+    except Exception as e:
+        logger.error(f"Error starting file watcher: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/file-watcher/stop")
+async def stop_file_watcher():
+    """Stop file watcher service"""
+    try:
+        logger.info("POST /api/file-watcher/stop - Stopping file watcher")
+
+        watcher = get_file_watcher()
+
+        if watcher.is_running():
+            watcher.stop()
+            logger.info("File watcher stopped")
+            message = "File watcher stopped successfully"
+        else:
+            logger.info("File watcher not running")
+            message = "File watcher not running"
+
+        return {
+            "success": True,
+            "message": message,
+            "is_running": watcher.is_running()
+        }
+    except Exception as e:
+        logger.error(f"Error stopping file watcher: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/file-watcher/status")
+async def get_file_watcher_status():
+    """Get file watcher status"""
+    try:
+        logger.info("GET /api/file-watcher/status - Getting status")
+
+        try:
+            watcher = get_file_watcher()
+            is_running = watcher.is_running()
+            watch_path = str(watcher.watch_path)
+            event_count = len(watcher.get_events())
+        except:
+            is_running = False
+            watch_path = None
+            event_count = 0
+
+        return {
+            "is_running": is_running,
+            "watch_path": watch_path,
+            "event_count": event_count
+        }
+    except Exception as e:
+        logger.error(f"Error getting file watcher status: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/file-watcher/events")
+async def get_file_watcher_events(clear: bool = False):
+    """Get file watcher events"""
+    try:
+        logger.info(f"GET /api/file-watcher/events - clear={clear}")
+
+        watcher = get_file_watcher()
+        events = watcher.get_events()
+
+        if clear:
+            watcher.clear_events()
+            logger.info("Events cleared")
+
+        return {
+            "events": events,
+            "count": len(events)
+        }
+    except Exception as e:
+        logger.error(f"Error getting file watcher events: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/migrations/status")
 async def get_migrations_status():
     """Get current migration status"""
@@ -2892,6 +3005,12 @@ v1_router.add_api_route("/file-sources", remove_file_source, methods=["DELETE"])
 v1_router.add_api_route("/migrations/status", get_migrations_status, methods=["GET"])
 v1_router.add_api_route("/migrations/run", run_db_migrations, methods=["POST"])
 v1_router.add_api_route("/migrations/rollback", rollback_db_migrations, methods=["POST"])
+
+# File watcher endpoints
+v1_router.add_api_route("/file-watcher/start", start_file_watcher, methods=["POST"])
+v1_router.add_api_route("/file-watcher/stop", stop_file_watcher, methods=["POST"])
+v1_router.add_api_route("/file-watcher/status", get_file_watcher_status, methods=["GET"])
+v1_router.add_api_route("/file-watcher/events", get_file_watcher_events, methods=["GET"])
 
 # Include v1 router under /api/v1 prefix
 app.include_router(v1_router, prefix="/api")

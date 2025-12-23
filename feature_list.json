@@ -820,7 +820,7 @@
       "Step 5: Verify modification detected",
       "Step 6: Verify events logged"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

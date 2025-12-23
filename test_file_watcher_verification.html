@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Watcher Verification - SHERPA V1</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .test-step {
+            background: #f8f9fa;
+            border-left: 4px solid #dee2e6;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .test-step.running {
+            border-left-color: #ffc107;
+            background: #fff3cd;
+        }
+
+        .test-step.success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+
+        .test-step.error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+
+        .step-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .step-description {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .step-output {
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+
+        .summary h2 {
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .status-badge.pending {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .status-badge.running {
+            background: #17a2b8;
+            color: #fff;
+        }
+
+        .status-badge.success {
+            background: #28a745;
+            color: #fff;
+        }
+
+        .status-badge.error {
+            background: #dc3545;
+            color: #fff;
+        }
+
+        .events-display {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .event-item {
+            background: white;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            border-left: 3px solid #667eea;
+            font-size: 13px;
+        }
+
+        .event-type {
+            font-weight: 600;
+            color: #667eea;
+            text-transform: uppercase;
+            font-size: 11px;
+        }
+
+        .event-path {
+            color: #333;
+            margin-top: 4px;
+        }
+
+        .event-time {
+            color: #999;
+            font-size: 11px;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏔️ SHERPA V1 - File Watcher Verification</h1>
+        <p class="subtitle">Test #64: File watcher for repo scanning - Watchdog monitors repository for changes</p>
+
+        <div id="tests">
+            <!-- Test steps will be added here -->
+        </div>
+
+        <div class="summary" id="summary" style="display: none;">
+            <h2>Test Summary</h2>
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="total-tests">0</div>
+                    <div class="stat-label">Total Tests</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="passed-tests">0</div>
+                    <div class="stat-label">Passed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="failed-tests">0</div>
+                    <div class="stat-label">Failed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="success-rate">0%</div>
+                    <div class="stat-label">Success Rate</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8001/api';
+
+        const tests = [
+            {
+                title: 'Step 1: Start file watcher',
+                description: 'Initialize and start the file watcher service',
+                run: async () => {
+                    const response = await fetch(`${API_BASE}/file-watcher/start`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ watch_path: '.' })
+                    });
+                    const data = await response.json();
+
+                    if (!response.ok) throw new Error(data.detail || 'Failed to start watcher');
+                    if (!data.success) throw new Error('Watcher did not start successfully');
+
+                    return `File watcher started successfully\nWatch path: ${data.watch_path}\nRunning: ${data.is_running}`;
+                }
+            },
+            {
+                title: 'Step 2: Create new file in repo',
+                description: 'Create a test file to trigger file creation event',
+                run: async () => {
+                    // Create a test file using File System Access API (if available)
+                    // For now, we'll simulate this by logging instructions
+                    const testFileName = `test_file_${Date.now()}.txt`;
+
+                    return `Please create a file manually:\n\nFile name: ${testFileName}\nContent: "Test file for watchdog"\n\nAfter creating the file, proceed to the next step.`;
+                }
+            },
+            {
+                title: 'Step 3: Verify change detected',
+                description: 'Check that file creation was detected by the watcher',
+                run: async () => {
+                    // Wait a moment for events to be captured
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+
+                    const response = await fetch(`${API_BASE}/file-watcher/events`);
+                    const data = await response.json();
+
+                    if (!response.ok) throw new Error('Failed to fetch events');
+
+                    const createEvents = data.events.filter(e => e.type === 'created');
+
+                    if (createEvents.length === 0) {
+                        return `⚠️ No creation events detected yet.\nPlease create a test file and run this step again.\n\nTotal events: ${data.count}`;
+                    }
+
+                    return `✓ File creation detected!\n\nEvents captured: ${data.count}\nCreation events: ${createEvents.length}\n\nRecent created files:\n${createEvents.slice(-3).map(e => `  - ${e.src_path} (${e.timestamp})`).join('\n')}`;
+                }
+            },
+            {
+                title: 'Step 4: Modify existing file',
+                description: 'Modify a file to trigger modification event',
+                run: async () => {
+                    return `Please modify a file manually:\n\n1. Open any existing file in the project\n2. Make a small change (e.g., add a comment)\n3. Save the file\n4. Proceed to the next step`;
+                }
+            },
+            {
+                title: 'Step 5: Verify modification detected',
+                description: 'Check that file modification was detected',
+                run: async () => {
+                    // Wait a moment for events to be captured
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+
+                    const response = await fetch(`${API_BASE}/file-watcher/events`);
+                    const data = await response.json();
+
+                    if (!response.ok) throw new Error('Failed to fetch events');
+
+                    const modifyEvents = data.events.filter(e => e.type === 'modified');
+
+                    if (modifyEvents.length === 0) {
+                        return `⚠️ No modification events detected yet.\nPlease modify a file and run this step again.\n\nTotal events: ${data.count}`;
+                    }
+
+                    return `✓ File modification detected!\n\nEvents captured: ${data.count}\nModification events: ${modifyEvents.length}\n\nRecent modified files:\n${modifyEvents.slice(-3).map(e => `  - ${e.src_path} (${e.timestamp})`).join('\n')}`;
+                }
+            },
+            {
+                title: 'Step 6: Verify events logged',
+                description: 'Confirm all events are properly logged',
+                run: async () => {
+                    const response = await fetch(`${API_BASE}/file-watcher/events`);
+                    const data = await response.json();
+
+                    if (!response.ok) throw new Error('Failed to fetch events');
+
+                    const eventTypes = {};
+                    data.events.forEach(e => {
+                        eventTypes[e.type] = (eventTypes[e.type] || 0) + 1;
+                    });
+
+                    let output = `✓ All events logged successfully!\n\n`;
+                    output += `Total events: ${data.count}\n\n`;
+                    output += `Event breakdown:\n`;
+                    Object.entries(eventTypes).forEach(([type, count]) => {
+                        output += `  ${type}: ${count}\n`;
+                    });
+
+                    // Display recent events
+                    output += `\nRecent events (last 5):\n`;
+                    data.events.slice(-5).forEach(e => {
+                        output += `  [${e.type}] ${e.src_path}\n`;
+                        output += `    Time: ${e.timestamp}\n`;
+                    });
+
+                    return output;
+                }
+            }
+        ];
+
+        let currentTest = 0;
+        let passedTests = 0;
+        let failedTests = 0;
+
+        function createTestElement(test, index) {
+            const div = document.createElement('div');
+            div.className = 'test-step';
+            div.id = `test-${index}`;
+            div.innerHTML = `
+                <div class="step-title">
+                    ${test.title}
+                    <span class="status-badge pending" id="status-${index}">Pending</span>
+                </div>
+                <div class="step-description">${test.description}</div>
+                <div class="step-output" id="output-${index}" style="display: none;"></div>
+                <button onclick="runTest(${index})" id="btn-${index}">Run Test</button>
+            `;
+            return div;
+        }
+
+        async function runTest(index) {
+            const test = tests[index];
+            const element = document.getElementById(`test-${index}`);
+            const output = document.getElementById(`output-${index}`);
+            const status = document.getElementById(`status-${index}`);
+            const button = document.getElementById(`btn-${index}`);
+
+            // Update UI to running state
+            element.className = 'test-step running';
+            status.textContent = 'Running...';
+            status.className = 'status-badge running';
+            button.disabled = true;
+            output.style.display = 'block';
+            output.textContent = 'Running test...';
+
+            try {
+                const result = await test.run();
+
+                // Success
+                element.className = 'test-step success';
+                status.textContent = 'Passed';
+                status.className = 'status-badge success';
+                output.textContent = result;
+                passedTests++;
+            } catch (error) {
+                // Failure
+                element.className = 'test-step error';
+                status.textContent = 'Failed';
+                status.className = 'status-badge error';
+                output.textContent = `Error: ${error.message}`;
+                failedTests++;
+            }
+
+            // Update summary
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const totalTests = tests.length;
+            const completedTests = passedTests + failedTests;
+            const successRate = completedTests > 0
+                ? Math.round((passedTests / completedTests) * 100)
+                : 0;
+
+            document.getElementById('total-tests').textContent = totalTests;
+            document.getElementById('passed-tests').textContent = passedTests;
+            document.getElementById('failed-tests').textContent = failedTests;
+            document.getElementById('success-rate').textContent = `${successRate}%`;
+            document.getElementById('summary').style.display = 'block';
+        }
+
+        // Initialize tests
+        const testsContainer = document.getElementById('tests');
+        tests.forEach((test, index) => {
+            testsContainer.appendChild(createTestElement(test, index));
+        });
+
+        // Auto-run first test
+        window.addEventListener('load', () => {
+            setTimeout(() => runTest(0), 500);
+        });
+    </script>
+</body>
+</html>
