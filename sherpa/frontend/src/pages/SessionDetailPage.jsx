@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { Play, Pause, Square, CheckCircle } from 'lucide-react'
 import api from '../lib/api'
 import SessionMonitor from '../components/SessionMonitor'
+import ProgressChart from '../components/ProgressChart'
 
 function SessionDetailPage() {
   const { id } = useParams()
@@ -11,6 +12,7 @@ function SessionDetailPage() {
   const [logs, setLogs] = useState([])
   const [commits, setCommits] = useState([])
   const [loading, setLoading] = useState(true)
+  const [progressData, setProgressData] = useState([])
 
   useEffect(() => {
     fetchSessionDetails()
@@ -19,6 +21,19 @@ function SessionDetailPage() {
   // Handle progress updates from SessionMonitor
   const handleProgressUpdate = (data) => {
     setSession(prev => ({ ...prev, ...data }))
+
+    // Add new data point to progress chart
+    if (data.completed_features !== undefined && data.total_features !== undefined) {
+      const newDataPoint = {
+        timestamp: new Date().toLocaleTimeString(),
+        completionPercent: data.total_features > 0
+          ? Math.round((data.completed_features / data.total_features) * 100)
+          : 0,
+        completed: data.completed_features,
+        total: data.total_features
+      }
+      setProgressData(prev => [...prev, newDataPoint])
+    }
   }
 
   const handleSessionComplete = (data) => {
@@ -42,6 +57,17 @@ function SessionDetailPage() {
       setFeatures(sessionRes.data.features || [])
       setLogs(logsRes.data.logs || [])
       setCommits(commitsRes.data.commits || [])
+
+      // Initialize progress data with current state
+      const currentProgress = {
+        timestamp: new Date().toLocaleTimeString(),
+        completionPercent: sessionRes.data.total_features > 0
+          ? Math.round((sessionRes.data.completed_features / sessionRes.data.total_features) * 100)
+          : 0,
+        completed: sessionRes.data.completed_features || 0,
+        total: sessionRes.data.total_features || 0
+      }
+      setProgressData([currentProgress])
     } catch (error) {
       console.error('Error fetching session details:', error)
     } finally {
@@ -151,6 +177,12 @@ function SessionDetailPage() {
         <p className="text-sm text-gray-600 mt-2">
           {session?.completed_features || 0} / {session?.total_features || 0} features completed
         </p>
+
+        {/* Progress Chart */}
+        <div className="mt-6">
+          <h3 className="text-lg font-medium mb-3">Progress Over Time</h3>
+          <ProgressChart data={progressData} height={250} />
+        </div>
       </div>
 
       {/* Feature List */}

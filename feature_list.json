@@ -512,7 +512,7 @@
       "Step 5: Verify tooltip shows details on hover",
       "Step 6: Verify chart updates with new data points"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
