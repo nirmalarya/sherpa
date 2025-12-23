@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SHERPA Backend Health Check</title>
+</head>
+<body>
+    <h1>SHERPA Backend Health Check</h1>
+    <div id="result">Testing...</div>
+
+    <script>
+        async function testBackend() {
+            const resultDiv = document.getElementById('result');
+
+            try {
+                // Test port 8001 (from START_HERE_HUMAN.md)
+                const response = await fetch('http://localhost:8001/api/health');
+                const data = await response.json();
+
+                resultDiv.innerHTML = `
+                    <h2 style="color: green;">✅ Backend is HEALTHY!</h2>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                    <p>Port: 8001</p>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h2 style="color: red;">❌ Backend Error</h2>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+
+        testBackend();
+    </script>
+</body>
+</html>
