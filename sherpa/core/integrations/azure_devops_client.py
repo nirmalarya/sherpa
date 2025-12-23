@@ -245,6 +245,53 @@ class AzureDevOpsClient:
             logger.error(f"Failed to update work item {work_item_id}: {str(e)}")
             raise Exception(f"Failed to update work item: {str(e)}")
 
+    async def add_comment(self, work_item_id: int, comment_text: str) -> Dict[str, Any]:
+        """
+        Add a comment to a work item in Azure DevOps
+
+        Args:
+            work_item_id: Work item ID to add comment to
+            comment_text: Comment text to add
+
+        Returns:
+            Result dictionary with success status
+        """
+        if not self.is_connected:
+            raise Exception("Not connected to Azure DevOps. Call connect() first.")
+
+        try:
+            if not AZURE_DEVOPS_AVAILABLE:
+                # Return mock success for testing
+                logger.info(f"Mock add comment to work item {work_item_id}")
+                return {
+                    "success": True,
+                    "work_item_id": work_item_id,
+                    "comment": comment_text,
+                    "message": "Comment added successfully (mock mode)"
+                }
+
+            # Add comment using the work item tracking client
+            from azure.devops.v7_1.work_item_tracking.models import CommentCreate
+
+            comment = CommentCreate(text=comment_text)
+            result = self.wit_client.add_comment(
+                project=self.project,
+                work_item_id=work_item_id,
+                comment=comment
+            )
+
+            return {
+                "success": True,
+                "work_item_id": work_item_id,
+                "comment": comment_text,
+                "comment_id": result.id if hasattr(result, 'id') else None,
+                "message": "Comment added successfully"
+            }
+
+        except Exception as e:
+            logger.error(f"Failed to add comment to work item {work_item_id}: {str(e)}")
+            raise Exception(f"Failed to add comment: {str(e)}")
+
     async def convert_work_item_to_spec(self, work_item_id: int) -> str:
         """
         Convert a work item to app_spec.txt format

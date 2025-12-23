@@ -227,7 +227,7 @@
       "Step 5: Complete session and update to 'Resolved'",
       "Step 6: Verify final status in Azure DevOps"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

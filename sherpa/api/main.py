@@ -1807,6 +1807,96 @@ async def update_azure_devops_work_item(work_item_id: int, request: AzureDevOpsU
         raise HTTPException(status_code=500, detail=f"Error updating work item: {str(e)}")
 
 
+@app.post("/api/azure-devops/work-items/{work_item_id}/comment")
+async def add_comment_to_work_item(work_item_id: int, request: Request):
+    """
+    Add a comment to a work item in Azure DevOps
+
+    Args:
+        work_item_id: ID of the work item to add comment to
+        request: Request body containing comment text
+
+    Returns:
+        Comment result details
+    """
+    try:
+        body = await request.json()
+        comment_text = body.get('comment', body.get('text', ''))
+
+        if not comment_text:
+            raise HTTPException(status_code=400, detail="Comment text is required")
+
+        logger.info(f"POST /api/azure-devops/work-items/{work_item_id}/comment - comment length={len(comment_text)}")
+
+        # Get Azure DevOps client
+        from sherpa.core.integrations.azure_devops_client import get_azure_devops_client
+        azure_client = get_azure_devops_client()
+
+        # Check if connected
+        if not azure_client.is_connected:
+            logger.info("Azure DevOps client not connected, attempting to reconnect...")
+
+            # Try to restore connection from database
+            db = await get_db()
+            config = await db.get_all_config()
+
+            org = config.get('azure_devops_org')
+            project = config.get('azure_devops_project')
+            pat = config.get('azure_devops_pat')
+
+            if not org or not project or not pat:
+                logger.warning("Azure DevOps credentials not found in database")
+                raise HTTPException(
+                    status_code=401,
+                    detail="Azure DevOps not configured. Please connect first using POST /api/azure-devops/connect"
+                )
+
+            # Extract organization name from URL if needed
+            if org.startswith('https://dev.azure.com/'):
+                org_name = org.replace('https://dev.azure.com/', '').rstrip('/')
+            elif org.startswith('http://dev.azure.com/'):
+                org_name = org.replace('http://dev.azure.com/', '').rstrip('/')
+            else:
+                org_name = org
+
+            # Reconnect
+            try:
+                await azure_client.connect(org_name, project, pat)
+                logger.info("Successfully reconnected to Azure DevOps")
+            except Exception as reconnect_error:
+                logger.error(f"Failed to reconnect to Azure DevOps: {str(reconnect_error)}")
+                raise HTTPException(
+                    status_code=401,
+                    detail=f"Failed to reconnect to Azure DevOps: {str(reconnect_error)}"
+                )
+
+        # Add comment to work item
+        try:
+            result = await azure_client.add_comment(work_item_id, comment_text)
+            logger.info(f"Successfully added comment to work item {work_item_id}")
+
+            return {
+                "success": True,
+                "work_item_id": work_item_id,
+                "comment": comment_text,
+                "result": result,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+
+        except Exception as comment_error:
+            logger.error(f"Failed to add comment to work item {work_item_id}: {str(comment_error)}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to add comment: {str(comment_error)}"
+            )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error adding comment to work item {work_item_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error adding comment: {str(e)}")
+
+
 @app.post("/api/azure-devops/work-items/{work_item_id}/convert-to-spec")
 async def convert_work_item_to_spec(work_item_id: int):
     """

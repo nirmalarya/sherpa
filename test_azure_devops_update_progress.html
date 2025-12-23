@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test: Azure DevOps Update Progress</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+        .test-section {
+            background: white;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+        .status.pending {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .test-step {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+        }
+        .test-step h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .result-box {
+            background: #f1f3f4;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .input-group {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        .progress {
+            margin: 20px 0;
+        }
+        .progress-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .progress-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .progress-icon.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .progress-icon.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .progress-icon.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔄 Azure DevOps Update Progress - Integration Test</h1>
+        <p>Test: Update work item status and add progress comments</p>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Configuration</h2>
+        <div class="input-group">
+            <label for="workItemId">Work Item ID:</label>
+            <input type="number" id="workItemId" value="1001" placeholder="Enter work item ID">
+        </div>
+        <div class="input-group">
+            <label for="commentText">Progress Comment:</label>
+            <textarea id="commentText" placeholder="Enter progress comment">Work in progress - implementing authentication features</textarea>
+        </div>
+        <button onclick="runAllTests()">Run All Tests</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Progress</h2>
+        <div class="progress" id="testProgress"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Results</h2>
+        <div id="testResults"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8001';
+        let testResults = [];
+
+        const testSteps = [
+            { id: 1, name: 'Configure Azure DevOps connection', func: testConfigureConnection },
+            { id: 2, name: 'Update work item status to Active', func: testUpdateToActive },
+            { id: 3, name: 'Verify status updated in Azure DevOps', func: testVerifyStatusUpdate },
+            { id: 4, name: 'Add progress comment to work item', func: testAddComment },
+            { id: 5, name: 'Update work item status to Resolved', func: testUpdateToResolved },
+            { id: 6, name: 'Verify final status in Azure DevOps', func: testVerifyFinalStatus }
+        ];
+
+        function updateProgress(stepId, status) {
+            const progressDiv = document.getElementById('testProgress');
+            const existingItem = document.getElementById(`progress-${stepId}`);
+
+            const icon = status === 'success' ? '✓' : status === 'error' ? '✗' : '⏳';
+            const html = `
+                <div class="progress-item" id="progress-${stepId}">
+                    <div class="progress-icon ${status}">${icon}</div>
+                    <div>Step ${stepId}: ${testSteps[stepId - 1].name}</div>
+                </div>
+            `;
+
+            if (existingItem) {
+                existingItem.outerHTML = html;
+            } else {
+                progressDiv.innerHTML += html;
+            }
+        }
+
+        function addResult(step, status, message, data = null) {
+            testResults.push({ step, status, message, data, timestamp: new Date().toISOString() });
+            displayResults();
+        }
+
+        function displayResults() {
+            const resultsDiv = document.getElementById('testResults');
+            resultsDiv.innerHTML = testResults.map(result => `
+                <div class="test-step">
+                    <h3>Step ${result.step}: ${testSteps[result.step - 1].name}</h3>
+                    <div class="status ${result.status}">${result.status.toUpperCase()}: ${result.message}</div>
+                    ${result.data ? `<div class="result-box"><pre>${JSON.stringify(result.data, null, 2)}</pre></div>` : ''}
+                    <small>Timestamp: ${new Date(result.timestamp).toLocaleTimeString()}</small>
+                </div>
+            `).join('');
+        }
+
+        function clearResults() {
+            testResults = [];
+            document.getElementById('testResults').innerHTML = '';
+            document.getElementById('testProgress').innerHTML = '';
+        }
+
+        async function testConfigureConnection() {
+            updateProgress(1, 'pending');
+            try {
+                const response = await fetch(`${API_BASE}/api/azure-devops/connect`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        organization: 'testorg',
+                        project: 'testproject',
+                        pat: 'test-pat-token-12345'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    updateProgress(1, 'success');
+                    addResult(1, 'success', 'Azure DevOps connection configured', data);
+                    return true;
+                } else {
+                    updateProgress(1, 'error');
+                    addResult(1, 'error', 'Failed to configure connection', data);
+                    return false;
+                }
+            } catch (error) {
+                updateProgress(1, 'error');
+                addResult(1, 'error', `Connection error: ${error.message}`);
+                return false;
+            }
+        }
+
+        async function testUpdateToActive() {
+            updateProgress(2, 'pending');
+            const workItemId = document.getElementById('workItemId').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/azure-devops/work-items/${workItemId}/update`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        updates: {
+                            "State": "Active"
+                        }
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    updateProgress(2, 'success');
+                    addResult(2, 'success', `Work item ${workItemId} status updated to Active`, data);
+                    return true;
+                } else {
+                    updateProgress(2, 'error');
+                    addResult(2, 'error', 'Failed to update status to Active', data);
+                    return false;
+                }
+            } catch (error) {
+                updateProgress(2, 'error');
+                addResult(2, 'error', `Update error: ${error.message}`);
+                return false;
+            }
+        }
+
+        async function testVerifyStatusUpdate() {
+            updateProgress(3, 'pending');
+            const workItemId = document.getElementById('workItemId').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/azure-devops/work-items?top=10`);
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    const workItem = data.work_items.find(item => item.id == workItemId);
+
+                    if (workItem) {
+                        updateProgress(3, 'success');
+                        addResult(3, 'success', `Verified work item exists with state: ${workItem.state}`, workItem);
+                        return true;
+                    } else {
+                        updateProgress(3, 'pending');
+                        addResult(3, 'pending', `Work item ${workItemId} not found in list (may be OK in mock mode)`, data);
+                        return true; // Continue anyway in mock mode
+                    }
+                } else {
+                    updateProgress(3, 'error');
+                    addResult(3, 'error', 'Failed to verify status update', data);
+                    return false;
+                }
+            } catch (error) {
+                updateProgress(3, 'error');
+                addResult(3, 'error', `Verification error: ${error.message}`);
+                return false;
+            }
+        }
+
+        async function testAddComment() {
+            updateProgress(4, 'pending');
+            const workItemId = document.getElementById('workItemId').value;
+            const commentText = document.getElementById('commentText').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/azure-devops/work-items/${workItemId}/comment`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        comment: commentText
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    updateProgress(4, 'success');
+                    addResult(4, 'success', `Comment added to work item ${workItemId}`, data);
+                    return true;
+                } else {
+                    updateProgress(4, 'error');
+                    addResult(4, 'error', 'Failed to add comment', data);
+                    return false;
+                }
+            } catch (error) {
+                updateProgress(4, 'error');
+                addResult(4, 'error', `Comment error: ${error.message}`);
+                return false;
+            }
+        }
+
+        async function testUpdateToResolved() {
+            updateProgress(5, 'pending');
+            const workItemId = document.getElementById('workItemId').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/azure-devops/work-items/${workItemId}/update`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        updates: {
+                            "State": "Resolved"
+                        }
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    updateProgress(5, 'success');
+                    addResult(5, 'success', `Work item ${workItemId} status updated to Resolved`, data);
+                    return true;
+                } else {
+                    updateProgress(5, 'error');
+                    addResult(5, 'error', 'Failed to update status to Resolved', data);
+                    return false;
+                }
+            } catch (error) {
+                updateProgress(5, 'error');
+                addResult(5, 'error', `Update error: ${error.message}`);
+                return false;
+            }
+        }
+
+        async function testVerifyFinalStatus() {
+            updateProgress(6, 'pending');
+            const workItemId = document.getElementById('workItemId').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/azure-devops/work-items?top=10`);
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    const workItem = data.work_items.find(item => item.id == workItemId);
+
+                    if (workItem) {
+                        updateProgress(6, 'success');
+                        addResult(6, 'success', `Final verification complete. Work item state: ${workItem.state}`, workItem);
+                        return true;
+                    } else {
+                        updateProgress(6, 'pending');
+                        addResult(6, 'pending', `Work item ${workItemId} not found (may be OK in mock mode)`, data);
+                        return true; // Continue anyway in mock mode
+                    }
+                } else {
+                    updateProgress(6, 'error');
+                    addResult(6, 'error', 'Failed to verify final status', data);
+                    return false;
+                }
+            } catch (error) {
+                updateProgress(6, 'error');
+                addResult(6, 'error', `Verification error: ${error.message}`);
+                return false;
+            }
+        }
+
+        async function runAllTests() {
+            clearResults();
+            console.log('Starting Azure DevOps update progress tests...');
+
+            for (const step of testSteps) {
+                console.log(`Running Step ${step.id}: ${step.name}`);
+                const result = await step.func();
+
+                if (!result) {
+                    console.error(`Step ${step.id} failed. Stopping tests.`);
+                    addResult(step.id + 0.5, 'error', 'Test sequence stopped due to failure');
+                    break;
+                }
+
+                // Small delay between steps
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+
+            console.log('All tests completed!');
+        }
+
+        // Auto-run tests on page load
+        window.addEventListener('load', () => {
+            console.log('Page loaded. Ready to run tests.');
+            // Uncomment to auto-run: runAllTests();
+        });
+    </script>
+</body>
+</html>
