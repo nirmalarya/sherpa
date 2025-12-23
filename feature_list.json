@@ -1982,7 +1982,7 @@
       "Step 5: Verify animations smooth",
       "Step 6: Verify focus trapped in modal"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
