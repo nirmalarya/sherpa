@@ -41,7 +41,8 @@ def generate():
 @click.option("--source", type=str, help="Source type (azure-devops, file, etc.)")
 def run(spec, source):
     """Execute autonomous harness"""
-    console.print("[yellow]Command 'run' not yet implemented[/yellow]")
+    from sherpa.cli.commands.run import run_command
+    run_command(spec, source)
 
 
 @cli.command()

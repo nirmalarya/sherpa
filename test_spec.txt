@@ -1,0 +1,48 @@
+Project Specification: Simple Todo List Application
+=====================================================
+
+## Overview
+
+Build a simple todo list web application with the following features:
+
+## Technology Stack
+
+### Backend
+- Framework: FastAPI (Python)
+- Database: SQLite
+- API: RESTful endpoints
+
+### Frontend
+- Framework: React 18
+- Build Tool: Vite
+- Styling: Tailwind CSS
+
+## Core Features
+
+### 1. Todo Management
+- Create new todos with title and description
+- Mark todos as complete/incomplete
+- Delete todos
+- Edit todo text
+
+### 2. API Endpoints
+- GET /api/todos - List all todos
+- POST /api/todos - Create new todo
+- PUT /api/todos/:id - Update todo
+- DELETE /api/todos/:id - Delete todo
+- GET /health - Health check
+
+### 3. Frontend Components
+- TodoList component - Display all todos
+- TodoItem component - Individual todo with checkbox
+- AddTodo component - Form to add new todo
+- Header component - App title and stats
+
+## Success Criteria
+
+- ✅ Backend API running on port 8000
+- ✅ Frontend running on port 3000
+- ✅ All CRUD operations work
+- ✅ Clean, responsive UI
+- ✅ No console errors
+- ✅ Data persists in database
