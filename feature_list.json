@@ -2044,7 +2044,7 @@
       "Step 4: Verify CTAs stand out",
       "Step 5: Verify user eye drawn to key actions"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
