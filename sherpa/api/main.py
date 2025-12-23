@@ -27,6 +27,7 @@ from sherpa.core.db import get_db, DB_PATH
 from sherpa.core.logging_config import get_logger
 from sherpa.core.migrations import run_migrations, rollback_migrations, get_migration_status
 from sherpa.core.config import get_settings
+from sherpa.core.bedrock_client import get_bedrock_client
 
 # Initialize logger
 logger = get_logger("sherpa.api")
@@ -96,6 +97,21 @@ class AzureDevOpsSaveConfigRequest(BaseModel):
     def validate_not_empty(cls, v):
         if v.strip() == '':
             raise ValueError('field cannot be empty string')
+        return v
+
+
+class QuerySnippetsRequest(BaseModel):
+    query: str = Field(..., min_length=1, max_length=500, description="Search query text")
+    max_results: int = Field(default=5, ge=1, le=20, description="Maximum number of results")
+    min_score: float = Field(default=0.5, ge=0.0, le=1.0, description="Minimum relevance score")
+
+    class Config:
+        extra = "forbid"
+
+    @validator('query', allow_reuse=True)
+    def validate_query(cls, v):
+        if v.strip() == '':
+            raise ValueError('query cannot be empty string')
         return v
 
 
@@ -991,6 +1007,65 @@ async def create_snippet(snippet: CreateSnippetRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/snippets/query")
+async def query_snippets(request: QuerySnippetsRequest):
+    """
+    Query Bedrock Knowledge Base for relevant code snippets
+
+    Performs semantic search using AWS Bedrock Knowledge Base to find
+    relevant snippets based on the query text. Returns snippets with
+    relevance scores and metadata.
+
+    In development mode without AWS credentials, returns mock responses.
+    """
+    try:
+        logger.info(f"POST /api/snippets/query - query='{request.query}', max_results={request.max_results}, min_score={request.min_score}")
+
+        # Get or create Bedrock client
+        db = await get_db()
+        config = await db.get_all_config()
+        kb_id = config.get('bedrock_kb_id')
+
+        bedrock_client = get_bedrock_client(kb_id=kb_id)
+
+        # Query Bedrock Knowledge Base
+        results = await bedrock_client.query(
+            query_text=request.query,
+            max_results=request.max_results,
+            min_score=request.min_score
+        )
+
+        logger.info(f"Bedrock query returned {len(results)} results for query: '{request.query}'")
+
+        # Format results for API response
+        formatted_results = []
+        for result in results:
+            formatted_results.append({
+                'content': result.get('content', ''),
+                'score': result.get('score', 0.0),
+                'metadata': result.get('metadata', {}),
+                'location': result.get('location', {}),
+                'category': result.get('metadata', {}).get('category', 'general'),
+                'tags': result.get('metadata', {}).get('tags', []),
+                'language': result.get('metadata', {}).get('language', 'unknown')
+            })
+
+        return success_response(
+            data={
+                'query': request.query,
+                'results': formatted_results,
+                'total': len(formatted_results),
+                'max_results': request.max_results,
+                'min_score': request.min_score
+            },
+            message=f"Found {len(formatted_results)} relevant snippets"
+        )
+
+    except Exception as e:
+        logger.error(f"Error querying snippets: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/snippets/load-builtin")
 async def load_builtin_snippets():
     """Load built-in snippets from markdown files into database"""
@@ -1773,6 +1848,7 @@ v1_router.add_api_route("/sessions/{session_id}/test-data", add_test_data, metho
 v1_router.add_api_route("/snippets", get_snippets, methods=["GET"])
 v1_router.add_api_route("/snippets/{snippet_id}", get_snippet, methods=["GET"])
 v1_router.add_api_route("/snippets", create_snippet, methods=["POST"], status_code=201)
+v1_router.add_api_route("/snippets/query", query_snippets, methods=["POST"])
 v1_router.add_api_route("/snippets/load-builtin", load_builtin_snippets, methods=["POST"])
 
 # Config endpoints

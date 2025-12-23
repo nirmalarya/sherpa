@@ -694,7 +694,7 @@
       "Step 4: Verify relevant snippets returned",
       "Step 5: Verify relevance scores included"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
