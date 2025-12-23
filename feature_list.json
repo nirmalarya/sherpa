@@ -1995,7 +1995,7 @@
       "Step 5: Verify info alerts blue",
       "Step 6: Verify icons used appropriately"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",

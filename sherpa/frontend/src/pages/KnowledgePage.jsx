@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import api from '../lib/api'
 import SnippetBrowser from '../components/SnippetBrowser'
+import Alert from '../components/Alert'
 
 function KnowledgePage() {
   const [snippets, setSnippets] = useState([])
+  const [alert, setAlert] = useState(null)
 
   useEffect(() => {
     fetchSnippets()
@@ -12,9 +14,21 @@ function KnowledgePage() {
   const fetchSnippets = async () => {
     try {
       const response = await api.get('/api/snippets')
-      setSnippets(response.data.snippets || [])
+      const loadedSnippets = response.data.snippets || []
+      setSnippets(loadedSnippets)
+
+      // Show warning if no snippets available
+      if (loadedSnippets.length === 0) {
+        setAlert({
+          type: 'warning',
+          message: 'No code snippets found. Add snippets to your project or configure external sources.'
+        })
+      } else {
+        setAlert(null)
+      }
     } catch (error) {
       console.error('Error fetching snippets:', error)
+      setAlert({ type: 'error', message: 'Failed to load snippets. Please try again.' })
     }
   }
 
@@ -29,10 +43,13 @@ function KnowledgePage() {
         language: snippet.language,
         tags: snippet.tags
       })
-      alert('Snippet added to project!')
+      setAlert({ type: 'success', message: `Snippet "${snippet.name || snippet.title}" added to project!` })
+
+      // Auto-dismiss success alert after 3 seconds
+      setTimeout(() => setAlert(null), 3000)
     } catch (error) {
       console.error('Error adding snippet:', error)
-      alert('Failed to add snippet to project')
+      setAlert({ type: 'error', message: 'Failed to add snippet to project. Please try again.' })
     }
   }
 
@@ -42,6 +59,15 @@ function KnowledgePage() {
         <h1 className="text-3xl font-bold text-gray-900">Knowledge Base</h1>
         <p className="mt-2 text-gray-600">Browse and search code snippets</p>
       </div>
+
+      {/* Alert Messages */}
+      {alert && (
+        <div className="mb-6">
+          <Alert type={alert.type}>
+            {alert.message}
+          </Alert>
+        </div>
+      )}
 
       <SnippetBrowser
         snippets={snippets}
