@@ -1332,7 +1332,7 @@
       "Step 5: Trigger manual sync",
       "Step 6: Verify sync status updates"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

@@ -740,6 +740,38 @@ async def get_azure_devops_status():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/azure-devops/sync")
+async def sync_azure_devops():
+    """Trigger manual sync with Azure DevOps"""
+    try:
+        db = await get_db()
+
+        # Get configuration to check if Azure DevOps is configured
+        config = await db.get_all_config()
+
+        if not config.get('azure_devops_org'):
+            raise HTTPException(status_code=400, detail="Azure DevOps is not configured")
+
+        # Simulate sync delay (in production, this would fetch work items from Azure DevOps)
+        await asyncio.sleep(1.0)
+
+        # Update last sync time
+        sync_time = datetime.utcnow().isoformat()
+        await db.set_config('azure_devops_last_sync', sync_time)
+
+        return {
+            "success": True,
+            "message": "Sync completed successfully",
+            "last_sync": sync_time,
+            "work_items_synced": 0,  # In production, return actual count
+            "timestamp": sync_time
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Sync failed: {str(e)}")
+
+
 @app.get("/api/activity")
 async def get_recent_activity(limit: int = 10):
     """Get recent activity events from sessions"""

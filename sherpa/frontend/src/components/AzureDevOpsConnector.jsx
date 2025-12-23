@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { CheckCircle, XCircle, Loader, AlertCircle } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { CheckCircle, XCircle, Loader, AlertCircle, RefreshCw } from 'lucide-react'
 import api from '../lib/api'
 
 function AzureDevOpsConnector() {
@@ -11,7 +11,45 @@ function AzureDevOpsConnector() {
   const [connectionStatus, setConnectionStatus] = useState(null)
   const [testing, setTesting] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [syncing, setSyncing] = useState(false)
   const [validationErrors, setValidationErrors] = useState({})
+  const [syncStatus, setSyncStatus] = useState(null)
+
+  // Load sync status on component mount
+  useEffect(() => {
+    loadSyncStatus()
+  }, [])
+
+  const loadSyncStatus = async () => {
+    try {
+      const response = await api.get('/api/azure-devops/status')
+      setSyncStatus(response.data)
+    } catch (error) {
+      console.error('Failed to load sync status:', error)
+    }
+  }
+
+  const handleSync = async () => {
+    setSyncing(true)
+    setConnectionStatus(null)
+
+    try {
+      const response = await api.post('/api/azure-devops/sync')
+      setConnectionStatus({
+        success: true,
+        message: response.data.message || 'Sync completed successfully!'
+      })
+      // Reload sync status after successful sync
+      await loadSyncStatus()
+    } catch (error) {
+      setConnectionStatus({
+        success: false,
+        message: error.response?.data?.detail || 'Sync failed. Please check your configuration.'
+      })
+    } finally {
+      setSyncing(false)
+    }
+  }
 
   const validateForm = () => {
     const errors = {}
@@ -200,7 +238,7 @@ function AzureDevOpsConnector() {
         <div className="flex gap-2 pt-2">
           <button
             onClick={handleTestConnection}
-            disabled={testing || saving}
+            disabled={testing || saving || syncing}
             className="btn-secondary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Test Azure DevOps connection"
           >
@@ -213,13 +251,74 @@ function AzureDevOpsConnector() {
           </button>
           <button
             onClick={handleSave}
-            disabled={testing || saving}
+            disabled={testing || saving || syncing}
             className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Save Azure DevOps configuration"
           >
             {saving ? 'Saving...' : 'Save Configuration'}
           </button>
         </div>
+
+        {/* Sync Status Section */}
+        {syncStatus && syncStatus.configured && (
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <h3 className="text-lg font-semibold mb-4">Sync Status</h3>
+
+            <div className="space-y-3">
+              {/* Last Sync Time */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Last Sync:</span>
+                <span className="text-sm font-medium text-gray-900">
+                  {syncStatus.last_sync
+                    ? new Date(syncStatus.last_sync).toLocaleString()
+                    : 'Never synced'}
+                </span>
+              </div>
+
+              {/* Sync Status Indicator */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Status:</span>
+                <div className="flex items-center gap-2">
+                  {syncStatus.status === 'success' && (
+                    <>
+                      <CheckCircle className="h-4 w-4 text-green-600" aria-hidden="true" />
+                      <span className="text-sm font-medium text-green-600">Connected</span>
+                    </>
+                  )}
+                  {syncStatus.status === 'never_synced' && (
+                    <>
+                      <AlertCircle className="h-4 w-4 text-yellow-600" aria-hidden="true" />
+                      <span className="text-sm font-medium text-yellow-600">Never Synced</span>
+                    </>
+                  )}
+                  {syncStatus.status === 'error' && (
+                    <>
+                      <XCircle className="h-4 w-4 text-red-600" aria-hidden="true" />
+                      <span className="text-sm font-medium text-red-600">Error</span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Manual Sync Button */}
+              <div className="pt-2">
+                <button
+                  onClick={handleSync}
+                  disabled={testing || saving || syncing}
+                  className="btn-secondary w-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Sync with Azure DevOps"
+                >
+                  {syncing ? (
+                    <Loader className="h-4 w-4 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4" aria-hidden="true" />
+                  )}
+                  {syncing ? 'Syncing...' : 'Sync Now'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
