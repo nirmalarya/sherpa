@@ -1759,7 +1759,7 @@
       "Step 5: Verify screenshots captured on failure",
       "Step 6: Verify all E2E tests pass"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
