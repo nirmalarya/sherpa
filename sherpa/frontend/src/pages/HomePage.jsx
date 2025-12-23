@@ -19,6 +19,15 @@ function HomePage() {
   useEffect(() => {
     fetchActiveSessions()
     fetchRecentActivity()
+
+    // Auto-refresh every 30 seconds
+    const refreshInterval = setInterval(() => {
+      fetchActiveSessions()
+      fetchRecentActivity()
+    }, 30000)
+
+    // Cleanup interval on unmount
+    return () => clearInterval(refreshInterval)
   }, [])
 
   const fetchActiveSessions = async () => {

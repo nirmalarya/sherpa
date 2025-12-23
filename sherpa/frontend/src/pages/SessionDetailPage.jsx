@@ -21,6 +21,30 @@ function SessionDetailPage() {
     fetchSessionDetails()
   }, [id])
 
+  // Auto-refresh logs and commits every 30 seconds
+  useEffect(() => {
+    const refreshInterval = setInterval(() => {
+      // Only refresh logs and commits, not full session details
+      // Session details are updated via SessionMonitor SSE
+      fetchLogsAndCommits()
+    }, 30000)
+
+    return () => clearInterval(refreshInterval)
+  }, [id])
+
+  const fetchLogsAndCommits = async () => {
+    try {
+      const [logsRes, commitsRes] = await Promise.all([
+        api.get(`/api/sessions/${id}/logs`),
+        api.get(`/api/sessions/${id}/commits`)
+      ])
+      setLogs(logsRes.data.logs || [])
+      setCommits(commitsRes.data.commits || [])
+    } catch (error) {
+      console.error('Error refreshing logs and commits:', error)
+    }
+  }
+
   // Handle progress updates from SessionMonitor
   const handleProgressUpdate = (data) => {
     setSession(prev => ({ ...prev, ...data }))

@@ -18,6 +18,14 @@ function SessionsPage() {
 
   useEffect(() => {
     fetchSessions()
+
+    // Auto-refresh every 30 seconds
+    const refreshInterval = setInterval(() => {
+      fetchSessions()
+    }, 30000)
+
+    // Cleanup interval on unmount
+    return () => clearInterval(refreshInterval)
   }, [statusFilter])
 
   const fetchSessions = async () => {

@@ -1488,7 +1488,7 @@
       "Step 4: Verify no page reload required",
       "Step 5: Verify polling interval reasonable"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
