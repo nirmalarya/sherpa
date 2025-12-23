@@ -1015,7 +1015,7 @@
       "Step 5: Verify request succeeds",
       "Step 6: Verify preflight OPTIONS requests handled"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

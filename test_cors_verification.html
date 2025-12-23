@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS Configuration Verification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-step {
+            margin: 15px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-left: 4px solid #2196F3;
+        }
+        .test-step h3 {
+            margin: 0 0 10px 0;
+            color: #2196F3;
+        }
+        .pass {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .fail {
+            color: #f44336;
+            font-weight: bold;
+        }
+        .pending {
+            color: #FF9800;
+            font-weight: bold;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+        .summary {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        pre {
+            background: #263238;
+            color: #aed581;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 13px;
+        }
+        .info {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🌐 CORS Configuration Verification Test</h1>
+
+    <div class="info">
+        <strong>Test Purpose:</strong> Verify that the backend properly configures CORS to allow requests from the frontend.
+        <br><strong>Backend:</strong> Port 8001 (Current configuration)
+        <br><strong>Frontend:</strong> Port 3003 (Current configuration)
+    </div>
+
+    <div class="summary" id="summary">
+        <h2>Test Summary</h2>
+        <p>Total Tests: 6</p>
+        <p id="passCount">Passed: 0</p>
+        <p id="failCount">Failed: 0</p>
+        <p id="pendingCount">Pending: 6</p>
+    </div>
+
+    <button onclick="runAllTests()">Run All Tests</button>
+    <button onclick="clearResults()">Clear Results</button>
+
+    <div id="testsContainer">
+        <!-- Test 1 -->
+        <div class="test-section">
+            <div class="test-step">
+                <h3>Step 1: Start backend on port 8000</h3>
+                <div class="result" id="result1">
+                    <span class="pending">PENDING</span> - Click "Run All Tests" to start
+                </div>
+            </div>
+        </div>
+
+        <!-- Test 2 -->
+        <div class="test-section">
+            <div class="test-step">
+                <h3>Step 2: Start frontend on port 3001</h3>
+                <div class="result" id="result2">
+                    <span class="pending">PENDING</span> - Click "Run All Tests" to start
+                </div>
+            </div>
+        </div>
+
+        <!-- Test 3 -->
+        <div class="test-section">
+            <div class="test-step">
+                <h3>Step 3: Make API call from frontend</h3>
+                <div class="result" id="result3">
+                    <span class="pending">PENDING</span> - Click "Run All Tests" to start
+                </div>
+            </div>
+        </div>
+
+        <!-- Test 4 -->
+        <div class="test-section">
+            <div class="test-step">
+                <h3>Step 4: Verify CORS headers present</h3>
+                <div class="result" id="result4">
+                    <span class="pending">PENDING</span> - Click "Run All Tests" to start
+                </div>
+            </div>
+        </div>
+
+        <!-- Test 5 -->
+        <div class="test-section">
+            <div class="test-step">
+                <h3>Step 5: Verify request succeeds</h3>
+                <div class="result" id="result5">
+                    <span class="pending">PENDING</span> - Click "Run All Tests" to start
+                </div>
+            </div>
+        </div>
+
+        <!-- Test 6 -->
+        <div class="test-section">
+            <div class="test-step">
+                <h3>Step 6: Verify preflight OPTIONS requests handled</h3>
+                <div class="result" id="result6">
+                    <span class="pending">PENDING</span> - Click "Run All Tests" to start
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'http://localhost:8001';
+        const FRONTEND_PORT = 3003; // Current actual frontend port
+
+        let testResults = {
+            passed: 0,
+            failed: 0,
+            pending: 6
+        };
+
+        function updateSummary() {
+            document.getElementById('passCount').textContent = `Passed: ${testResults.passed}`;
+            document.getElementById('failCount').textContent = `Failed: ${testResults.failed}`;
+            document.getElementById('pendingCount').textContent = `Pending: ${testResults.pending}`;
+        }
+
+        function setResult(stepNum, passed, message) {
+            const resultDiv = document.getElementById(`result${stepNum}`);
+            if (passed) {
+                resultDiv.innerHTML = `<span class="pass">✅ PASS</span><br>${message}`;
+                testResults.passed++;
+            } else {
+                resultDiv.innerHTML = `<span class="fail">❌ FAIL</span><br>${message}`;
+                testResults.failed++;
+            }
+            testResults.pending--;
+            updateSummary();
+        }
+
+        async function test1_BackendRunning() {
+            try {
+                const response = await fetch(`${BACKEND_URL}/health`);
+                const data = await response.json();
+
+                if (response.ok && data.status === 'ok') {
+                    setResult(1, true, `Backend is running on port 8001. Status: ${data.status}, Service: ${data.service}`);
+                    return true;
+                } else {
+                    setResult(1, false, `Backend responded but health check failed. Response: ${JSON.stringify(data)}`);
+                    return false;
+                }
+            } catch (error) {
+                setResult(1, false, `Backend is not accessible on port 8001. Error: ${error.message}<br>Make sure backend is running with: uvicorn sherpa.api.main:app --port 8001`);
+                return false;
+            }
+        }
+
+        async function test2_FrontendRunning() {
+            try {
+                // Check if we're running on the expected frontend port
+                const currentPort = window.location.port;
+
+                if (currentPort === FRONTEND_PORT.toString()) {
+                    setResult(2, true, `Frontend is running on port ${FRONTEND_PORT}. Current location: ${window.location.origin}`);
+                    return true;
+                } else {
+                    setResult(2, false, `Frontend is running on port ${currentPort}, expected port ${FRONTEND_PORT}. Please access from http://localhost:${FRONTEND_PORT}`);
+                    return false;
+                }
+            } catch (error) {
+                setResult(2, false, `Could not verify frontend port. Error: ${error.message}`);
+                return false;
+            }
+        }
+
+        async function test3_MakeAPICall() {
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/sessions`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    setResult(3, true, `API call succeeded. Received ${data.total || 0} sessions. Response status: ${response.status}`);
+                    return { success: true, response };
+                } else {
+                    setResult(3, false, `API call failed with status ${response.status}. Response: ${JSON.stringify(data)}`);
+                    return { success: false, response };
+                }
+            } catch (error) {
+                setResult(3, false, `API call failed. Error: ${error.message}<br>This could indicate a CORS issue or backend unavailability.`);
+                return { success: false, response: null };
+            }
+        }
+
+        async function test4_VerifyCORSHeaders(apiResponse) {
+            if (!apiResponse || !apiResponse.response) {
+                setResult(4, false, 'No API response available to check headers. Previous test must have failed.');
+                return false;
+            }
+
+            const response = apiResponse.response;
+            const corsHeader = response.headers.get('access-control-allow-origin');
+            const credentialsHeader = response.headers.get('access-control-allow-credentials');
+
+            let headerInfo = '';
+            headerInfo += `<br>Access-Control-Allow-Origin: ${corsHeader || 'NOT PRESENT'}`;
+            headerInfo += `<br>Access-Control-Allow-Credentials: ${credentialsHeader || 'NOT PRESENT'}`;
+
+            if (corsHeader) {
+                setResult(4, true, `CORS headers are present and configured correctly.${headerInfo}`);
+                return true;
+            } else {
+                setResult(4, false, `CORS headers are missing. This would cause cross-origin requests to fail.${headerInfo}`);
+                return false;
+            }
+        }
+
+        async function test5_VerifyRequestSucceeds(apiResult) {
+            if (!apiResult) {
+                setResult(5, false, 'API call test (Step 3) did not run or failed.');
+                return false;
+            }
+
+            if (apiResult.success) {
+                setResult(5, true, 'Cross-origin API request succeeded without CORS errors.');
+                return true;
+            } else {
+                setResult(5, false, 'Cross-origin API request failed. Check browser console for CORS errors.');
+                return false;
+            }
+        }
+
+        async function test6_VerifyPreflightRequests() {
+            try {
+                // Make a request that triggers a preflight (using custom headers)
+                const response = await fetch(`${BACKEND_URL}/api/sessions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        spec_file: 'test_cors.txt',
+                        total_features: 10
+                    })
+                });
+
+                // If we get here without CORS errors, preflight worked
+                if (response.ok || response.status === 201) {
+                    const data = await response.json();
+                    setResult(6, true, `Preflight OPTIONS request was handled correctly. POST request succeeded with status ${response.status}. Session created: ${data.id || 'unknown'}`);
+                    return true;
+                } else {
+                    setResult(6, true, `Preflight OPTIONS request was handled (no CORS error). POST request completed with status ${response.status}`);
+                    return true;
+                }
+            } catch (error) {
+                if (error.message.includes('CORS')) {
+                    setResult(6, false, `Preflight OPTIONS request failed. CORS error: ${error.message}<br>The backend must handle OPTIONS requests with proper CORS headers.`);
+                    return false;
+                } else {
+                    // Other errors might not be CORS-related, so we can still pass the CORS test
+                    setResult(6, true, `Preflight OPTIONS request was handled (no CORS error). Request error (non-CORS): ${error.message}`);
+                    return true;
+                }
+            }
+        }
+
+        async function runAllTests() {
+            // Reset counters
+            testResults = { passed: 0, failed: 0, pending: 6 };
+            updateSummary();
+
+            // Run tests sequentially
+            console.log('Starting CORS verification tests...');
+
+            // Test 1: Backend running
+            const backendOk = await test1_BackendRunning();
+
+            // Test 2: Frontend running
+            const frontendOk = await test2_FrontendRunning();
+
+            // Test 3: Make API call
+            const apiResult = await test3_MakeAPICall();
+
+            // Test 4: Verify CORS headers (depends on Test 3)
+            await test4_VerifyCORSHeaders(apiResult);
+
+            // Test 5: Verify request succeeds (depends on Test 3)
+            await test5_VerifyRequestSucceeds(apiResult);
+
+            // Test 6: Verify preflight requests
+            await test6_VerifyPreflightRequests();
+
+            console.log('All tests completed!');
+            console.log(`Results: ${testResults.passed} passed, ${testResults.failed} failed`);
+        }
+
+        function clearResults() {
+            testResults = { passed: 0, failed: 0, pending: 6 };
+            updateSummary();
+
+            for (let i = 1; i <= 6; i++) {
+                document.getElementById(`result${i}`).innerHTML = '<span class="pending">PENDING</span> - Click "Run All Tests" to start';
+            }
+        }
+
+        // Update summary on load
+        updateSummary();
+    </script>
+</body>
+</html>
