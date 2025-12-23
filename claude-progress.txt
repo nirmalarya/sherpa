@@ -1,8 +1,8 @@
-SHERPA V1 - Session 23 Progress Report
+SHERPA V1 - Session 24 Progress Report
 ======================================
 
-Date: December 22, 2025 (9:32 PM - 9:45 PM)
-Agent: Coding Agent (Session 23)
+Date: December 22, 2025 (9:47 PM - 10:15 PM)
+Agent: Coding Agent (Session 24)
 
 ✅ COMPLETED TASKS
 ==================
@@ -10,146 +10,141 @@ Agent: Coding Agent (Session 23)
 1. ✅ Performed Verification Tests (Step 3 - MANDATORY!)
    - Navigated to http://localhost:3003 (HomePage)
    - Verified HomePage still displays correctly ✅
-   - Checked backend health endpoint: GET /health ✅
+   - Tested SessionsPage navigation ✅
    - Backend responding on port 8001 ✅
    - Frontend accessible on port 3003 ✅
    - No regressions found in existing features
 
 2. ✅ Started Frontend Server
    - Frontend server was stopped, restarted successfully
-   - Started Vite dev server on port 3003 (background task b4ccafb)
+   - Started Vite dev server on port 3003 (background task b7deabc)
    - Server accessible at http://localhost:3003
    - Hot Module Replacement (HMR) working
 
-3. ✅ Implemented SessionDetailPage Component
-   - Enabled SessionDetailPage in App.jsx (removed placeholder function)
-   - Imported actual SessionDetailPage component from ./pages/SessionDetailPage
-   - Fixed SSE endpoint URL to use port 8001 (was 8000)
-   - Fixed API response parsing to handle backend format:
-     * setLogs(logsRes.data.logs || []) instead of logsRes.data
-     * setCommits(commitsRes.data.commits || []) instead of commitsRes.data
-   - Fixed session name display: spec_file || `Session ${id}`
-   - Fixed started_at date display with null handling
-   - Fixed progress calculation: Math.round((completed_features / total_features) * 100)
+3. ✅ Implemented KnowledgePage Component
+   - Enabled KnowledgePage in App.jsx (removed placeholder function)
+   - Imported actual KnowledgePage component from ./pages/KnowledgePage
+   - Fixed API response parsing issues:
+     * Backend returns { snippets: [...], total, timestamp }
+     * Frontend was expecting response.data to be array directly
+     * Changed to response.data.snippets || []
+   - Fixed snippet display to use both title and name fields
+   - Updated filteredSnippets to search by title or name
+   - Simplified handleSearch to use local filtering
+   - Fixed handleAddToProject to send correct payload format
 
 4. ✅ Comprehensive Testing with Browser Automation
-   - All 8 test steps verified successfully through Puppeteer
+   - All 6 test steps verified successfully through Puppeteer
 
-   Test Results Summary (8/8 VERIFIED):
+   Test Results Summary (6/6 VERIFIED):
 
-   Step 1: SessionDetailPage.jsx component exists ✅
-   - Component file exists at sherpa/frontend/src/pages/SessionDetailPage.jsx ✅
+   Step 1: KnowledgePage.jsx component exists ✅
+   - Component file exists at sherpa/frontend/src/pages/KnowledgePage.jsx ✅
    - Component properly imported in App.jsx ✅
-   - React routing configured correctly for /sessions/:id ✅
+   - React routing configured correctly for /knowledge ✅
    - Component renders without errors ✅
 
-   Step 2: SSE connection to /api/sessions/:id/progress ✅
-   - EventSource created in useEffect hook (line 18) ✅
-   - SSE endpoint exists: GET /api/sessions/:id/progress ✅
-   - Backend endpoint returns proper SSE format ✅
-   - Connection URL uses correct port 8001 ✅
+   Step 2: Search input for snippets ✅
+   - Search input field exists with placeholder "Search snippets..." ✅
+   - Search button exists and styled correctly ✅
+   - Typing "react" in search filters results to React snippets only ✅
+   - Search filters by both title and description ✅
+   - Search is case-insensitive ✅
 
-   Step 3: Real-time progress updates ✅
-   - Progress section displays with progress bar ✅
-   - Progress calculated from completed_features / total_features ✅
-   - Progress bar shows 0% for test session (0 / 100 features) ✅
-   - Feature count text displays correctly ✅
-   - SSE updates would trigger state changes via onmessage handler ✅
+   Step 3: Browse by category ✅
+   - Category filter buttons displayed: all, security, python, react, testing, api, git ✅
+   - Clicking "python" category shows only Python snippets ✅
+   - Active category button highlighted with blue background ✅
+   - Clicking "all" category shows all snippets again ✅
+   - Category filtering works correctly ✅
 
-   Step 4: Feature list with checkboxes ✅
-   - Features section exists with proper header ✅
-   - Features mapped to list items with CheckCircle icons ✅
-   - Scrollable container with max-height ✅
-   - Clean layout with hover effect ✅
-   - Empty state handled (test session has no features) ✅
+   Step 4: Snippet content preview ✅
+   - Clicking snippet card opens modal overlay ✅
+   - Modal displays snippet title and description ✅
+   - Modal shows code content in dark theme code block ✅
+   - Copy button exists in modal header ✅
+   - Close button (×) in top right corner ✅
+   - Clicking close button dismisses modal ✅
+   - Modal backdrop has semi-transparent overlay ✅
 
-   Step 5: passes:true features show as checked ✅
-   - Component uses conditional classes for CheckCircle ✅
-   - passes:true → text-green-500 (green checked) ✅
-   - passes:false → text-gray-300 (gray unchecked) ✅
-   - Completed features show line-through text ✅
-   - Visual distinction between completed and pending ✅
+   Step 5: Add to project snippets button ✅
+   - "Add to Project" button exists on every snippet card ✅
+   - Button styled with btn-secondary class ✅
+   - Button click triggers handleAddToProject function ✅
+   - Function sends POST /api/snippets with correct payload ✅
+   - Payload includes: name, category, source, content, language, tags ✅
 
-   Step 6: Live logs streaming ✅
-   - Live Logs section exists with proper header ✅
-   - Dark terminal-style display (bg-gray-900) ✅
-   - Monospace font for code readability ✅
-   - Scrollable container with max-height ✅
-   - Color-coded log levels (ERROR=red, WARNING=yellow, INFO=green) ✅
-   - Timestamp display for each log entry ✅
-   - Empty state handled (test session has no logs) ✅
-
-   Step 7: Git commits list ✅
-   - Git Commits section exists with proper header ✅
-   - Commits displayed with left border accent ✅
-   - Shows commit hash (monospace font) ✅
-   - Shows commit message ✅
-   - Shows timestamp with date formatting ✅
-   - Empty state handled (test session has no commits) ✅
-
-   Step 8: Stop/pause/resume controls ✅
-   - All three control buttons tested via browser automation ✅
-   - Pause button clicked → session paused successfully ✅
-     * POST /api/sessions/:id/pause called ✅
-     * UI updated: Pause/Stop buttons hidden ✅
-     * Resume button appeared (blue primary color) ✅
-   - Resume button clicked → session resumed successfully ✅
-     * POST /api/sessions/:id/resume called ✅
-     * UI updated: Resume button hidden ✅
-     * Pause/Stop buttons reappeared ✅
-   - Stop button clicked → session stopped successfully ✅
-     * POST /api/sessions/:id/stop called ✅
-     * UI updated: All buttons hidden (correct for stopped state) ✅
-   - Conditional rendering based on session status working perfectly ✅
+   Step 6: Snippets fetched from API ✅
+   - Component fetches snippets on mount via useEffect ✅
+   - API call: GET /api/snippets ✅
+   - Backend returns 9 snippets successfully ✅
+   - Snippets displayed in grid layout ✅
+   - Each snippet shows: title, category, description ✅
+   - Response parsing: response.data.snippets works correctly ✅
 
 5. ✅ Visual Verification
-   - Page header displays session name (spec_file) ✅
-   - Start date/time displayed with proper formatting ✅
-   - Control buttons styled correctly:
-     * Pause button: secondary style with Pause icon ✅
-     * Stop button: secondary style with Square icon ✅
-     * Resume button: primary style with Play icon ✅
-   - Progress section clean and professional ✅
-   - Progress bar with primary color (primary-600) ✅
-   - Features section with scrollable list ✅
-   - Live Logs with dark terminal aesthetic ✅
-   - Git Commits with left border accent ✅
+   - Page header "Knowledge Base" displays correctly ✅
+   - Subtitle "Browse and search code snippets" ✅
+   - Search input with magnifying glass icon ✅
+   - Search button styled with primary color ✅
+   - Category filter buttons in row with proper spacing ✅
+   - Active category button has blue background ✅
+   - Inactive category buttons have gray background ✅
+   - Snippets displayed in responsive grid (1/2/3 columns) ✅
+   - Each card has:
+     * Code icon (Lucide React <Code> component) ✅
+     * Snippet title in bold ✅
+     * Category badge (gray background, small text) ✅
+     * Description with line-clamp-3 (max 3 lines) ✅
+     * "Add to Project" button at bottom ✅
+   - Card hover effect (shadow-md) ✅
+   - Modal design:
+     * White background with rounded corners ✅
+     * Dark code block (bg-gray-900) ✅
+     * Copy button with icon ✅
+     * Close button (×) ✅
+     * Max width and max height constraints ✅
+     * Scrollable content area ✅
    - No visual bugs or layout issues ✅
    - No console errors ✅
    - Responsive layout works ✅
 
 6. ✅ Updated feature_list.json
-   - Marked "SessionDetailPage component - Real-time session monitoring with SSE" as passing
+   - Marked "KnowledgePage component - Browse and search code snippets" as passing
    - Changed "passes": false → "passes": true
    - Feature fully verified through browser automation
 
 7. ✅ Git Commit
    - Committed all changes with comprehensive message
-   - Clean commit history maintained (commit 11d77f9)
+   - Clean commit history maintained (commit 8d01b4d)
    - Included implementation details, fixes, and test verification
-   - Files modified: App.jsx, SessionDetailPage.jsx, feature_list.json
+   - Files modified: App.jsx, KnowledgePage.jsx, feature_list.json
+   - New file: sherpa/snippets/snippet-1766475884.081034.md
 
 📊 FEATURE COMPLETION STATUS
 =============================
 
 Total Features: 165
-Completed (Previous Sessions): 27
+Completed (Previous Sessions): 28
 Completed This Session: 1
-Total Passing: 28
-Remaining: 137
-Progress: 17.0% (was 16.4%)
+Total Passing: 29
+Remaining: 136
+Progress: 17.6% (was 17.0%)
 
 Features Now Passing:
-1-27. ✅ (Previous features - see Session 22 report)
-28. ✅ SessionDetailPage component - Real-time session monitoring with SSE (NEW!)
+1-28. ✅ (Previous features - see Session 23 report)
+29. ✅ KnowledgePage component - Browse and search code snippets (NEW!)
 
 📁 FILES MODIFIED THIS SESSION
 ===============================
 
 Modified:
-- sherpa/frontend/src/App.jsx (enabled SessionDetailPage import)
-- sherpa/frontend/src/pages/SessionDetailPage.jsx (fixed SSE URL, API parsing, display)
+- sherpa/frontend/src/App.jsx (enabled KnowledgePage import)
+- sherpa/frontend/src/pages/KnowledgePage.jsx (fixed API parsing, search, display)
 - feature_list.json (1 feature: "passes": false → "passes": true)
+
+New Files:
+- sherpa/snippets/snippet-1766475884.081034.md (test snippet from Add to Project)
 
 🎯 CURRENT STATE
 =================
@@ -162,9 +157,11 @@ Frontend Status:
 - ✅ React application running on port 3003
 - ✅ HomePage component fully functional (verified)
 - ✅ SessionsPage component fully functional (verified)
-- ✅ SessionDetailPage component fully functional (NEW!)
-- ✅ Real-time monitoring with SSE working
-- ✅ All control buttons (pause/resume/stop) working
+- ✅ SessionDetailPage component fully functional (verified)
+- ✅ KnowledgePage component fully functional (NEW!)
+- ✅ Search and filtering working perfectly
+- ✅ Category browsing working
+- ✅ Snippet preview modal working
 - ✅ API integration working perfectly
 - ✅ Navigation between pages working
 - ✅ No console errors
@@ -181,44 +178,41 @@ Backend Status:
 - ✅ POST /api/sessions/:id/pause endpoint working
 - ✅ POST /api/sessions/:id/resume endpoint working
 - ✅ POST /api/sessions/:id/stop endpoint working
+- ✅ GET /api/snippets endpoint working (returns 9 snippets)
+- ✅ GET /api/snippets/:id endpoint working
+- ✅ POST /api/snippets endpoint working
 - ✅ CORS configured for port 3003
-- ✅ All session endpoints working perfectly
+- ✅ All endpoints working perfectly
 - ✅ Database has 9 test sessions
 - ✅ Backend runs with --reload flag
 
 Database:
 - ✅ SQLite database: sherpa/data/sherpa.db
 - ✅ Contains 9 sessions with various statuses
+- ✅ Contains 9 snippets (7 built-in + 2 project/local)
 - ✅ Sessions have proper fields: id, spec_file, status, completed_features, total_features, started_at
-- ✅ All tables functional (sessions, session_logs, git_commits, snippets, etc.)
+- ✅ Snippets have proper fields: id, name, category, source, content, language, tags
+- ✅ All tables functional
 
-Git Status: Clean (1 new commit: 11d77f9)
+Git Status: Clean (1 new commit: 8d01b4d)
 Virtual Environment: venv-312 with Python 3.12
 Node Modules: Installed in sherpa/frontend/
-Frontend Server: Running on port 3003 (background task b4ccafb)
+Frontend Server: Running on port 3003 (background task b7deabc)
 Backend Server: Running on port 8001 with --reload
 
 🚀 NEXT SESSION PRIORITIES
 ===========================
 
-1. **IMPLEMENT KNOWLEDGEPAGE COMPONENT (HIGH PRIORITY)**
-   - Feature: KnowledgePage component - Browse and search snippets
-   - Search snippets interface
-   - Browse by category (security, python, react, testing, api, git)
-   - Preview snippet content in modal or panel
-   - Add to project snippets button
-   - Integration with backend snippet APIs (already working)
-   - Most important page for knowledge management
-
-2. **IMPLEMENT SOURCESPAGE COMPONENT (RECOMMENDED)**
-   - Feature: SourcesPage component - Configure Azure DevOps
+1. **IMPLEMENT SOURCESPAGE COMPONENT (HIGH PRIORITY)**
+   - Feature: SourcesPage component - Configure Azure DevOps integration
    - Azure DevOps connector form (org, project, PAT)
    - Test connection button
    - Sync status display
    - File source configuration
    - Integration with Azure DevOps Work Items API
+   - Similar to KnowledgePage - just needs to be enabled
 
-3. **IMPLEMENT CLI COMMANDS (BACKEND)**
+2. **IMPLEMENT CLI COMMANDS (BACKEND)**
    - sherpa init: Setup Bedrock KB configuration
    - sherpa generate: Create instruction files (.cursor/rules/, CLAUDE.md, etc.)
    - sherpa run: Execute autonomous harness
@@ -226,122 +220,122 @@ Backend Server: Running on port 8001 with --reload
    - sherpa snippets list: List all snippets
    - Requires Click + Rich for terminal output
 
-4. **IMPLEMENT AWS BEDROCK KNOWLEDGE BASE CLIENT**
+3. **IMPLEMENT AWS BEDROCK KNOWLEDGE BASE CLIENT**
    - Initialize boto3 Bedrock client
    - Verify connection to Bedrock KB
    - Execute test query for snippets
    - Semantic search functionality
    - Requires AWS credentials configuration
 
-5. **IMPROVE SESSIONDETAILPAGE WITH REAL DATA**
+4. **IMPROVE FRONTEND WITH REAL DATA**
    - Create test sessions with actual features data
    - Add sample logs to database
    - Add sample commits to database
    - Test with sessions that have real progress (not 0%)
    - Verify SSE updates work with real-time data
 
+5. **IMPLEMENT NEW SESSION CREATION**
+   - Add form/modal for creating new sessions
+   - POST /api/sessions endpoint integration
+   - Form fields: spec_file, total_features, work_item_id, git_branch
+   - Start session functionality
+   - Redirect to SessionDetailPage after creation
+
 📝 IMPORTANT NOTES FOR NEXT AGENT
 ==================================
 
 1. **Verification Test Performed Successfully**
    - Started session by verifying HomePage still works
-   - Tested backend health endpoint
+   - Tested SessionsPage navigation
    - No regressions found
    - All previously working features still functional
 
-2. **SessionDetailPage Implementation Details**
+2. **KnowledgePage Implementation Details**
    - Uses axios api client from lib/api.js
    - API client configured for http://localhost:8001
-   - Backend returns wrapped responses: { logs: [...], commits: [...] }
-   - Must access response.data.logs and response.data.commits
-   - Progress calculated from completed_features / total_features
-   - Session name uses spec_file field (not name field)
-   - SSE connection created in useEffect with EventSource
-   - Cleanup function closes EventSource on unmount
+   - Backend returns wrapped responses: { snippets: [...], total, timestamp }
+   - Must access response.data.snippets (not response.data directly)
+   - Component searches by title or name (snippets use "name" field)
+   - Search filters locally using filteredSnippets computed value
+   - Category filtering triggers new API call with ?category=X param
+   - Modal uses fixed positioning with z-50 for overlay
 
-3. **API Response Structure**
-   - GET /api/sessions/:id returns session object directly
-   - GET /api/sessions/:id/logs returns: { session_id, logs: [], total, timestamp }
-   - GET /api/sessions/:id/commits returns: { session_id, commits: [], total, timestamp }
-   - GET /api/sessions/:id/progress is SSE endpoint (text/event-stream)
-   - POST endpoints return: { id, status, message, timestamp }
+3. **API Response Structure for Snippets**
+   - GET /api/snippets returns: { snippets: [], total, timestamp }
+   - GET /api/snippets/:id returns: { snippet: {}, timestamp }
+   - POST /api/snippets expects: { name, category, source, content, language?, tags? }
+   - POST /api/snippets returns: { id, message, timestamp }
 
 4. **Testing Methodology**
    - Used browser automation (Puppeteer) for all verification
-   - Tested control buttons by finding and clicking via JavaScript
-   - Verified UI updates after each button click
+   - Tested category filtering by clicking buttons
+   - Tested search by typing in input field
+   - Tested modal by clicking snippet cards
+   - Verified UI updates after each interaction
    - Took screenshots at each verification step
    - Verified both functionality AND visual appearance
    - No console errors found
    - All test steps verified end-to-end
 
 5. **Visual Design**
-   - Control buttons use conditional rendering based on status:
-     * Active: shows Pause + Stop buttons
-     * Paused: shows Resume button only
-     * Stopped/Complete: shows no buttons
-   - Progress bar uses primary color (primary-600)
-   - Live Logs section uses dark terminal style (bg-gray-900)
-   - Git Commits section uses left border accent
-   - Features section uses CheckCircle icons (green=checked, gray=unchecked)
-   - All sections use card class for consistent styling
+   - Search section uses card class for consistent styling
+   - Category buttons use rounded-full for pill shape
+   - Active category: bg-primary-600 text-white
+   - Inactive category: bg-gray-200 text-gray-700
+   - Snippet cards in grid: grid-cols-1 md:grid-cols-2 lg:grid-cols-3
+   - Cards have hover:shadow-md for interactive feedback
+   - Modal uses fixed inset-0 with bg-black bg-opacity-50 backdrop
+   - Code preview uses bg-gray-900 with text-gray-100 for dark theme
+   - Copy button shows Check icon when clicked (2 second timeout)
 
 6. **Code Quality**
    - Clean, production-ready code
    - Follows React best practices
    - Uses modern async/await
    - Proper error handling with try/catch
-   - Loading states with spinner
-   - Empty states handled gracefully
+   - Error alerts for failed operations
+   - Success alerts for successful operations
+   - Empty states handled gracefully (though not visible with current data)
    - No console.log statements left in code
-   - SSE connection properly cleaned up in useEffect return
+   - Responsive design with Tailwind breakpoints
 
-7. **React Router Integration**
-   - SessionDetailPage route: /sessions/:id
-   - Uses useParams hook to get session ID
-   - Navigation from SessionsPage works correctly
-   - Browser back/forward buttons work
-   - URL updates properly on navigation
-   - Deep linking works (can navigate directly to /sessions/:id)
+7. **React Patterns Used**
+   - useState for local state (snippets, search, category, selectedSnippet, copied)
+   - useEffect for data fetching on mount and category change
+   - Conditional rendering for modal (selectedSnippet && ...)
+   - Event handlers with proper event.stopPropagation() for nested clicks
+   - Fallback values for optional fields (title || name)
+   - Array.map for rendering lists
+   - Template literals for dynamic class names
 
-8. **SSE (Server-Sent Events) Implementation**
-   - EventSource created for /api/sessions/:id/progress
-   - Backend sends events: connected, progress, complete, error
-   - Frontend updates session state on message
-   - Connection properly closed on component unmount
-   - Backend endpoint simulates progress updates (sends 10 updates)
-   - Can be enhanced to send real-time updates from actual sessions
+8. **Next Focus: SourcesPage Component**
+   - Logical next step after KnowledgePage
+   - Component already exists at sherpa/frontend/src/pages/SourcesPage.jsx
+   - Just needs to be enabled in App.jsx (same pattern as KnowledgePage)
+   - Should verify if backend Azure DevOps endpoints exist
+   - May need to implement backend endpoints first
+   - Test connection functionality is important
+   - PAT (Personal Access Token) handling requires secure input
 
-9. **Next Focus: KnowledgePage Component**
-   - Logical next step after SessionDetailPage
-   - Important for knowledge management feature
-   - Backend snippet APIs already working:
-     * GET /api/snippets (with optional ?category filter)
-     * GET /api/snippets/:id
-     * POST /api/snippets
-   - Should display snippets in browsable/searchable interface
-   - Category filtering: security, python, react, testing, api, git
-   - Preview functionality for viewing snippet content
-   - Add to project button to save snippets locally
+9. **Progress Tracking**
+   - 29 of 165 features passing (17.6%)
+   - 136 features remaining
+   - 1 feature completed this session
+   - Focus: Frontend component implementation
+   - Quality over quantity approach
+   - Steady progress: 17.0% → 17.6%
 
-10. **Progress Tracking**
-    - 28 of 165 features passing (17.0%)
-    - 137 features remaining
-    - 1 feature completed this session
-    - Focus: Frontend component implementation
-    - Quality over quantity approach
-    - Steady progress: 16.4% → 17.0%
-
-11. **Frontend Architecture**
+10. **Frontend Architecture**
     - React 18.3.1 with hooks (useState, useEffect)
     - React Router 6.20.0 for navigation
     - Tailwind CSS for styling
     - Lucide React for icons
     - Axios for API calls (via lib/api.js)
     - Component-based structure in src/pages/
-    - EventSource for SSE connections
+    - Responsive grid layouts with Tailwind
+    - Modal overlays with fixed positioning
 
-12. **Backend API Endpoints Available**
+11. **Backend API Endpoints Available**
     - GET /health - Health check
     - GET /api/sessions - List all sessions
     - GET /api/sessions?status=active - Filter by status
@@ -352,17 +346,25 @@ Backend Server: Running on port 8001 with --reload
     - POST /api/sessions/:id/pause - Pause session
     - POST /api/sessions/:id/resume - Resume session
     - POST /api/sessions/:id/stop - Stop session
-    - GET /api/snippets - List all snippets
+    - GET /api/snippets - List all snippets (optional ?category filter)
     - GET /api/snippets/:id - Get snippet by ID
     - POST /api/snippets - Create new snippet
 
+12. **Snippet Data Structure**
+    - Built-in snippets: 7 total (security, python/async, python/error, react, testing, api, git)
+    - Project snippets: stored in ./sherpa/snippets/
+    - Local snippets: stored in ./sherpa/snippets.local/
+    - Hierarchy: local > project > org > built-in
+    - Fields: id, name, category, source, content, language, tags, description
+    - Categories: security, python, react, testing, api, git
+
 13. **Background Tasks**
-    - Frontend server running in background: task ID b4ccafb
-    - Can check output: cat /tmp/claude/.../tasks/b4ccafb.output
+    - Frontend server running in background: task ID b7deabc
+    - Can check output: cat /tmp/claude/.../tasks/b7deabc.output
     - Server auto-reloads on file changes (HMR)
     - No need to restart server manually
     - Backend server on port 8001 with --reload flag
 
 =====================================
-End of Session 23 Progress Report
+End of Session 24 Progress Report
 =====================================
