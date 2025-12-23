@@ -1779,6 +1779,99 @@ async def update_azure_devops_work_item(work_item_id: int, request: AzureDevOpsU
         raise HTTPException(status_code=500, detail=f"Error updating work item: {str(e)}")
 
 
+@app.post("/api/azure-devops/work-items/{work_item_id}/convert-to-spec")
+async def convert_work_item_to_spec(work_item_id: int):
+    """
+    Convert an Azure DevOps work item to app_spec.txt format
+
+    Args:
+        work_item_id: ID of the work item to convert
+
+    Returns:
+        Spec file content and metadata
+    """
+    try:
+        logger.info(f"POST /api/azure-devops/work-items/{work_item_id}/convert-to-spec")
+
+        # Get Azure DevOps client
+        azure_client = get_azure_devops_client()
+
+        # Check if connected
+        if not azure_client.is_connected:
+            logger.info("Azure DevOps client not connected, attempting to reconnect...")
+
+            # Try to restore connection from database
+            db = await get_db()
+            config = await db.get_all_config()
+
+            org = config.get('azure_devops_org')
+            project = config.get('azure_devops_project')
+            pat = config.get('azure_devops_pat')
+
+            if not org or not project or not pat:
+                logger.warning("Azure DevOps credentials not found in database")
+                raise HTTPException(
+                    status_code=401,
+                    detail="Azure DevOps not configured. Please connect first using POST /api/azure-devops/connect"
+                )
+
+            # Extract organization name from URL if needed
+            if org.startswith('https://dev.azure.com/'):
+                org_name = org.replace('https://dev.azure.com/', '').rstrip('/')
+            elif org.startswith('http://dev.azure.com/'):
+                org_name = org.replace('http://dev.azure.com/', '').rstrip('/')
+            else:
+                org_name = org
+
+            try:
+                await azure_client.connect(org_name, project, pat)
+                logger.info("Successfully reconnected to Azure DevOps")
+            except Exception as reconnect_error:
+                logger.error(f"Failed to reconnect to Azure DevOps: {str(reconnect_error)}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Failed to reconnect to Azure DevOps: {str(reconnect_error)}"
+                )
+
+        # Convert work item to spec
+        try:
+            spec_content = await azure_client.convert_work_item_to_spec(work_item_id)
+
+            # Save spec to file
+            import os
+            specs_dir = "specs"
+            os.makedirs(specs_dir, exist_ok=True)
+            spec_filename = f"work_item_{work_item_id}_spec.txt"
+            spec_path = os.path.join(specs_dir, spec_filename)
+
+            with open(spec_path, 'w') as f:
+                f.write(spec_content)
+
+            logger.info(f"Successfully converted work item {work_item_id} to spec and saved to {spec_path}")
+
+            return {
+                "success": True,
+                "work_item_id": work_item_id,
+                "spec_content": spec_content,
+                "spec_filename": spec_filename,
+                "spec_path": spec_path,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+
+        except Exception as convert_error:
+            logger.error(f"Failed to convert work item {work_item_id} to spec: {str(convert_error)}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to convert work item to spec: {str(convert_error)}"
+            )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error converting work item {work_item_id} to spec: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error converting work item to spec: {str(e)}")
+
+
 @app.post("/api/azure-devops/save-config")
 async def save_azure_devops_config(request: AzureDevOpsSaveConfigRequest):
     """Save Azure DevOps configuration to database"""

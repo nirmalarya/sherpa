@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Loader, AlertCircle, RefreshCw, FileText, User, Calendar } from 'lucide-react'
+import { Loader, AlertCircle, RefreshCw, FileText, User, Calendar, Download, CheckCircle } from 'lucide-react'
 import api from '../lib/api'
 
 function WorkItemsList() {
@@ -8,6 +8,8 @@ function WorkItemsList() {
   const [error, setError] = useState(null)
   const [query, setQuery] = useState('')
   const [topCount, setTopCount] = useState(100)
+  const [convertingIds, setConvertingIds] = useState(new Set())
+  const [convertedIds, setConvertedIds] = useState(new Set())
 
   useEffect(() => {
     fetchWorkItems()
@@ -45,6 +47,41 @@ function WorkItemsList() {
 
   const handleRefresh = () => {
     fetchWorkItems()
+  }
+
+  const convertToSpec = async (workItemId) => {
+    try {
+      // Mark as converting
+      setConvertingIds(prev => new Set([...prev, workItemId]))
+
+      const response = await api.post(`/api/azure-devops/work-items/${workItemId}/convert-to-spec`)
+
+      if (response.data.success) {
+        // Mark as converted
+        setConvertedIds(prev => new Set([...prev, workItemId]))
+
+        // Download the spec file
+        const blob = new Blob([response.data.spec_content], { type: 'text/plain' })
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = response.data.spec_filename
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        window.URL.revokeObjectURL(url)
+      }
+    } catch (error) {
+      console.error('Error converting work item to spec:', error)
+      alert(error.response?.data?.detail || 'Failed to convert work item to spec')
+    } finally {
+      // Remove from converting state
+      setConvertingIds(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(workItemId)
+        return newSet
+      })
+    }
   }
 
   const getStateColor = (state) => {
@@ -194,19 +231,48 @@ function WorkItemsList() {
                 </div>
               </div>
 
-              <div className="flex items-center space-x-4 text-xs text-gray-500 mt-3 pt-3 border-t border-gray-100">
-                {item.assigned_to && (
-                  <div className="flex items-center">
-                    <User className="h-3.5 w-3.5 mr-1" />
-                    <span>{item.assigned_to}</span>
-                  </div>
-                )}
-                {item.changed_date && (
-                  <div className="flex items-center">
-                    <Calendar className="h-3.5 w-3.5 mr-1" />
-                    <span>Updated: {formatDate(item.changed_date)}</span>
-                  </div>
-                )}
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                <div className="flex items-center space-x-4 text-xs text-gray-500">
+                  {item.assigned_to && (
+                    <div className="flex items-center">
+                      <User className="h-3.5 w-3.5 mr-1" />
+                      <span>{item.assigned_to}</span>
+                    </div>
+                  )}
+                  {item.changed_date && (
+                    <div className="flex items-center">
+                      <Calendar className="h-3.5 w-3.5 mr-1" />
+                      <span>Updated: {formatDate(item.changed_date)}</span>
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={() => convertToSpec(item.id)}
+                  disabled={convertingIds.has(item.id)}
+                  className={`flex items-center space-x-1 px-3 py-1 rounded text-xs font-medium transition-colors ${
+                    convertedIds.has(item.id)
+                      ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                      : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  title="Convert to spec file"
+                >
+                  {convertingIds.has(item.id) ? (
+                    <>
+                      <Loader className="h-3.5 w-3.5 animate-spin" />
+                      <span>Converting...</span>
+                    </>
+                  ) : convertedIds.has(item.id) ? (
+                    <>
+                      <CheckCircle className="h-3.5 w-3.5" />
+                      <span>Converted</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-3.5 w-3.5" />
+                      <span>Convert to Spec</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           ))}

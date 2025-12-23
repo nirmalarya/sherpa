@@ -214,7 +214,7 @@
       "Step 5: Verify spec includes description",
       "Step 6: Verify spec saved as .txt file"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

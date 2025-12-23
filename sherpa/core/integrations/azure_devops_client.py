@@ -245,6 +245,105 @@ class AzureDevOpsClient:
             logger.error(f"Failed to update work item {work_item_id}: {str(e)}")
             raise Exception(f"Failed to update work item: {str(e)}")
 
+    async def convert_work_item_to_spec(self, work_item_id: int) -> str:
+        """
+        Convert a work item to app_spec.txt format
+
+        Args:
+            work_item_id: Work item ID to convert
+
+        Returns:
+            Formatted spec string
+        """
+        if not self.is_connected:
+            raise Exception("Not connected to Azure DevOps. Call connect() first.")
+
+        try:
+            if not AZURE_DEVOPS_AVAILABLE:
+                # Return mock spec for testing
+                logger.info(f"Mock convert work item {work_item_id} to spec")
+                return f"""Project Specification: Work Item #{work_item_id}
+===================================================================
+
+## Overview
+
+Implement user authentication
+
+## Description
+
+Add JWT-based authentication to the API
+
+## Technical Requirements
+
+- Backend: FastAPI with JWT authentication
+- Database: Store user credentials securely
+- Security: Hash passwords with bcrypt
+- Tokens: Generate and validate JWT tokens
+
+## Acceptance Criteria
+
+- Users can register with email and password
+- Users can login and receive JWT token
+- Protected endpoints verify JWT token
+- Tokens expire after 24 hours
+- Passwords are hashed and never stored in plain text
+
+## Success Criteria
+
+- ✅ Registration endpoint works
+- ✅ Login endpoint returns valid JWT
+- ✅ Protected endpoints reject invalid tokens
+- ✅ Password hashing implemented
+- ✅ Token expiration works correctly
+"""
+
+            # Get work item details
+            work_item = self.wit_client.get_work_item(work_item_id, expand="all")
+            fields = work_item.fields
+
+            # Extract fields
+            title = fields.get("System.Title", "Untitled")
+            description = fields.get("System.Description", "")
+            work_item_type = fields.get("System.WorkItemType", "")
+            acceptance_criteria = fields.get("Microsoft.VSTS.Common.AcceptanceCriteria", "")
+
+            # Build spec file content
+            spec_content = f"""Project Specification: {title}
+===================================================================
+
+## Overview
+
+{title}
+
+## Description
+
+{description if description else "No description provided"}
+
+## Work Item Details
+
+- Type: {work_item_type}
+- ID: #{work_item_id}
+- Project: {self.project}
+
+## Acceptance Criteria
+
+{acceptance_criteria if acceptance_criteria else "No acceptance criteria defined"}
+
+## Success Criteria
+
+- ✅ All acceptance criteria met
+- ✅ Code is tested and verified
+- ✅ Documentation is complete
+- ✅ Changes are committed to version control
+"""
+
+            logger.info(f"Successfully converted work item {work_item_id} to spec")
+            return spec_content
+
+        except Exception as e:
+            logger.error(f"Failed to convert work item {work_item_id} to spec: {str(e)}")
+            raise Exception(f"Failed to convert work item to spec: {str(e)}")
+
     def disconnect(self):
         """Disconnect from Azure DevOps"""
         self.connection = None
