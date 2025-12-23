@@ -1,15 +1,8 @@
 import { useState, useEffect } from 'react'
-import { CheckCircle, XCircle, Loader } from 'lucide-react'
 import api from '../lib/api'
+import AzureDevOpsConnector from '../components/AzureDevOpsConnector'
 
 function SourcesPage() {
-  const [azureConfig, setAzureConfig] = useState({
-    organization: '',
-    project: '',
-    pat: ''
-  })
-  const [connectionStatus, setConnectionStatus] = useState(null)
-  const [testing, setTesting] = useState(false)
   const [syncStatus, setSyncStatus] = useState(null)
 
   useEffect(() => {
@@ -25,33 +18,6 @@ function SourcesPage() {
     }
   }
 
-  const handleTestConnection = async () => {
-    setTesting(true)
-    setConnectionStatus(null)
-
-    try {
-      await api.post('/api/azure-devops/connect', azureConfig)
-      setConnectionStatus({ success: true, message: 'Connection successful!' })
-      fetchSyncStatus()
-    } catch (error) {
-      setConnectionStatus({
-        success: false,
-        message: error.response?.data?.message || 'Connection failed'
-      })
-    } finally {
-      setTesting(false)
-    }
-  }
-
-  const handleSave = async () => {
-    try {
-      await api.post('/api/azure-devops/save-config', azureConfig)
-      alert('Configuration saved successfully!')
-    } catch (error) {
-      console.error('Error saving configuration:', error)
-      alert('Failed to save configuration')
-    }
-  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -61,88 +27,8 @@ function SourcesPage() {
       </div>
 
       {/* Azure DevOps Configuration */}
-      <div className="card mb-6">
-        <h2 className="text-xl font-semibold mb-4">Azure DevOps</h2>
-
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Organization URL
-            </label>
-            <input
-              type="text"
-              placeholder="https://dev.azure.com/your-org"
-              value={azureConfig.organization}
-              onChange={(e) => setAzureConfig({ ...azureConfig, organization: e.target.value })}
-              className="input w-full"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Project Name
-            </label>
-            <input
-              type="text"
-              placeholder="YourProject"
-              value={azureConfig.project}
-              onChange={(e) => setAzureConfig({ ...azureConfig, project: e.target.value })}
-              className="input w-full"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Personal Access Token (PAT)
-            </label>
-            <input
-              type="password"
-              placeholder="Enter your PAT"
-              value={azureConfig.pat}
-              onChange={(e) => setAzureConfig({ ...azureConfig, pat: e.target.value })}
-              className="input w-full"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Requires: Work Items (Read, Write), Code (Read)
-            </p>
-          </div>
-
-          {connectionStatus && (
-            <div className={`p-4 rounded-lg flex items-center gap-2 ${
-              connectionStatus.success
-                ? 'bg-green-50 text-green-800'
-                : 'bg-red-50 text-red-800'
-            }`}>
-              {connectionStatus.success ? (
-                <CheckCircle className="h-5 w-5" />
-              ) : (
-                <XCircle className="h-5 w-5" />
-              )}
-              <span>{connectionStatus.message}</span>
-            </div>
-          )}
-
-          <div className="flex gap-2">
-            <button
-              onClick={handleTestConnection}
-              disabled={testing}
-              className="btn-secondary flex items-center gap-2"
-            >
-              {testing ? (
-                <Loader className="h-4 w-4 animate-spin" />
-              ) : (
-                <CheckCircle className="h-4 w-4" />
-              )}
-              Test Connection
-            </button>
-            <button
-              onClick={handleSave}
-              className="btn-primary"
-            >
-              Save Configuration
-            </button>
-          </div>
-        </div>
+      <div className="mb-6">
+        <AzureDevOpsConnector />
       </div>
 
       {/* Sync Status */}
