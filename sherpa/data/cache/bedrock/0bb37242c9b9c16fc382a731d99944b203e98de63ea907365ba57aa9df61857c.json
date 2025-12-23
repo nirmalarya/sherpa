@@ -1,0 +1,23 @@
+{
+  "cached_at": "2025-12-23T18:41:10.359388",
+  "cache_key": "0bb37242c9b9c16fc382a731d99944b203e98de63ea907365ba57aa9df61857c",
+  "results": [
+    {
+      "content": "# Authentication Patterns\n\n## JWT Authentication\n```python\nimport jwt\nfrom datetime import datetime, timedelta\n\ndef create_token(user_id: str, secret_key: str) -> str:\n    payload = {\n        'user_id': user_id,\n        'exp': datetime.utcnow() + timedelta(hours=24)\n    }\n    return jwt.encode(payload, secret_key, algorithm='HS256')\n```\n\n## OAuth 2.0 Flow\n- Authorization Code flow for web apps\n- Client Credentials for service-to-service\n- PKCE for mobile/SPA applications\n",
+      "score": 0.92,
+      "metadata": {
+        "category": "security",
+        "language": "python",
+        "tags": [
+          "jwt",
+          "oauth",
+          "authentication"
+        ]
+      },
+      "location": {
+        "type": "MOCK",
+        "source": "mock-knowledge-base/authentication.md"
+      }
+    }
+  ]
+}

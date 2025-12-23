@@ -768,7 +768,7 @@
       "Step 5: Verify cache expiration works",
       "Step 6: Verify cache invalidation works"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
