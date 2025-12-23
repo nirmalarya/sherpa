@@ -1821,7 +1821,7 @@
       "Step 3: Verify copyright holder listed",
       "Step 4: Verify year correct"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
