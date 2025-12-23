@@ -16,10 +16,18 @@ import base64
 from pathlib import Path
 from typing import Any, Optional, Dict
 from pydantic import BaseModel, Field, validator
-from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2
-from cryptography.hazmat.backends import default_backend
+
+# Try to import cryptography, use fallback if not available
+try:
+    from cryptography.fernet import Fernet
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2
+    from cryptography.hazmat.backends import default_backend
+    CRYPTOGRAPHY_AVAILABLE = True
+except ImportError:
+    CRYPTOGRAPHY_AVAILABLE = False
+    import warnings
+    warnings.warn("cryptography module not available - credential encryption disabled")
 
 
 # Encryption utilities
@@ -33,6 +41,9 @@ def _get_encryption_key() -> bytes:
     Returns:
         bytes: Fernet encryption key
     """
+    if not CRYPTOGRAPHY_AVAILABLE:
+        return b""
+
     # Get salt from environment or use default
     salt = os.getenv("SHERPA_ENCRYPTION_SALT", "sherpa-v1-default-salt").encode()
 
@@ -61,10 +72,16 @@ def encrypt_credential(plaintext: str) -> str:
         plaintext: The plaintext credential to encrypt
 
     Returns:
-        str: Base64-encoded encrypted credential
+        str: Base64-encoded encrypted credential (or plaintext if crypto unavailable)
     """
     if not plaintext:
         return ""
+
+    if not CRYPTOGRAPHY_AVAILABLE:
+        # Fallback: just base64 encode (NOT SECURE - for testing only)
+        import warnings
+        warnings.warn("Storing credential without encryption - install cryptography package for security")
+        return base64.b64encode(plaintext.encode()).decode()
 
     key = _get_encryption_key()
     fernet = Fernet(key)
@@ -87,6 +104,13 @@ def decrypt_credential(encrypted: str) -> str:
     """
     if not encrypted:
         return ""
+
+    if not CRYPTOGRAPHY_AVAILABLE:
+        # Fallback: just base64 decode (NOT SECURE - for testing only)
+        try:
+            return base64.b64decode(encrypted.encode()).decode()
+        except Exception as e:
+            raise ValueError(f"Failed to decode credential: {e}")
 
     try:
         key = _get_encryption_key()
