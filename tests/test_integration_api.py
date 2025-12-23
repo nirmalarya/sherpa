@@ -820,3 +820,171 @@ class TestSessionStatePersistence:
             assert session["total_features"] == session_info["expected_total"]
             assert session["completed_features"] == session_info["expected_completed"]
             assert session["status"] == session_info["expected_status"]
+
+
+@pytest.mark.integration
+class TestErrorHandlingAndRecovery:
+    """Test #68 - Error handling and recovery - Graceful handling of errors"""
+
+    @pytest.mark.asyncio
+    async def test_404_error_for_nonexistent_session(self, client):
+        """Test that accessing nonexistent resource returns proper 404 error"""
+        # Try to get a session that doesn't exist
+        response = await client.get("/api/sessions/nonexistent-session-id")
+
+        # Should return 404
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+        # Error message should be clear
+        data = response.json()
+        assert "detail" in data
+        assert "not found" in data["detail"].lower()
+
+    @pytest.mark.asyncio
+    async def test_400_error_for_invalid_update(self, client):
+        """Test that invalid updates return proper 400 error"""
+        # Create a session first
+        create_response = await client.post("/api/sessions", json={
+            "spec_file": "error_test.txt",
+            "total_features": 10
+        })
+        session_id = create_response.json().get("data", {}).get("id") or create_response.json().get("id")
+
+        # Try to update with no valid fields
+        response = await client.patch(f"/api/sessions/{session_id}", json={
+            "invalid_field": "should_be_rejected"
+        })
+
+        # Should return 400 or 422
+        assert response.status_code in [status.HTTP_400_BAD_REQUEST, status.HTTP_422_UNPROCESSABLE_ENTITY]
+
+    @pytest.mark.asyncio
+    async def test_validation_error_422(self, client):
+        """Test that invalid input data returns 422 validation error"""
+        # Try to create session with invalid data
+        invalid_data = {
+            "spec_file": "",  # Empty string should fail validation
+            "total_features": -1  # Negative number should fail
+        }
+
+        response = await client.post("/api/sessions", json=invalid_data)
+
+        # Should return 422
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    @pytest.mark.asyncio
+    async def test_session_continues_after_recoverable_error(self, client):
+        """Test that session operations continue after recoverable errors"""
+        # Create a session
+        create_response = await client.post("/api/sessions", json={
+            "spec_file": "recovery_test.txt",
+            "total_features": 10
+        })
+        session_id = create_response.json().get("data", {}).get("id") or create_response.json().get("id")
+
+        # Cause an error by trying to access nonexistent resource
+        error_response = await client.get("/api/sessions/nonexistent")
+        assert error_response.status_code == status.HTTP_404_NOT_FOUND
+
+        # Verify the original session still works
+        get_response = await client.get(f"/api/sessions/{session_id}")
+        assert get_response.status_code == status.HTTP_200_OK
+
+        # Can still update the session
+        update_response = await client.patch(f"/api/sessions/{session_id}", json={
+            "completed_features": 5
+        })
+        assert update_response.status_code == status.HTTP_200_OK
+
+        # Verify update persisted
+        final_response = await client.get(f"/api/sessions/{session_id}")
+        final_data = final_response.json().get("data") or final_response.json()
+        assert final_data["completed_features"] == 5
+
+    @pytest.mark.asyncio
+    async def test_error_responses_have_consistent_format(self, client):
+        """Test that all error responses follow consistent format"""
+        # Collect different types of errors
+        errors = []
+
+        # 404 error
+        response_404 = await client.get("/api/sessions/nonexistent")
+        errors.append(("404", response_404))
+
+        # 400 error - pause already paused session
+        create_resp = await client.post("/api/sessions", json={
+            "spec_file": "test.txt",
+            "total_features": 5
+        })
+        session_id = create_resp.json().get("data", {}).get("id") or create_resp.json().get("id")
+
+        await client.post(f"/api/sessions/{session_id}/pause")
+        response_400 = await client.post(f"/api/sessions/{session_id}/pause")
+        errors.append(("400", response_400))
+
+        # 422 validation error
+        response_422 = await client.post("/api/sessions", json={"invalid": "data"})
+        errors.append(("422", response_422))
+
+        # All should have detail field
+        for error_type, response in errors:
+            data = response.json()
+            assert "detail" in data, f"{error_type} error should have 'detail' field"
+
+    @pytest.mark.asyncio
+    async def test_concurrent_errors_dont_affect_each_other(self, client):
+        """Test that errors in concurrent operations don't affect other operations"""
+        # Create a valid session
+        create_response = await client.post("/api/sessions", json={
+            "spec_file": "concurrent_error_test.txt",
+            "total_features": 10
+        })
+        session_id = create_response.json().get("data", {}).get("id") or create_response.json().get("id")
+
+        # Run mix of valid and invalid operations concurrently
+        tasks = [
+            # Valid operations
+            client.get(f"/api/sessions/{session_id}"),  # Should succeed
+            client.patch(f"/api/sessions/{session_id}", json={"completed_features": 3}),  # Should succeed
+            # Invalid operations
+            client.get("/api/sessions/nonexistent"),  # Should fail with 404
+            client.patch("/api/sessions/nonexistent", json={"completed_features": 5}),  # Should fail with 404
+        ]
+
+        responses = await asyncio.gather(*tasks, return_exceptions=False)
+
+        # Valid operations should succeed
+        assert responses[0].status_code == status.HTTP_200_OK
+        assert responses[1].status_code == status.HTTP_200_OK
+
+        # Invalid operations should fail
+        assert responses[2].status_code == status.HTTP_404_NOT_FOUND
+        assert responses[3].status_code == status.HTTP_404_NOT_FOUND
+
+        # Verify the valid session is still in good state
+        final_response = await client.get(f"/api/sessions/{session_id}")
+        assert final_response.status_code == status.HTTP_200_OK
+        final_data = final_response.json().get("data") or final_response.json()
+        assert final_data["completed_features"] == 3
+
+    @pytest.mark.asyncio
+    async def test_multiple_error_scenarios(self, client):
+        """Test various error scenarios are handled gracefully"""
+        # Test 1: Missing required fields
+        response1 = await client.post("/api/snippets", json={"name": "test"})
+        assert response1.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+        # Test 2: Invalid session ID format
+        response2 = await client.get("/api/sessions/")
+        assert response2.status_code in [status.HTTP_404_NOT_FOUND, status.HTTP_405_METHOD_NOT_ALLOWED]
+
+        # Test 3: Pause a non-existent session
+        response3 = await client.post("/api/sessions/nonexistent/pause")
+        assert response3.status_code == status.HTTP_404_NOT_FOUND
+
+        # Test 4: Resume a non-existent session
+        response4 = await client.post("/api/sessions/nonexistent/resume")
+        assert response4.status_code == status.HTTP_404_NOT_FOUND
+
+        # All errors should have been logged (we can't test logging directly in integration tests,
+        # but we verify the errors are returned properly)

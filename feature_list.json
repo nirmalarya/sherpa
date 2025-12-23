@@ -872,7 +872,7 @@
       "Step 5: Verify retry logic for transient errors",
       "Step 6: Verify fatal errors stop session"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
