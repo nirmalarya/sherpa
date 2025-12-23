@@ -1385,7 +1385,7 @@
       "Step 5: Verify help text below field",
       "Step 6: Verify help text explains purpose"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

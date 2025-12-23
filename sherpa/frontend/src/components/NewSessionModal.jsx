@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
+import Tooltip from './Tooltip'
+import HelpText from './HelpText'
 
 /**
  * NewSessionModal - Modal dialog for creating new autonomous coding sessions
@@ -170,8 +172,9 @@ function NewSessionModal({ isOpen, onClose, onSuccess }) {
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Spec File */}
           <div>
-            <label htmlFor="spec_file" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="spec_file" className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1">
               Spec File <span className="text-red-500">*</span>
+              <Tooltip content="Path to your application specification file that describes what to build" position="right" showIcon />
             </label>
             <input
               ref={firstInputRef}
@@ -184,10 +187,11 @@ function NewSessionModal({ isOpen, onClose, onSuccess }) {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
               disabled={loading}
               required
+              aria-describedby="spec-help"
             />
-            <p className="mt-1 text-xs text-gray-500">
-              Path to the application specification file
-            </p>
+            <HelpText id="spec-help">
+              Path to the application specification file (e.g., app_spec.txt, requirements.md)
+            </HelpText>
           </div>
 
           {/* Total Features */}

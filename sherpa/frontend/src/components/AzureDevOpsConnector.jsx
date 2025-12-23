@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { CheckCircle, XCircle, Loader, AlertCircle, RefreshCw } from 'lucide-react'
 import api from '../lib/api'
+import Tooltip from './Tooltip'
+import HelpText from './HelpText'
 
 function AzureDevOpsConnector() {
   const [config, setConfig] = useState({
@@ -161,8 +163,9 @@ function AzureDevOpsConnector() {
       <div className="space-y-4">
         {/* Organization URL */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Organization URL <span className="text-red-500">*</span>
+            <Tooltip content="Your Azure DevOps organization URL (e.g., https://dev.azure.com/mycompany)" position="right" showIcon />
           </label>
           <input
             type="text"
@@ -171,20 +174,25 @@ function AzureDevOpsConnector() {
             onChange={(e) => handleInputChange('organization', e.target.value)}
             className={`input w-full ${validationErrors.organization ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
             aria-invalid={!!validationErrors.organization}
-            aria-describedby={validationErrors.organization ? 'org-error' : undefined}
+            aria-describedby={validationErrors.organization ? 'org-error org-help' : 'org-help'}
           />
-          {validationErrors.organization && (
+          {validationErrors.organization ? (
             <div id="org-error" className="mt-1 flex items-center gap-1 text-sm text-red-600">
               <AlertCircle className="h-4 w-4" />
               <span>{validationErrors.organization}</span>
             </div>
+          ) : (
+            <HelpText id="org-help">
+              Find this in your Azure DevOps URL bar. Must start with https://dev.azure.com/
+            </HelpText>
           )}
         </div>
 
         {/* Project Name */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Project Name <span className="text-red-500">*</span>
+            <Tooltip content="The name of your Azure DevOps project where work items are stored" position="right" showIcon />
           </label>
           <input
             type="text"
@@ -193,20 +201,25 @@ function AzureDevOpsConnector() {
             onChange={(e) => handleInputChange('project', e.target.value)}
             className={`input w-full ${validationErrors.project ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
             aria-invalid={!!validationErrors.project}
-            aria-describedby={validationErrors.project ? 'project-error' : undefined}
+            aria-describedby={validationErrors.project ? 'project-error project-help' : 'project-help'}
           />
-          {validationErrors.project && (
+          {validationErrors.project ? (
             <div id="project-error" className="mt-1 flex items-center gap-1 text-sm text-red-600">
               <AlertCircle className="h-4 w-4" />
               <span>{validationErrors.project}</span>
             </div>
+          ) : (
+            <HelpText id="project-help">
+              The project name appears in your Azure DevOps navigation menu
+            </HelpText>
           )}
         </div>
 
         {/* Personal Access Token */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Personal Access Token (PAT) <span className="text-red-500">*</span>
+            <Tooltip content="Create a PAT in Azure DevOps User Settings → Personal Access Tokens" position="right" showIcon />
           </label>
           <input
             type="password"
@@ -215,7 +228,7 @@ function AzureDevOpsConnector() {
             onChange={(e) => handleInputChange('pat', e.target.value)}
             className={`input w-full ${validationErrors.pat ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
             aria-invalid={!!validationErrors.pat}
-            aria-describedby={validationErrors.pat ? 'pat-error' : undefined}
+            aria-describedby={validationErrors.pat ? 'pat-error pat-help' : 'pat-help'}
           />
           {validationErrors.pat ? (
             <div id="pat-error" className="mt-1 flex items-center gap-1 text-sm text-red-600">
@@ -223,9 +236,9 @@ function AzureDevOpsConnector() {
               <span>{validationErrors.pat}</span>
             </div>
           ) : (
-            <p className="text-xs text-gray-500 mt-1">
-              Requires: Work Items (Read, Write), Code (Read)
-            </p>
+            <HelpText id="pat-help" variant="info" showIcon>
+              Required permissions: Work Items (Read, Write), Code (Read). Token is encrypted when saved.
+            </HelpText>
           )}
         </div>
 
