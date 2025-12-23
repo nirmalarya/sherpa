@@ -1643,7 +1643,7 @@
       "Step 5: Verify response includes dependencies status",
       "Step 6: Simulate DB down, verify health check fails"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

@@ -358,13 +358,69 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
+    """
+    Enhanced health check endpoint with dependency status checking
+
+    Returns:
+        - 200: Service is healthy (all dependencies OK)
+        - 503: Service is unhealthy (one or more dependencies failed)
+
+    Response includes:
+        - status: "ok" or "unhealthy"
+        - version: API version
+        - service: Service name
+        - dependencies: Status of each dependency (database, etc.)
+    """
+    # Check database dependency
+    db_status = "ok"
+    db_message = "Database connection successful"
+
+    try:
+        db = await get_db()
+        # Perform a simple query to verify database is accessible
+        conn = await db.connect()
+        cursor = await conn.execute("SELECT 1")
+        await cursor.fetchone()
+        db_status = "ok"
+        db_message = "Database connection successful"
+    except Exception as e:
+        db_status = "error"
+        db_message = f"Database connection failed: {str(e)}"
+        logger.error(f"Health check - Database error: {e}", exc_info=True)
+
+    # Determine overall status
+    overall_status = "ok" if db_status == "ok" else "unhealthy"
+
+    # Build dependencies status
+    dependencies = {
+        "database": {
+            "status": db_status,
+            "message": db_message,
+            "type": "sqlite",
+            "path": str(DB_PATH)
+        }
+    }
+
+    # Build response data
+    health_data = {
+        "status": overall_status,
+        "service": "sherpa-api",
+        "version": "1.0.0",
+        "dependencies": dependencies
+    }
+
+    # Return 503 if unhealthy, 200 if healthy
+    if overall_status == "unhealthy":
+        return JSONResponse(
+            status_code=503,
+            content=success_response(
+                data=health_data,
+                message="Service is unhealthy - one or more dependencies failed"
+            )
+        )
+
     return success_response(
-        data={
-            "status": "ok",
-            "service": "sherpa-api",
-            "version": "1.0.0"
-        },
+        data=health_data,
         message="Service is healthy"
     )
 
