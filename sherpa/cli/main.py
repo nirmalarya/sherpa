@@ -76,13 +76,11 @@ def status():
 
 
 @cli.command()
-@click.argument("session_id", required=False)
+@click.argument("session_id")
 def logs(session_id):
     """View session logs"""
-    if session_id:
-        console.print(f"[yellow]Logs for session {session_id} not yet implemented[/yellow]")
-    else:
-        console.print("[yellow]Command 'logs' requires a session ID[/yellow]")
+    from sherpa.cli.commands.logs import logs_command
+    logs_command(session_id)
 
 
 @cli.command()

@@ -164,7 +164,7 @@
       "Step 5: Verify timestamps displayed",
       "Step 6: Verify output formatted with Rich syntax"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
