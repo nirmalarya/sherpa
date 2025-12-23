@@ -1,0 +1,72 @@
+# SHERPA V1 - Pre-commit Hooks Configuration
+# See https://pre-commit.com for more information
+
+# Install: pip install pre-commit
+# Setup: pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # Frontend Linting
+  - repo: local
+    hooks:
+      - id: eslint
+        name: ESLint (Frontend)
+        entry: bash -c 'cd sherpa/frontend && npm run lint'
+        language: system
+        files: \.jsx?$
+        pass_filenames: false
+
+  # Backend Linting
+  - repo: local
+    hooks:
+      - id: flake8
+        name: flake8 (Backend)
+        entry: bash -c 'if [ -f venv-312/bin/flake8 ]; then venv-312/bin/flake8 sherpa/; elif [ -f venv/bin/flake8 ]; then venv/bin/flake8 sherpa/; else flake8 sherpa/; fi'
+        language: system
+        types: [python]
+        pass_filenames: false
+
+  # Backend Formatting
+  - repo: local
+    hooks:
+      - id: black
+        name: black (Backend)
+        entry: bash -c 'if [ -f venv-312/bin/black ]; then venv-312/bin/black sherpa/ --check; elif [ -f venv/bin/black ]; then venv/bin/black sherpa/ --check; else black sherpa/ --check; fi'
+        language: system
+        types: [python]
+        pass_filenames: false
+
+  # Type Checking
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy (Backend Type Checking)
+        entry: bash -c 'if [ -f venv-312/bin/mypy ]; then venv-312/bin/mypy sherpa/ || true; elif [ -f venv/bin/mypy ]; then venv/bin/mypy sherpa/ || true; else mypy sherpa/ || true; fi'
+        language: system
+        types: [python]
+        pass_filenames: false
+
+  # General Checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.md$'
+      - id: end-of-file-fixer
+        exclude: '\.md$'
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+  # Security Checks
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: package-lock.json
