@@ -17,8 +17,9 @@ import json
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from sherpa.core.db import get_db
+from sherpa.core.db import get_db, DB_PATH
 from sherpa.core.logging_config import get_logger
+from sherpa.core.migrations import run_migrations, rollback_migrations, get_migration_status
 
 # Initialize logger
 logger = get_logger("sherpa.api")
@@ -1140,6 +1141,85 @@ async def remove_file_source(request: Request):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/migrations/status")
+async def get_migrations_status():
+    """Get current migration status"""
+    try:
+        logger.info("GET /api/migrations/status - Fetching migration status")
+        status = await get_migration_status(DB_PATH)
+        logger.info(f"Migration status: version={status['current_version']}, pending={status['pending_count']}")
+        return {
+            "status": "success",
+            "migrations": status,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error getting migration status: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/migrations/run")
+async def run_db_migrations(request: Request):
+    """Run pending database migrations"""
+    try:
+        logger.info("POST /api/migrations/run - Running migrations")
+
+        # Get optional target version from request body
+        body = await request.json() if request.headers.get("content-length") else {}
+        target_version = body.get('target_version', None)
+
+        if target_version:
+            logger.info(f"Running migrations up to version {target_version}")
+        else:
+            logger.info("Running all pending migrations")
+
+        result = await run_migrations(DB_PATH, target_version)
+
+        logger.info(f"Migrations completed: applied {len(result['applied_versions'])} migrations")
+
+        return {
+            "status": "success",
+            "result": result,
+            "message": f"Applied {len(result['applied_versions'])} migration(s)",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error running migrations: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Migration failed: {str(e)}")
+
+
+@app.post("/api/migrations/rollback")
+async def rollback_db_migrations(request: Request):
+    """Rollback database migrations to target version"""
+    try:
+        logger.info("POST /api/migrations/rollback - Rolling back migrations")
+
+        # Get target version from request body (required)
+        body = await request.json()
+        target_version = body.get('target_version')
+
+        if target_version is None:
+            raise HTTPException(status_code=400, detail="target_version is required")
+
+        logger.info(f"Rolling back migrations to version {target_version}")
+
+        result = await rollback_migrations(DB_PATH, target_version)
+
+        logger.info(f"Rollback completed: rolled back {len(result['rolled_back_versions'])} migrations")
+
+        return {
+            "status": "success",
+            "result": result,
+            "message": f"Rolled back {len(result['rolled_back_versions'])} migration(s)",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error rolling back migrations: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Rollback failed: {str(e)}")
 
 
 if __name__ == "__main__":

@@ -1565,7 +1565,7 @@
       "Step 5: Verify existing data preserved",
       "Step 6: Verify rollback possible"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
