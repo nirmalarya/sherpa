@@ -1254,7 +1254,7 @@
       "Step 5: Click 'python' category",
       "Step 6: Verify python snippets shown"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1292,7 +1292,7 @@
       "Step 4: Verify success message shown",
       "Step 5: Verify snippet now in project snippets list"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
