@@ -1319,7 +1319,7 @@
       "Step 5: Verify success message on valid credentials",
       "Step 6: Verify error message on invalid credentials"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
