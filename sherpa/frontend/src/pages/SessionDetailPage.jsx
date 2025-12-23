@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { Play, Pause, Square, CheckCircle } from 'lucide-react'
 import api from '../lib/api'
+import SessionMonitor from '../components/SessionMonitor'
 
 function SessionDetailPage() {
   const { id } = useParams()
@@ -13,19 +14,21 @@ function SessionDetailPage() {
 
   useEffect(() => {
     fetchSessionDetails()
-
-    // Setup SSE for real-time updates
-    const eventSource = new EventSource(`http://localhost:8001/api/sessions/${id}/progress`)
-
-    eventSource.onmessage = (event) => {
-      const data = JSON.parse(event.data)
-      setSession(prev => ({ ...prev, ...data }))
-    }
-
-    return () => {
-      eventSource.close()
-    }
   }, [id])
+
+  // Handle progress updates from SessionMonitor
+  const handleProgressUpdate = (data) => {
+    setSession(prev => ({ ...prev, ...data }))
+  }
+
+  const handleSessionComplete = (data) => {
+    console.log('Session completed:', data)
+    fetchSessionDetails() // Refresh all data when session completes
+  }
+
+  const handleMonitorError = (error) => {
+    console.error('SessionMonitor error:', error)
+  }
 
   const fetchSessionDetails = async () => {
     try {
@@ -113,6 +116,14 @@ function SessionDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Session Monitor - SSE Connection */}
+      <SessionMonitor
+        sessionId={id}
+        onProgress={handleProgressUpdate}
+        onComplete={handleSessionComplete}
+        onError={handleMonitorError}
+      />
 
       {/* Progress */}
       <div className="card mb-6">
