@@ -2092,7 +2092,7 @@
       "Step 3: Verify favicon appropriate size",
       "Step 4: Verify favicon matches branding"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
