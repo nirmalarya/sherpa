@@ -976,7 +976,7 @@
       "Step 5: Run npm run build successfully",
       "Step 6: Run npm run preview successfully"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -989,7 +989,7 @@
       "Step 5: Verify CSS bundles generated",
       "Step 6: Verify assets optimized and minified"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
