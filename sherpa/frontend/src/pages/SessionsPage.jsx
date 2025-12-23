@@ -4,6 +4,7 @@ import { Search, Filter, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, FolderOp
 import api from '../lib/api'
 import ErrorMessage from '../components/ErrorMessage'
 import Breadcrumb from '../components/Breadcrumb'
+import { formatRelativeTime, formatAbsoluteTime } from '../lib/timeUtils'
 
 function SessionsPage() {
   const [sessions, setSessions] = useState([])
@@ -67,8 +68,8 @@ function SessionsPage() {
     let comparison = 0
 
     if (sortBy === 'date') {
-      const dateA = new Date(a.created_at || 0)
-      const dateB = new Date(b.created_at || 0)
+      const dateA = new Date(a.started_at || 0)
+      const dateB = new Date(b.started_at || 0)
       comparison = dateA - dateB
     } else if (sortBy === 'status') {
       const statusA = a.status || ''
@@ -321,7 +322,12 @@ function SessionsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
-                      {session.created_at ? new Date(session.created_at).toLocaleString() : 'N/A'}
+                      <span
+                        title={formatAbsoluteTime(session.started_at)}
+                        className="cursor-help"
+                      >
+                        {formatRelativeTime(session.started_at)}
+                      </span>
                     </td>
                   </tr>
                 )

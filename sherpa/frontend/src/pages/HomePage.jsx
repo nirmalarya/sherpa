@@ -4,6 +4,7 @@ import { Plus, FileText, Activity, Clock, CheckCircle, XCircle, StopCircle, Paus
 import NewSessionModal from '../components/NewSessionModal'
 import GenerateFilesModal from '../components/GenerateFilesModal'
 import ErrorMessage from '../components/ErrorMessage'
+import { formatRelativeTime, formatAbsoluteTime } from '../lib/timeUtils'
 
 function HomePage() {
   const [sessions, setSessions] = useState([])
@@ -247,23 +248,6 @@ function HomePage() {
                   }
                 }
 
-                // Helper function to format timestamp
-                const formatTimestamp = (timestamp) => {
-                  if (!timestamp) return 'N/A'
-                  const date = new Date(timestamp)
-                  const now = new Date()
-                  const diffMs = now - date
-                  const diffMins = Math.floor(diffMs / 60000)
-                  const diffHours = Math.floor(diffMins / 60)
-                  const diffDays = Math.floor(diffHours / 24)
-
-                  if (diffMins < 1) return 'Just now'
-                  if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`
-                  if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`
-                  if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`
-                  return date.toLocaleDateString()
-                }
-
                 return (
                   <Link
                     key={event.id}
@@ -275,7 +259,12 @@ function HomePage() {
                     </div>
                     <div className="flex-grow min-w-0">
                       <p className="text-sm text-gray-900 font-medium">{event.message}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{formatTimestamp(event.timestamp)}</p>
+                      <p
+                        className="text-xs text-gray-500 mt-0.5 cursor-help"
+                        title={formatAbsoluteTime(event.timestamp)}
+                      >
+                        {formatRelativeTime(event.timestamp)}
+                      </p>
                     </div>
                   </Link>
                 )

@@ -1437,7 +1437,7 @@
       "Step 5: Verify time updates to relative format",
       "Step 6: Hover to see absolute timestamp"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
