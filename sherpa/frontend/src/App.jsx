@@ -8,6 +8,7 @@ import SessionDetailPage from './pages/SessionDetailPage'
 import KnowledgePage from './pages/KnowledgePage'
 import SourcesPage from './pages/SourcesPage'
 import NotFoundPage from './pages/NotFoundPage'
+import ErrorTestPage from './pages/ErrorTestPage'
 
 function App() {
   return (
@@ -49,6 +50,7 @@ function App() {
             <Route path="/sessions/:id" element={<SessionDetailPage />} />
             <Route path="/knowledge" element={<KnowledgePage />} />
             <Route path="/sources" element={<SourcesPage />} />
+            <Route path="/error-test" element={<ErrorTestPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </main>

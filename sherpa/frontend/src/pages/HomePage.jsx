@@ -3,10 +3,12 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Plus, FileText, Activity } from 'lucide-react'
 import NewSessionModal from '../components/NewSessionModal'
 import GenerateFilesModal from '../components/GenerateFilesModal'
+import ErrorMessage from '../components/ErrorMessage'
 
 function HomePage() {
   const [sessions, setSessions] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [showNewSessionModal, setShowNewSessionModal] = useState(false)
   const [showGenerateFilesModal, setShowGenerateFilesModal] = useState(false)
   const navigate = useNavigate()
@@ -17,11 +19,21 @@ function HomePage() {
 
   const fetchActiveSessions = async () => {
     try {
+      setError(null) // Clear any previous errors
       const response = await fetch('http://localhost:8001/api/sessions?status=active')
+
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}: ${response.statusText}`)
+      }
+
       const data = await response.json()
       setSessions(data.sessions || [])
     } catch (error) {
       console.error('Error fetching sessions:', error)
+      setError({
+        message: 'Unable to load active sessions. Please check your connection and try again.',
+        technicalDetails: `${error.message}\n\nEndpoint: GET /api/sessions?status=active\nTimestamp: ${new Date().toISOString()}`
+      })
     } finally {
       setLoading(false)
     }
@@ -74,12 +86,24 @@ function HomePage() {
       {/* Active Sessions */}
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Active Sessions</h2>
+
+        {/* Error Message */}
+        {error && (
+          <ErrorMessage
+            message={error.message}
+            technicalDetails={error.technicalDetails}
+            onDismiss={() => setError(null)}
+            onRetry={fetchActiveSessions}
+            className="mb-4"
+          />
+        )}
+
         {loading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Loading sessions...</p>
           </div>
-        ) : sessions.length === 0 ? (
+        ) : sessions.length === 0 && !error ? (
           <div className="card text-center py-12">
             <Activity className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No active sessions</h3>

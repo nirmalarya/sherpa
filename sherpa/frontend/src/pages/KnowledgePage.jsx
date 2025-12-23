@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react'
 import api from '../lib/api'
 import SnippetBrowser from '../components/SnippetBrowser'
 import Alert from '../components/Alert'
+import ErrorMessage from '../components/ErrorMessage'
 
 function KnowledgePage() {
   const [snippets, setSnippets] = useState([])
   const [alert, setAlert] = useState(null)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     fetchSnippets()
@@ -13,6 +15,7 @@ function KnowledgePage() {
 
   const fetchSnippets = async () => {
     try {
+      setError(null) // Clear any previous errors
       const response = await api.get('/api/snippets')
       const loadedSnippets = response.data.snippets || []
       setSnippets(loadedSnippets)
@@ -26,14 +29,18 @@ function KnowledgePage() {
       } else {
         setAlert(null)
       }
-    } catch (error) {
-      console.error('Error fetching snippets:', error)
-      setAlert({ type: 'error', message: 'Failed to load snippets. Please try again.' })
+    } catch (err) {
+      console.error('Error fetching snippets:', err)
+      setError({
+        message: 'Unable to load code snippets. Please check your connection and try again.',
+        technicalDetails: `${err.message}\n\nEndpoint: GET /api/snippets\nTimestamp: ${new Date().toISOString()}`
+      })
     }
   }
 
   const handleAddToProject = async (snippet) => {
     try {
+      setError(null) // Clear any previous errors
       // Create snippet with project source
       await api.post('/api/snippets', {
         name: snippet.name || snippet.title,
@@ -47,9 +54,12 @@ function KnowledgePage() {
 
       // Auto-dismiss success alert after 3 seconds
       setTimeout(() => setAlert(null), 3000)
-    } catch (error) {
-      console.error('Error adding snippet:', error)
-      setAlert({ type: 'error', message: 'Failed to add snippet to project. Please try again.' })
+    } catch (err) {
+      console.error('Error adding snippet:', err)
+      setError({
+        message: 'Unable to add snippet to project. Please try again.',
+        technicalDetails: `${err.message}\n\nEndpoint: POST /api/snippets\nSnippet: ${snippet.name || snippet.title}\nTimestamp: ${new Date().toISOString()}`
+      })
     }
   }
 
@@ -60,7 +70,18 @@ function KnowledgePage() {
         <p className="mt-2 text-gray-600">Browse and search code snippets</p>
       </div>
 
-      {/* Alert Messages */}
+      {/* Error Messages */}
+      {error && (
+        <ErrorMessage
+          message={error.message}
+          technicalDetails={error.technicalDetails}
+          onDismiss={() => setError(null)}
+          onRetry={fetchSnippets}
+          className="mb-6"
+        />
+      )}
+
+      {/* Alert Messages (for warnings and successes) */}
       {alert && (
         <div className="mb-6">
           <Alert type={alert.type}>

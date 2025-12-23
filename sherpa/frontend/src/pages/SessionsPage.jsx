@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, Filter } from 'lucide-react'
 import api from '../lib/api'
+import ErrorMessage from '../components/ErrorMessage'
 
 function SessionsPage() {
   const [sessions, setSessions] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
 
@@ -15,12 +17,17 @@ function SessionsPage() {
 
   const fetchSessions = async () => {
     try {
+      setError(null) // Clear any previous errors
       const params = statusFilter !== 'all' ? { status: statusFilter } : {}
       const response = await api.get('/api/sessions', { params })
       // API returns { sessions: [...], total: N, timestamp: "..." }
       setSessions(response.data.sessions || [])
     } catch (error) {
       console.error('Error fetching sessions:', error)
+      setError({
+        message: 'Unable to load sessions. Please check your connection and try again.',
+        technicalDetails: `${error.message}\n\nEndpoint: GET /api/sessions\nFilter: ${statusFilter}\nTimestamp: ${new Date().toISOString()}`
+      })
     } finally {
       setLoading(false)
     }
@@ -69,6 +76,17 @@ function SessionsPage() {
         </div>
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <ErrorMessage
+          message={error.message}
+          technicalDetails={error.technicalDetails}
+          onDismiss={() => setError(null)}
+          onRetry={fetchSessions}
+          className="mb-6"
+        />
+      )}
+
       {/* Sessions Table */}
       <div className="card overflow-x-auto">
         {loading ? (
@@ -76,7 +94,7 @@ function SessionsPage() {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Loading sessions...</p>
           </div>
-        ) : filteredSessions.length === 0 ? (
+        ) : filteredSessions.length === 0 && !error ? (
           <div className="text-center py-12">
             <p className="text-gray-600">No sessions found</p>
           </div>
