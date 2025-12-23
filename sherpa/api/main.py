@@ -6,12 +6,14 @@ Backend API server for the autonomous coding orchestrator
 from fastapi import FastAPI, HTTPException, Body, Request, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, JSONResponse
-from pydantic import BaseModel
+from fastapi.exceptions import RequestValidationError
+from pydantic import BaseModel, Field, ValidationError, validator
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
+from starlette.exceptions import HTTPException as StarletteHTTPException
 import asyncio
 from datetime import datetime
-from typing import Optional, Dict
+from typing import Optional, Dict, List, Any
 from collections import defaultdict
 import time
 import sys
@@ -29,34 +31,71 @@ from sherpa.core.migrations import run_migrations, rollback_migrations, get_migr
 logger = get_logger("sherpa.api")
 
 
-# Pydantic models
+# Pydantic models with comprehensive validation
 class CreateSessionRequest(BaseModel):
-    spec_file: Optional[str] = None
-    total_features: int = 0
-    work_item_id: Optional[str] = None
-    git_branch: Optional[str] = None
+    spec_file: Optional[str] = Field(None, min_length=1, max_length=500, description="Path to spec file")
+    total_features: int = Field(default=0, ge=0, le=10000, description="Total number of features")
+    work_item_id: Optional[str] = Field(None, min_length=1, max_length=100, description="Azure DevOps work item ID")
+    git_branch: Optional[str] = Field(None, min_length=1, max_length=200, description="Git branch name")
+
+    class Config:
+        # Reject extra fields not defined in the model
+        extra = "forbid"
+
+    @validator('spec_file', allow_reuse=True)
+    def validate_spec_file(cls, v):
+        if v is not None and v.strip() == '':
+            raise ValueError('spec_file cannot be empty string')
+        return v
 
 
 class CreateSnippetRequest(BaseModel):
-    id: Optional[str] = None
-    name: str
-    category: str
-    source: str = "project"
-    content: str
-    language: Optional[str] = None
-    tags: Optional[str] = None
+    id: Optional[str] = Field(None, min_length=1, max_length=100, description="Snippet ID")
+    name: str = Field(..., min_length=1, max_length=200, description="Snippet name")
+    category: str = Field(..., min_length=1, max_length=50, description="Snippet category")
+    source: str = Field(default="project", pattern="^(built-in|org|project|local)$", description="Snippet source")
+    content: str = Field(..., min_length=1, max_length=1000000, description="Snippet content")
+    language: Optional[str] = Field(None, max_length=100, description="Programming language")
+    tags: Optional[str] = Field(None, max_length=500, description="Comma-separated tags")
+
+    class Config:
+        extra = "forbid"
+
+    @validator('name', 'category', 'content', allow_reuse=True)
+    def validate_not_empty(cls, v):
+        if v and v.strip() == '':
+            raise ValueError('field cannot be empty string')
+        return v
 
 
 class AzureDevOpsConnectRequest(BaseModel):
-    organization: str
-    project: str
-    pat: str
+    organization: str = Field(..., min_length=1, max_length=200, description="Azure DevOps organization")
+    project: str = Field(..., min_length=1, max_length=200, description="Azure DevOps project")
+    pat: str = Field(..., min_length=1, max_length=500, description="Personal Access Token")
+
+    class Config:
+        extra = "forbid"
+
+    @validator('organization', 'project', 'pat', allow_reuse=True)
+    def validate_not_empty(cls, v):
+        if v.strip() == '':
+            raise ValueError('field cannot be empty string')
+        return v
 
 
 class AzureDevOpsSaveConfigRequest(BaseModel):
-    organization: str
-    project: str
-    pat: str
+    organization: str = Field(..., min_length=1, max_length=200, description="Azure DevOps organization")
+    project: str = Field(..., min_length=1, max_length=200, description="Azure DevOps project")
+    pat: str = Field(..., min_length=1, max_length=500, description="Personal Access Token")
+
+    class Config:
+        extra = "forbid"
+
+    @validator('organization', 'project', 'pat', allow_reuse=True)
+    def validate_not_empty(cls, v):
+        if v.strip() == '':
+            raise ValueError('field cannot be empty string')
+        return v
 
 
 # Create FastAPI app
@@ -163,6 +202,50 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(APIVersionMiddleware)
 app.add_middleware(RateLimitMiddleware, max_requests=100, window_seconds=60)
+
+
+# Global exception handler for request validation errors
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """
+    Handle Pydantic validation errors and return detailed error information
+    """
+    errors = []
+    for error in exc.errors():
+        error_detail = {
+            "field": ".".join(str(loc) for loc in error["loc"][1:]) if len(error["loc"]) > 1 else str(error["loc"][0]),
+            "message": error["msg"],
+            "type": error["type"]
+        }
+        errors.append(error_detail)
+
+    logger.warning(f"Validation error on {request.method} {request.url.path}: {errors}")
+
+    return JSONResponse(
+        status_code=400,
+        content={
+            "error": "Validation Error",
+            "message": "Request validation failed",
+            "details": errors,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    )
+
+
+# Global exception handler for generic HTTP exceptions
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    """
+    Handle HTTP exceptions with consistent response format
+    """
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": exc.detail,
+            "status_code": exc.status_code,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    )
 
 
 @app.on_event("startup")
