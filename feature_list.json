@@ -1810,7 +1810,7 @@
       "Step 5: Verify API documentation linked",
       "Step 6: Verify contribution guidelines present"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
