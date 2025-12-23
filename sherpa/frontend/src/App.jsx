@@ -1,18 +1,28 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
 import { Mountain } from 'lucide-react'
 
-// Pages
-import HomePage from './pages/HomePage'
-import SessionsPage from './pages/SessionsPage'
-import SessionDetailPage from './pages/SessionDetailPage'
-import KnowledgePage from './pages/KnowledgePage'
-import SourcesPage from './pages/SourcesPage'
-import NotFoundPage from './pages/NotFoundPage'
-import ErrorTestPage from './pages/ErrorTestPage'
+// Lazy load pages for code splitting
+const HomePage = lazy(() => import('./pages/HomePage'))
+const SessionsPage = lazy(() => import('./pages/SessionsPage'))
+const SessionDetailPage = lazy(() => import('./pages/SessionDetailPage'))
+const KnowledgePage = lazy(() => import('./pages/KnowledgePage'))
+const SourcesPage = lazy(() => import('./pages/SourcesPage'))
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
+const ErrorTestPage = lazy(() => import('./pages/ErrorTestPage'))
 
-// Components
+// Components - CommandPalette is not lazy loaded as it's used globally
 import CommandPalette from './components/CommandPalette'
+
+// Loading component for Suspense fallback
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="text-center">
+      <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-primary-600 border-r-transparent"></div>
+      <p className="mt-4 text-gray-600">Loading...</p>
+    </div>
+  </div>
+)
 
 function App() {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
@@ -70,15 +80,17 @@ function App() {
 
         {/* Main Content */}
         <main className="flex-1">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/sessions" element={<SessionsPage />} />
-            <Route path="/sessions/:id" element={<SessionDetailPage />} />
-            <Route path="/knowledge" element={<KnowledgePage />} />
-            <Route path="/sources" element={<SourcesPage />} />
-            <Route path="/error-test" element={<ErrorTestPage />} />
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/sessions" element={<SessionsPage />} />
+              <Route path="/sessions/:id" element={<SessionDetailPage />} />
+              <Route path="/knowledge" element={<KnowledgePage />} />
+              <Route path="/sources" element={<SourcesPage />} />
+              <Route path="/error-test" element={<ErrorTestPage />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </Suspense>
         </main>
 
         {/* Footer */}
