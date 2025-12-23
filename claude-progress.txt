@@ -1,8 +1,8 @@
-SHERPA V1 - Session 15 Progress Report
+SHERPA V1 - Session 16 Progress Report
 ======================================
 
 Date: December 22, 2025
-Agent: Coding Agent (Session 15)
+Agent: Coding Agent (Session 16)
 
 ✅ COMPLETED TASKS
 ==================
@@ -14,127 +14,102 @@ Agent: Coding Agent (Session 15)
    - All verification tests passed - NO REGRESSIONS!
    - All existing features still working perfectly
 
-2. ✅ Implemented POST /api/snippets/load-builtin Endpoint
-   - Created endpoint to load built-in snippets from markdown files into database
-   - Location: sherpa/api/main.py lines 389-514
-   - Endpoint reads snippet files from sherpa/snippets/ directory
-   - Loads all 7 built-in snippets with metadata
-   - Clears existing snippets before loading (prevents duplicates)
-   - Returns JSON with load status, count, errors (if any)
+2. ✅ Implemented GET /api/snippets/:id Database Method
+   - Added get_snippet(snippet_id) method to sherpa/core/db.py
+   - Location: sherpa/core/db.py lines 224-232
+   - Queries SQLite database for snippet by ID
+   - Returns dict with all snippet fields or None if not found
+   - Follows same pattern as get_session method
+   - Async method with proper await syntax
 
-   - Endpoint functionality:
-     * Reads markdown files from sherpa/snippets/ directory
-     * Parses snippet metadata (name, category, language, tags)
-     * Inserts snippets into database using db.create_snippet()
-     * Returns load summary with success count
-     * Handles errors gracefully
-     * Can be called multiple times (idempotent)
+3. ✅ Implemented GET /api/snippets/:id API Endpoint
+   - Added endpoint to sherpa/api/main.py (lines 389-406)
+   - Endpoint retrieves specific snippet by ID from database
+   - Returns 200 with snippet object and timestamp on success
+   - Returns 404 with error message for non-existent snippets
+   - Proper exception handling (HTTPException vs general exceptions)
+   - Follows consistent API pattern with other endpoints
 
-   - Built-in snippets loaded:
-     1. Security & Authentication Patterns (security/auth)
-     2. Python Error Handling Patterns (python/error-handling)
-     3. Python Async/Await Patterns (python/async)
-     4. React Hooks Patterns (react/hooks)
-     5. Unit Testing Patterns (testing/unit)
-     6. REST API Best Practices (api/rest)
-     7. Git Commit Best Practices (git/commits)
+   Endpoint functionality:
+   * GET /api/snippets/{snippet_id}
+   * Calls db.get_snippet(snippet_id) method
+   * Returns JSON: {"snippet": {...}, "timestamp": "..."}
+   * 404 response: {"detail": "Snippet not found: {id}"}
+   * Async/await error handling
 
-3. ✅ Loaded All 7 Built-in Snippets into Database
-   - Used test_load_snippets.html interactive UI
-   - Clicked "Load Snippets" button
-   - POST request to /api/snippets/load-builtin
-   - Successfully loaded 7/7 snippets
-   - Database now contains all built-in code patterns
-   - Verified snippets accessible via GET /api/snippets
+4. ✅ Created Comprehensive Test Page
+   - Created test_get_snippet_by_id.html
+   - 5-step automated verification process
+   - Auto-runs tests on page load
+   - Visual test summary with pass/fail counters
+   - Progress bar showing test completion (100%)
+   - Color-coded step indicators (green for passed)
+   - Displays snippet metadata and content preview
+   - Tests both success and error cases (404)
 
-4. ✅ Implemented and Verified GET /api/snippets Endpoint
-   - Endpoint already existed in sherpa/api/main.py (lines 374-386)
-   - Uses db.get_snippets(category=category) method
-   - Supports optional category filter query parameter
-   - Returns JSON with snippets array, total count, timestamp
+5. ✅ Verified Endpoint Through Browser Automation
+   - Used Puppeteer for browser automation testing
+   - Navigated to test page and captured screenshots
+   - All 5 test steps passed successfully
+   - Screenshot evidence captured for verification
 
-   - Created comprehensive test page: test_get_snippets.html
-   - Features of test page:
-     * 5-step verification process
-     * Auto-runs tests on page load
-     * Visual test summary with pass/fail counters
-     * Progress bar showing test completion (100%)
-     * Color-coded step indicators (green for passed)
-     * Detailed step results with response data
-     * Displays all loaded snippets with metadata
-     * Category badges and content size display
+   Test Results Summary (5/5 PASSED):
 
-   - Tested through browser automation with Puppeteer:
-     * Step 1: Get All Snippets (No Filter) ✅
-       - Sent GET request to /api/snippets
-       - Received 200 status code ✅
-       - Response received successfully
-       - Test passed
+   Step 1: Get Valid Snippet by ID ✅
+   - Successfully retrieved snippet-api-rest
+   - Status code: 200 ✅
+   - Response received successfully ✅
 
-     * Step 2: Verify Response Structure ✅
-       - Verified response has 'snippets' array ✅
-       - Verified response has 'total' number (7) ✅
-       - Verified response has 'timestamp' string ✅
-       - All required fields present ✅
-       - Test passed
+   Step 2: Verify Response Structure ✅
+   - Response has "snippet" object ✅
+   - Response has "timestamp" field ✅
+   - All required fields present ✅
 
-     * Step 3: Verify Built-in Snippets Included ✅
-       - Found 7 snippets (expected 7) ✅
-       - All expected categories present: api, git, python, react, security, testing ✅
-       - All 7 snippet names verified:
-         * REST API Best Practices (api)
-         * Git Commit Best Practices (git)
-         * Python Async/Await Patterns (python)
-         * Python Error Handling Patterns (python)
-         * React Hooks Patterns (react)
-         * Security & Authentication Patterns (security)
-         * Unit Testing Patterns (testing)
-       - Test passed
+   Step 3: Verify Snippet Metadata ✅
+   - Has "id" field ✅
+   - Has "name" field ✅
+   - Has "category" field ✅
+   - Has "source" field ✅
+   - Has "content" field ✅
+   - Has "created_at" field ✅
+   - Has "updated_at" field ✅
+   - All metadata fields present ✅
+   - Snippet displayed: REST API Best Practices
+   - Category: api, Source: built-in
+   - Language: python, javascript
 
-     * Step 4: Verify Snippet Metadata ✅
-       - All required fields present: id, name, category, source, content, created_at, updated_at ✅
-       - Snippet has content (11175 characters for REST API snippet) ✅
-       - Metadata complete and properly formatted ✅
-       - Test passed
+   Step 4: Verify Snippet Content ✅
+   - Snippet has content (11,175 characters) ✅
+   - Content has substantial length ✅
+   - Content properly formatted ✅
+   - Content preview displayed successfully
 
-     * Step 5: Test Category Filter (Python) ✅
-       - Sent GET request to /api/snippets?category=python
-       - Received 200 status code ✅
-       - Filter works correctly ✅
-       - Found 2 Python snippets ✅
-       - All returned snippets have category='python' ✅
-       - Python snippets verified:
-         * Python Async/Await Patterns
-         * Python Error Handling Patterns
-       - Test passed
+   Step 5: Test Non-Existent Snippet (404) ✅
+   - Correctly returned 404 for non-existent snippet ✅
+   - Error message: "Snippet not found: snippet-nonexistent-12345" ✅
+   - 404 handling works correctly ✅
 
-   - Test Summary: 5/5 Passed, 0/5 Failed (100% success rate!)
-   - All critical tests passed
-   - Endpoint verified working correctly in all scenarios
-   - Screenshot evidence captured for all test steps
-   - Snippet display shows all 7 snippets with badges and metadata
-
-5. ✅ Updated feature_list.json
-   - Marked "API endpoint: GET /api/snippets - List all snippets" as passing
+6. ✅ Updated feature_list.json
+   - Marked "API endpoint: GET /api/snippets/:id - Get snippet details" as passing
    - Changed "passes": false → "passes": true
    - Verified JSON structure remains valid
-   - Feature at lines 663-673 in feature_list.json
+   - Feature at lines 675-686 in feature_list.json
 
-6. ✅ Git Commit
-   - Committed all changes with descriptive message
-   - Clean commit history maintained (commit f84110b)
+7. ✅ Git Commit
+   - Committed all changes with comprehensive message
+   - Clean commit history maintained (commit 6356237)
    - Included implementation details and test verification
-   - All files added: main.py, feature_list.json, test files, scripts
+   - All files added: db.py, main.py, feature_list.json, test page
 
 📊 FEATURE COMPLETION STATUS
 =============================
 
 Total Features: 165
-Completed (Previous Sessions): 19
+Completed (Previous Sessions): 20
 Completed This Session: 1
-Total Passing: 20
-Remaining: 145
-Progress: 12.1% (was 11.5%)
+Total Passing: 21
+Remaining: 144
+Progress: 12.7% (was 12.1%)
 
 Features Now Passing:
 1. ✅ Backend FastAPI server initialization
@@ -156,19 +131,19 @@ Features Now Passing:
 17. ✅ API endpoint: POST /api/sessions/:id/resume
 18. ✅ API endpoint: GET /api/sessions/:id/logs
 19. ✅ API endpoint: GET /api/sessions/:id/commits
-20. ✅ API endpoint: GET /api/snippets (NEW!)
+20. ✅ API endpoint: GET /api/snippets
+21. ✅ API endpoint: GET /api/snippets/:id (NEW!)
 
 📁 FILES MODIFIED THIS SESSION
 ===============================
 
 Modified:
-- sherpa/api/main.py (added POST /api/snippets/load-builtin endpoint)
+- sherpa/core/db.py (added get_snippet method)
+- sherpa/api/main.py (added GET /api/snippets/:id endpoint)
 - feature_list.json (1 feature: "passes": false → "passes": true)
 
 Created:
-- load_snippets.py (alternative script-based snippet loader)
-- test_load_snippets.html (interactive UI to load snippets)
-- test_get_snippets.html (comprehensive 5-step test page)
+- test_get_snippet_by_id.html (comprehensive 5-step test page)
 
 🎯 CURRENT STATE
 =================
@@ -189,34 +164,25 @@ Backend Status:
 - ✅ POST /api/sessions/:id/resume endpoint working perfectly
 - ✅ GET /api/sessions/:id/logs endpoint working perfectly
 - ✅ GET /api/sessions/:id/commits endpoint working perfectly
-- ✅ GET /api/snippets endpoint working perfectly (NEW!)
-- ✅ POST /api/snippets/load-builtin endpoint working perfectly (NEW!)
+- ✅ GET /api/snippets endpoint working perfectly
+- ✅ POST /api/snippets/load-builtin endpoint working perfectly
+- ✅ GET /api/snippets/:id endpoint working perfectly (NEW!)
 - ✅ Database has 8 test sessions
-- ✅ Database has 7 built-in snippets (NEW!)
+- ✅ Database has 7 built-in snippets
 - ✅ All required response fields present
 - ✅ Proper REST status codes (GET: 200, POST: 200/201, 404 for not found)
-- ✅ Error handling works correctly
+- ✅ Error handling works correctly (404 for non-existent resources)
 - ✅ Backend runs with --reload flag for automatic code reloading
 
 Snippets Endpoint Details:
-- ✅ Returns all snippets when no filter provided
-- ✅ Returns filtered snippets when category parameter provided
-- ✅ Response includes snippets array, total count, timestamp
-- ✅ Each snippet has: id, name, category, source, content, language, tags, created_at, updated_at
-- ✅ Built-in snippets loaded from markdown files
-- ✅ All 7 snippets accessible with full metadata
-- ✅ Category filtering tested and working (python category returns 2 snippets)
+- ✅ Returns specific snippet when valid ID provided
+- ✅ Returns 404 when snippet ID doesn't exist
+- ✅ Response includes snippet object and timestamp
+- ✅ Snippet has all required fields: id, name, category, source, content, language, tags, created_at, updated_at
+- ✅ Content is complete and properly formatted
+- ✅ Error messages are clear and helpful
 - ✅ Follows consistent API pattern with other endpoints
 - ✅ Proper async/await error handling
-
-Snippets in Database:
-- ✅ REST API Best Practices (api) - 11,175 characters
-- ✅ Git Commit Best Practices (git) - 7,806 characters
-- ✅ Python Async/Await Patterns (python) - 8,800 characters
-- ✅ Python Error Handling Patterns (python) - 7,516 characters
-- ✅ React Hooks Patterns (react) - 10,173 characters
-- ✅ Security & Authentication Patterns (security) - 5,792 characters
-- ✅ Unit Testing Patterns (testing) - 9,074 characters
 
 Frontend Status:
 - ✅ React application exists
@@ -228,22 +194,23 @@ Database:
 - ✅ SQLite database: sherpa/data/sherpa.db
 - ✅ All tables created and functional
 - ✅ Contains 8 test sessions
-- ✅ Contains 7 built-in snippets (NEW!)
+- ✅ Contains 7 built-in snippets
 - ✅ Session CRUD operations working
-- ✅ Snippet CRUD operations working (NEW!)
+- ✅ Snippet read operations working
 - ✅ Session logs table exists with proper schema
 - ✅ Git commits table exists with proper schema
 - ✅ All fields properly stored and retrieved
 
-Git Status: Clean (1 new commit: f84110b)
+Git Status: Clean (1 new commit: 6356237)
 Virtual Environment: venv-312 with Python 3.12
 Node Modules: Installed in sherpa/frontend/
 Frontend Server: Running on port 3001
 Backend Server: Running on port 8001 with --reload
 
 Test Files Created:
-- test_get_snippets.html (GET /api/snippets testing - NEW!)
-- test_load_snippets.html (Load built-in snippets - NEW!)
+- test_get_snippet_by_id.html (GET /api/snippets/:id testing - NEW!)
+- test_get_snippets.html (GET /api/snippets testing)
+- test_load_snippets.html (Load built-in snippets)
 - test_session_commits.html (GET /api/sessions/:id/commits testing)
 - test_session_logs.html (GET /api/sessions/:id/logs testing)
 - test_resume_session.html (POST /api/sessions/:id/resume testing)
@@ -268,35 +235,39 @@ Test Files Created:
 🚀 NEXT SESSION PRIORITIES
 ===========================
 
-1. **IMPLEMENT NEXT API ENDPOINT: GET /api/snippets/:id (HIGH PRIORITY)**
-   - Retrieve specific snippet by ID
-   - Test with various snippet IDs from database
-   - Verify 404 handling for non-existent snippets
-   - Return snippet with full content and metadata
-   - Follow same pattern as GET /api/sessions/:id
-
-2. **IMPLEMENT API ENDPOINT: POST /api/snippets/query**
+1. **IMPLEMENT NEXT API ENDPOINT: POST /api/snippets/query (HIGH PRIORITY)**
    - Query Bedrock KB for snippets (if Bedrock configured)
    - Semantic search for code patterns
    - Return relevant snippets with relevance scores
    - May need to mock Bedrock KB for testing
    - Alternative: local search through existing snippets
 
-3. **IMPLEMENT API ENDPOINT: POST /api/snippets**
+2. **IMPLEMENT API ENDPOINT: POST /api/snippets**
    - Add new snippet to project
    - Validate snippet data
    - Save to ./sherpa/snippets/ directory
    - Insert into database
    - Test snippet creation and retrieval
 
-4. **INVESTIGATE FRONTEND RENDERING ISSUE**
+3. **IMPLEMENT API ENDPOINT: PUT /api/snippets/:id**
+   - Update existing snippet
+   - Validate snippet data
+   - Update in database and file system
+   - Test snippet update and retrieval
+
+4. **IMPLEMENT API ENDPOINT: DELETE /api/snippets/:id**
+   - Delete snippet from database
+   - Optionally remove from file system
+   - Test deletion and 404 response
+
+5. **INVESTIGATE FRONTEND RENDERING ISSUE**
    - React app not displaying properly
    - Check HomePage component and routing
    - Verify all React components compile
    - Fix Grafana preloader issue
    - Enable proper navigation
 
-5. **IMPLEMENT AZURE DEVOPS ENDPOINTS**
+6. **IMPLEMENT AZURE DEVOPS ENDPOINTS**
    - POST /api/azure-devops/connect
    - GET /api/azure-devops/work-items
    - POST /api/azure-devops/work-items/:id/update
@@ -320,21 +291,27 @@ Test Files Created:
    - Progress bars for visual feedback
    - 5-step comprehensive verification process
 
-3. **Snippets Implementation**
-   - Added endpoint to load built-in snippets from markdown files
-   - All 7 snippets successfully loaded into database
-   - GET /api/snippets endpoint verified working
-   - Category filtering tested and working
-   - Full metadata stored (id, name, category, source, content, language, tags, timestamps)
-   - Snippets ready for use in autonomous coding harness
-   - Can enhance prompts with relevant code patterns
+3. **GET /api/snippets/:id Implementation**
+   - Added database method get_snippet(snippet_id) to db.py
+   - Added API endpoint GET /api/snippets/{snippet_id} to main.py
+   - Endpoint retrieves specific snippet by ID
+   - Returns 200 with snippet object on success
+   - Returns 404 with error message for non-existent snippets
+   - All 5 test steps passed with browser automation
+   - Screenshot evidence captured
+   - Endpoint verified working correctly in all scenarios
 
 4. **Database Has Test Data**
    - 8 test sessions created during testing sessions
    - 7 have "active" status, 1 has "stopped" status
-   - 7 built-in snippets with full content
-   - Git commits table exists but is empty
-   - Session logs table exists but is empty
+   - 7 built-in snippets with full content:
+     * snippet-api-rest (REST API Best Practices)
+     * snippet-git-commits (Git Commit Best Practices)
+     * snippet-python-async (Python Async/Await Patterns)
+     * snippet-python-error-handling (Python Error Handling Patterns)
+     * snippet-react-hooks (React Hooks Patterns)
+     * snippet-security-auth (Security & Authentication Patterns)
+     * snippet-testing-unit (Unit Testing Patterns)
    - Can be used for testing other endpoints
    - Session IDs and snippet IDs available in test results
 
@@ -346,10 +323,10 @@ Test Files Created:
    - Should be investigated when working on frontend features
 
 6. **Next Focus: Continue API Endpoints**
-   - GET /api/snippets/:id is next logical step
-   - Should be straightforward (similar to GET /api/sessions/:id)
+   - POST /api/snippets/query is next logical step (Bedrock KB search)
    - Then POST /api/snippets for creating new snippets
-   - Then POST /api/snippets/query for Bedrock KB queries
+   - Then PUT /api/snippets/:id for updating snippets
+   - Then DELETE /api/snippets/:id for deleting snippets
    - Many endpoints may already be implemented
    - Focus on thorough testing and verification
 
@@ -362,12 +339,12 @@ Test Files Created:
    - 5-step verification process works well
 
 8. **Progress Tracking**
-   - 20 of 165 features passing (12.1%)
-   - 145 features remaining
+   - 21 of 165 features passing (12.7%)
+   - 144 features remaining
    - Focus on one feature at a time
    - Quality over quantity
    - Each session completes ~1 feature thoroughly
-   - Steady progress: 11.5% → 12.1% this session
+   - Steady progress: 12.1% → 12.7% this session
 
 9. **API Endpoints Progress**
    - ✅ GET /api/sessions (list all)
@@ -381,37 +358,51 @@ Test Files Created:
    - ✅ GET /api/sessions/:id/commits (get git commits)
    - ✅ GET /api/snippets (list all snippets)
    - ✅ POST /api/snippets/load-builtin (load built-in snippets)
-   - ⏳ GET /api/snippets/:id (next to implement)
-   - ⏳ POST /api/snippets/query (Bedrock KB search)
+   - ✅ GET /api/snippets/:id (get specific snippet)
+   - ⏳ POST /api/snippets/query (Bedrock KB search - next to implement)
    - ⏳ POST /api/snippets (create new snippet)
+   - ⏳ PUT /api/snippets/:id (update snippet)
+   - ⏳ DELETE /api/snippets/:id (delete snippet)
    - And many more...
 
-10. **Snippets Endpoint Implementation Details**
-    - Uses FastAPI @app.get decorator
-    - Async function with await for database operations
-    - Optional category query parameter: ?category=python
-    - Calls db.get_snippets(category=category) method
-    - Database method returns List[Dict[str, Any]]
-    - Returns JSON with snippets, total, timestamp
-    - Proper error propagation and handling
-    - Empty snippets handled gracefully (returns [])
-    - Category filter works correctly
+10. **GET /api/snippets/:id Endpoint Implementation Details**
+    - Database Method: get_snippet(snippet_id) in db.py
+      * SQL query: SELECT * FROM snippets WHERE id = ?
+      * Returns dict(row) if found, None otherwise
+      * Async method with proper await syntax
 
-11. **Load Built-in Endpoint Implementation**
-    - POST /api/snippets/load-builtin
-    - Reads markdown files from sherpa/snippets/
-    - Parses 7 built-in snippet files
-    - Clears existing snippets before loading
-    - Inserts each snippet with full metadata
-    - Returns load summary (loaded count, total in db, errors)
-    - Idempotent (can be called multiple times)
-    - Handles file not found errors gracefully
+    - API Endpoint: GET /api/snippets/{snippet_id} in main.py
+      * Calls db.get_snippet(snippet_id)
+      * Returns 200 with snippet object and timestamp
+      * Returns 404 with error detail for non-existent snippets
+      * Exception handling: HTTPException re-raised, others wrapped
 
-12. **Built-in Snippets Schema**
+    - Response Format (200):
+      {
+        "snippet": {
+          "id": "snippet-api-rest",
+          "name": "REST API Best Practices",
+          "category": "api",
+          "source": "built-in",
+          "content": "...",
+          "language": "python, javascript",
+          "tags": "rest-api, http, fastapi, express, api-design",
+          "created_at": "2025-12-23T01:08:39.754825",
+          "updated_at": "2025-12-23T01:08:39.754825"
+        },
+        "timestamp": "2025-12-23T01:08:48.139879"
+      }
+
+    - Response Format (404):
+      {
+        "detail": "Snippet not found: snippet-nonexistent-12345"
+      }
+
+11. **Snippet Schema**
     - id: TEXT PRIMARY KEY (e.g., snippet-security-auth)
     - name: TEXT NOT NULL (e.g., Security & Authentication Patterns)
-    - category: TEXT NOT NULL (e.g., security, python, react)
-    - source: TEXT NOT NULL (always "built-in" for these)
+    - category: TEXT NOT NULL (e.g., security, python, react, api, git, testing)
+    - source: TEXT NOT NULL (e.g., "built-in", "project", "org", "local")
     - content: TEXT NOT NULL (full markdown file content)
     - language: TEXT (e.g., "python, javascript")
     - tags: TEXT (e.g., "authentication, authorization, security")
@@ -419,5 +410,5 @@ Test Files Created:
     - updated_at: TEXT NOT NULL (ISO timestamp)
 
 =====================================
-End of Session 15 Progress Report
+End of Session 16 Progress Report
 =====================================
