@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Search, Code, Copy, Check } from 'lucide-react'
+import { Search, Code } from 'lucide-react'
+import CodeBlock from './CodeBlock'
 
 /**
  * SnippetBrowser Component
@@ -21,17 +22,10 @@ function SnippetBrowser({ snippets = [], onAddToProject }) {
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('all')
   const [selectedSnippet, setSelectedSnippet] = useState(null)
-  const [copied, setCopied] = useState(false)
 
   const handleSearch = () => {
     // Search is handled by filteredSnippets - this is for manual trigger
     // The filtering happens automatically via the filteredSnippets computed value
-  }
-
-  const handleCopy = (content) => {
-    navigator.clipboard.writeText(content)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
   }
 
   const handleAddClick = (e, snippet) => {
@@ -153,18 +147,11 @@ function SnippetBrowser({ snippets = [], onAddToProject }) {
               </button>
             </div>
             <div className="p-6 overflow-y-auto max-h-[60vh]">
-              <div className="relative">
-                <button
-                  onClick={() => handleCopy(selectedSnippet.content)}
-                  className="absolute top-2 right-2 btn-secondary flex items-center gap-2"
-                >
-                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  {copied ? 'Copied!' : 'Copy'}
-                </button>
-                <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
-                  <code>{selectedSnippet.content}</code>
-                </pre>
-              </div>
+              <CodeBlock
+                code={selectedSnippet.content}
+                showLineNumbers={true}
+                showCopyButton={true}
+              />
             </div>
           </div>
         </div>

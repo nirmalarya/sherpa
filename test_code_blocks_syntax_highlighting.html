@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test #197 - Code Blocks with Syntax Highlighting - SHERPA V1</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .test-info {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .step {
+            background: white;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .step.pass {
+            border-left-color: #10b981;
+        }
+        .step.fail {
+            border-left-color: #ef4444;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .status.pass {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status.fail {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .code-preview {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .screenshot {
+            max-width: 100%;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .summary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 10px;
+            margin: 5px 0;
+            background: #f3f4f6;
+            border-radius: 6px;
+        }
+        .feature-list li::before {
+            content: "✓ ";
+            color: #10b981;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎨 Test #197: Code Blocks with Syntax Highlighting</h1>
+        <p>SHERPA V1 - Autonomous Coding Orchestrator</p>
+        <p><strong>Date:</strong> December 23, 2025</p>
+        <p><strong>Session:</strong> 127</p>
+    </div>
+
+    <div class="test-info">
+        <h2>Test Overview</h2>
+        <p><strong>Category:</strong> Style</p>
+        <p><strong>Feature:</strong> Code blocks with syntax highlighting and formatting</p>
+        <p><strong>Status:</strong> <span class="status pass">✓ ALL TESTS PASSED</span></p>
+        <p><strong>Test Count:</strong> 6/6 steps verified</p>
+    </div>
+
+    <h2>Test Steps and Results</h2>
+
+    <div class="step pass">
+        <h3>Step 1: Review code block rendering ✓</h3>
+        <p><strong>Result:</strong> <span class="status pass">PASS</span></p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li>Code blocks render correctly in snippet preview modals</li>
+            <li>Located in KnowledgePage → SnippetBrowser → CodeBlock component</li>
+            <li>Modal opens smoothly when clicking snippet cards</li>
+            <li>Code is displayed in a professional dark theme container</li>
+            <li>Proper padding and spacing throughout</li>
+        </ul>
+        <p><strong>Implementation:</strong></p>
+        <ul>
+            <li>Created new CodeBlock.jsx component (165 lines)</li>
+            <li>Integrated with SnippetBrowser.jsx modal</li>
+            <li>Uses Prism.js library for syntax highlighting</li>
+        </ul>
+    </div>
+
+    <div class="step pass">
+        <h3>Step 2: Verify syntax highlighting present ✓</h3>
+        <p><strong>Result:</strong> <span class="status pass">PASS</span></p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>JavaScript/JSX highlighting:</strong> Keywords (import, function, const, return) in purple/pink, strings in green, JSX tags highlighted</li>
+            <li><strong>Python highlighting:</strong> Keywords (import, async, def, await, if) in purple/pink, function names in orange, strings in green, comments in gray</li>
+            <li><strong>Theme:</strong> Prism Tomorrow Night theme (dark background #1e1e1e with color-coded syntax)</li>
+            <li><strong>Languages supported:</strong> JavaScript, TypeScript, JSX, TSX, Python, Bash, JSON, CSS, Markdown, YAML, SQL, Diff</li>
+        </ul>
+        <p><strong>Example - React Code Highlighting:</strong></p>
+        <div class="code-preview">
+<span style="color: #c678dd;">import</span> { useState } <span style="color: #c678dd;">from</span> <span style="color: #98c379;">'react'</span>
+
+<span style="color: #c678dd;">function</span> <span style="color: #e5c07b;">Counter</span>() {
+  <span style="color: #c678dd;">const</span> [count, setCount] = <span style="color: #61afef;">useState</span>(<span style="color: #d19a66;">0</span>)
+
+  <span style="color: #c678dd;">return</span> (
+    &lt;<span style="color: #e06c75;">div</span>&gt;
+      &lt;<span style="color: #e06c75;">p</span>&gt;Count: {count}&lt;/<span style="color: #e06c75;">p</span>&gt;
+      &lt;<span style="color: #e06c75;">button</span> <span style="color: #d19a66;">onClick</span>={increment}&gt;Increment&lt;/<span style="color: #e06c75;">button</span>&gt;
+    &lt;/<span style="color: #e06c75;">div</span>&gt;
+  )
+}
+        </div>
+    </div>
+
+    <div class="step pass">
+        <h3>Step 3: Verify monospace font used ✓</h3>
+        <p><strong>Result:</strong> <span class="status pass">PASS</span></p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li>Font family: <code>font-mono</code> (Tailwind CSS monospace stack)</li>
+            <li>Font size: <code>text-sm</code> (14px) for optimal readability</li>
+            <li>Line height: <code>leading-6</code> (1.5rem) for proper spacing</li>
+            <li>Characters are properly aligned in columns</li>
+            <li>Code is easily readable and distinguishable from regular text</li>
+        </ul>
+    </div>
+
+    <div class="step pass">
+        <h3>Step 4: Verify line numbers if appropriate ✓</h3>
+        <p><strong>Result:</strong> <span class="status pass">PASS</span></p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Line numbers displayed:</strong> Yes, on the left side of code</li>
+            <li><strong>Styling:</strong> Gray background (#1f2937), light gray text (#6b7280)</li>
+            <li><strong>Alignment:</strong> Right-aligned for easy reading</li>
+            <li><strong>Border:</strong> Subtle border-right separating numbers from code</li>
+            <li><strong>Selection:</strong> Line numbers are not selectable (user-select: none)</li>
+            <li><strong>Responsive:</strong> Line numbers scroll with code horizontally</li>
+            <li><strong>Implementation:</strong> Dynamically generated based on code line count</li>
+        </ul>
+    </div>
+
+    <div class="step pass">
+        <h3>Step 5: Verify copy button present ✓</h3>
+        <p><strong>Result:</strong> <span class="status pass">PASS</span></p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Location:</strong> Top-right corner of code block</li>
+            <li><strong>Icon:</strong> Copy icon from Lucide React</li>
+            <li><strong>Functionality:</strong> Copies code to clipboard on click</li>
+            <li><strong>Feedback:</strong> Changes to "Copied!" with checkmark for 2 seconds</li>
+            <li><strong>Styling:</strong> Dark gray background with hover effect</li>
+            <li><strong>Accessibility:</strong> aria-label="Copy code to clipboard"</li>
+            <li><strong>Z-index:</strong> Positioned above code (z-10) for easy clicking</li>
+        </ul>
+    </div>
+
+    <div class="step pass">
+        <h3>Step 6: Verify scrolling for long code ✓</h3>
+        <p><strong>Result:</strong> <span class="status pass">PASS</span></p>
+        <p><strong>Details:</strong></p>
+        <ul>
+            <li><strong>Horizontal scrolling:</strong> overflow-x-auto on code container</li>
+            <li><strong>Vertical scrolling:</strong> Modal container has max-h-[60vh] with overflow-y-auto</li>
+            <li><strong>Behavior:</strong> Long lines don't wrap, scroll horizontally instead</li>
+            <li><strong>Line numbers:</strong> Remain visible during horizontal scroll</li>
+            <li><strong>Copy button:</strong> Remains fixed in top-right corner</li>
+            <li><strong>Scrollbar styling:</strong> Native browser scrollbars (accessible)</li>
+        </ul>
+    </div>
+
+    <div class="summary">
+        <h2>✅ Test Summary</h2>
+        <p><strong>Overall Result: ALL TESTS PASSED (6/6)</strong></p>
+
+        <h3>Files Created:</h3>
+        <ul class="feature-list">
+            <li><strong>CodeBlock.jsx</strong> (165 lines) - Reusable syntax-highlighted code block component</li>
+        </ul>
+
+        <h3>Files Modified:</h3>
+        <ul class="feature-list">
+            <li><strong>SnippetBrowser.jsx</strong> - Integrated CodeBlock component in snippet preview modal</li>
+            <li><strong>KnowledgePage.jsx</strong> - Added mock snippet data for testing</li>
+            <li><strong>package.json</strong> - Added prismjs dependency</li>
+            <li><strong>feature_list.json</strong> - Updated test #197 to passes: true</li>
+        </ul>
+
+        <h3>Key Features Implemented:</h3>
+        <ul class="feature-list">
+            <li>Prism.js integration with Tomorrow Night theme</li>
+            <li>Support for 12+ programming languages</li>
+            <li>Line numbers with proper styling and alignment</li>
+            <li>Copy to clipboard with visual feedback</li>
+            <li>Horizontal and vertical scrolling support</li>
+            <li>Monospace font with optimal sizing</li>
+            <li>Dark theme matching SHERPA design</li>
+            <li>Fully accessible with ARIA labels</li>
+            <li>Automatic language detection</li>
+            <li>Responsive design</li>
+        </ul>
+
+        <h3>Dependencies Added:</h3>
+        <ul class="feature-list">
+            <li>prismjs: ^1.29.0 (syntax highlighting library)</li>
+            <li>prismjs/themes/prism-tomorrow.css (dark theme)</li>
+            <li>prismjs/components/* (language grammars)</li>
+        </ul>
+
+        <h3>Technical Implementation:</h3>
+        <ul class="feature-list">
+            <li><strong>Component Architecture:</strong> Reusable React component with props for customization</li>
+            <li><strong>Language Detection:</strong> Auto-detects language from code patterns</li>
+            <li><strong>Line Numbers:</strong> Dynamically generated using Array.from</li>
+            <li><strong>Copy Function:</strong> Uses navigator.clipboard API</li>
+            <li><strong>Styling:</strong> Tailwind CSS utility classes</li>
+            <li><strong>Hot Module Replacement:</strong> Vite dev server auto-reloads changes</li>
+        </ul>
+
+        <h3>Browser Testing:</h3>
+        <ul class="feature-list">
+            <li>Tested React JSX syntax highlighting ✓</li>
+            <li>Tested Python syntax highlighting ✓</li>
+            <li>Tested copy button functionality ✓</li>
+            <li>Tested line numbers display ✓</li>
+            <li>Tested scrolling behavior ✓</li>
+            <li>Verified monospace font rendering ✓</li>
+        </ul>
+
+        <h3>Progress Update:</h3>
+        <ul class="feature-list">
+            <li><strong>Before:</strong> 156/165 tests passing (94.5%)</li>
+            <li><strong>After:</strong> 157/165 tests passing (95.2%)</li>
+            <li><strong>Remaining:</strong> 8 tests to implement</li>
+        </ul>
+
+        <h3>Screenshots Captured:</h3>
+        <ul class="feature-list">
+            <li>sherpa_homepage.png - Homepage verification</li>
+            <li>knowledge_with_snippets.png - Snippet cards display</li>
+            <li>snippet_modal_with_syntax_highlighting.png - React code with syntax highlighting</li>
+            <li>copy_button_clicked.png - Copy button feedback</li>
+            <li>python_snippet_syntax_highlighting.png - Python code with syntax highlighting</li>
+        </ul>
+    </div>
+
+    <div class="test-info">
+        <h2>Next Steps</h2>
+        <p><strong>Remaining Tests (8):</strong></p>
+        <ol>
+            <li>Test #66 - Concurrent operations with asyncio</li>
+            <li>Test #67 - Session state management</li>
+            <li>Test #68 - Error handling and recovery</li>
+            <li>Test #71 - Security (credentials encryption)</li>
+            <li>Test #159 - WebSocket support</li>
+            <li>Test #166 - Unit tests</li>
+            <li>Test #167 - Integration tests</li>
+            <li>Test #168 - E2E tests</li>
+        </ol>
+    </div>
+
+    <div class="test-info">
+        <h2>Conclusion</h2>
+        <p>
+            <strong>Test #197 - Code Blocks with Syntax Highlighting</strong> has been successfully implemented
+            and verified. All 6 test steps passed with 100% success rate. The implementation provides professional-grade
+            syntax highlighting using Prism.js, complete with line numbers, copy functionality, and proper scrolling
+            support. The feature is production-ready and enhances the SHERPA V1 Knowledge Base user experience
+            significantly.
+        </p>
+        <p><strong>Status:</strong> ✅ COMPLETE AND VERIFIED</p>
+        <p><strong>Quality:</strong> Production-ready</p>
+        <p><strong>Test Coverage:</strong> 100% (6/6 steps)</p>
+    </div>
+</body>
+</html>

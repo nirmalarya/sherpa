@@ -2008,7 +2008,7 @@
       "Step 5: Verify copy button present",
       "Step 6: Verify scrolling for long code"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",

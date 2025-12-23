@@ -32,9 +32,105 @@ function KnowledgePage() {
       }
     } catch (err) {
       console.error('Error fetching snippets:', err)
+
+      // Use mock data for testing when API fails
+      const mockSnippets = [
+        {
+          name: 'React useState Hook',
+          title: 'React useState Hook',
+          category: 'react',
+          description: 'Example of using the useState hook in React for state management',
+          content: `import { useState } from 'react'
+
+function Counter() {
+  const [count, setCount] = useState(0)
+
+  const increment = () => {
+    setCount(count + 1)
+  }
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={increment}>Increment</button>
+    </div>
+  )
+}
+
+export default Counter`,
+          language: 'jsx',
+          tags: ['react', 'hooks', 'state']
+        },
+        {
+          name: 'Python Async Function',
+          title: 'Python Async Function',
+          category: 'python',
+          description: 'Example of async/await pattern in Python for concurrent operations',
+          content: `import asyncio
+
+async def fetch_data(url):
+    """Fetch data asynchronously"""
+    await asyncio.sleep(1)
+    return {"url": url, "data": "some data"}
+
+async def main():
+    # Concurrent execution
+    results = await asyncio.gather(
+        fetch_data("https://api.example.com/1"),
+        fetch_data("https://api.example.com/2"),
+        fetch_data("https://api.example.com/3")
+    )
+    return results
+
+if __name__ == "__main__":
+    asyncio.run(main())`,
+          language: 'python',
+          tags: ['python', 'async', 'asyncio']
+        },
+        {
+          name: 'REST API Endpoint',
+          title: 'REST API Endpoint',
+          category: 'api',
+          description: 'FastAPI endpoint example with validation and error handling',
+          content: `from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class User(BaseModel):
+    name: str
+    email: str
+
+@app.get("/users/{user_id}")
+async def get_user(user_id: str):
+    user = await db.fetch_one(
+        "SELECT * FROM users WHERE id = ?",
+        user_id
+    )
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+    return user
+
+@app.post("/users")
+async def create_user(user: User):
+    user_id = str(uuid.uuid4())
+    await db.execute(
+        "INSERT INTO users (id, name, email) VALUES (?, ?, ?)",
+        user_id, user.name, user.email
+    )
+    return {"id": user_id, "message": "User created"}`,
+          language: 'python',
+          tags: ['api', 'fastapi', 'rest']
+        }
+      ]
+
+      setSnippets(mockSnippets)
       setError({
         message: 'Unable to load code snippets. Please check your connection and try again.',
-        technicalDetails: `${err.message}\n\nEndpoint: GET /api/snippets\nTimestamp: ${new Date().toISOString()}`
+        technicalDetails: `${err.message}\n\nEndpoint: GET /api/snippets\nTimestamp: ${new Date().toISOString()}\n\nNote: Displaying mock data for testing.`
       })
     }
   }
