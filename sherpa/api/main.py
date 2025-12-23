@@ -740,6 +740,102 @@ async def get_azure_devops_status():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/sessions/{session_id}/test-data")
+async def add_test_data(session_id: str):
+    """Add test logs and commits to a session for testing purposes"""
+    try:
+        db = await get_db()
+
+        # Verify session exists
+        session = await db.get_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        conn = await db.connect()
+
+        # Add test logs with different levels
+        test_logs = [
+            ("INFO", f"Session {session_id} started"),
+            ("INFO", "Initializing autonomous coding agent..."),
+            ("INFO", "Loading knowledge snippets from database"),
+            ("INFO", "Found 7 built-in snippets"),
+            ("WARNING", "No local snippets found in ./sherpa/snippets.local/"),
+            ("INFO", "Starting feature implementation"),
+            ("INFO", "Implementing feature 1: Backend FastAPI server initialization"),
+            ("INFO", "Running tests for feature 1"),
+            ("INFO", "✅ Feature 1 tests passed"),
+            ("INFO", "Implementing feature 2: SQLite database with aiosqlite"),
+            ("ERROR", "Failed to connect to database on first attempt"),
+            ("INFO", "Retrying database connection..."),
+            ("INFO", "✅ Database connection successful"),
+            ("INFO", "Running tests for feature 2"),
+            ("INFO", "✅ Feature 2 tests passed"),
+            ("INFO", "Committing changes to git"),
+            ("INFO", "Progress: 2/50 features completed (4%)"),
+        ]
+
+        for level, message in test_logs:
+            await conn.execute("""
+                INSERT INTO session_logs (session_id, level, message, timestamp)
+                VALUES (?, ?, ?, ?)
+            """, (session_id, level, message, datetime.utcnow().isoformat()))
+
+        # Add test git commits
+        test_commits = [
+            {
+                "hash": "a1b2c3d",
+                "message": "Implement backend FastAPI server initialization\n\n- Added main.py with FastAPI app\n- Configured CORS for frontend\n- Added health check endpoint",
+                "author": "Autonomous Agent",
+                "files_changed": 3
+            },
+            {
+                "hash": "e4f5g6h",
+                "message": "Implement SQLite database with aiosqlite\n\n- Created database schema\n- Added sessions table\n- Added snippets table\n- Implemented async database operations",
+                "author": "Autonomous Agent",
+                "files_changed": 5
+            },
+            {
+                "hash": "i7j8k9l",
+                "message": "Add session logs and git commits tables\n\n- Extended database schema\n- Added session_logs table for tracking\n- Added git_commits table for version control",
+                "author": "Autonomous Agent",
+                "files_changed": 2
+            },
+        ]
+
+        for commit in test_commits:
+            await conn.execute("""
+                INSERT INTO git_commits (session_id, commit_hash, message, author, timestamp, files_changed)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (
+                session_id,
+                commit['hash'],
+                commit['message'],
+                commit['author'],
+                datetime.utcnow().isoformat(),
+                commit['files_changed']
+            ))
+
+        await conn.commit()
+
+        # Get counts to verify
+        logs = await db.get_logs(session_id)
+        commits = await db.get_commits(session_id)
+
+        return {
+            "success": True,
+            "message": "Test data added successfully",
+            "logs_added": len(test_logs),
+            "commits_added": len(test_commits),
+            "total_logs": len(logs),
+            "total_commits": len(commits),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)

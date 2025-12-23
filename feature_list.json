@@ -1133,7 +1133,7 @@
       "Step 5: Verify logs auto-scroll to bottom",
       "Step 6: Verify log levels color-coded"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1146,7 +1146,7 @@
       "Step 5: Verify commit details shown",
       "Step 6: Verify link to git diff"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

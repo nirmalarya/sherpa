@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Test Logs and Commits to Database</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+        }
+        h1 { color: #4ec9b0; }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background-color: #0e4429; color: #3fb950; }
+        .error { background-color: #4a1618; color: #f85149; }
+        .info { background-color: #1a2735; color: #58a6ff; }
+        pre {
+            background-color: #0d1117;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        button {
+            background-color: #238636;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 10px 5px;
+        }
+        button:hover { background-color: #2ea043; }
+        button:disabled {
+            background-color: #6e7681;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <h1>🏔️ Add Test Data to SHERPA Database</h1>
+    <p>This tool will add sample logs and git commits to a session for testing the Live Logs and Git Commits features.</p>
+
+    <button onclick="addTestData()">Add Test Logs & Commits</button>
+    <button onclick="checkData()">Check Existing Data</button>
+
+    <div id="output"></div>
+
+    <script>
+        const API_URL = 'http://localhost:8001';
+
+        function log(message, type = 'info') {
+            const output = document.getElementById('output');
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = message;
+            output.appendChild(div);
+        }
+
+        async function addTestData() {
+            document.getElementById('output').innerHTML = '';
+            log('🚀 Starting test data addition...', 'info');
+
+            try {
+                // Step 1: Get all sessions
+                log('📊 Fetching sessions...', 'info');
+                const sessionsRes = await fetch(`${API_URL}/api/sessions`);
+                const sessionsData = await sessionsRes.json();
+
+                if (sessionsData.sessions.length === 0) {
+                    log('❌ No sessions found. Please create a session first.', 'error');
+                    return;
+                }
+
+                const session = sessionsData.sessions[0];
+                const sessionId = session.id;
+                log(`✅ Using session: ${sessionId}`, 'success');
+
+                // Step 2: Check if data already exists
+                const logsRes = await fetch(`${API_URL}/api/sessions/${sessionId}/logs`);
+                const logsData = await logsRes.json();
+
+                const commitsRes = await fetch(`${API_URL}/api/sessions/${sessionId}/commits`);
+                const commitsData = await commitsRes.json();
+
+                log(`📝 Current state: ${logsData.total} logs, ${commitsData.total} commits`, 'info');
+
+                // Since we can't directly insert into database via API,
+                // we'll use the browser's IndexedDB or localStorage to simulate
+                // For now, let's just display the session info
+
+                log('ℹ️  Note: Direct database insertion requires backend endpoint', 'info');
+                log('📋 Session details:', 'info');
+
+                const pre = document.createElement('pre');
+                pre.textContent = JSON.stringify({
+                    session_id: sessionId,
+                    spec_file: session.spec_file,
+                    status: session.status,
+                    total_features: session.total_features,
+                    completed_features: session.completed_features
+                }, null, 2);
+                document.getElementById('output').appendChild(pre);
+
+                log('💡 To add test data, you need to use the Python script directly on the server', 'info');
+                log('   Run: ./venv-312/bin/python3 add_test_logs_commits.py', 'info');
+
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+                console.error('Full error:', error);
+            }
+        }
+
+        async function checkData() {
+            document.getElementById('output').innerHTML = '';
+            log('🔍 Checking existing data...', 'info');
+
+            try {
+                const sessionsRes = await fetch(`${API_URL}/api/sessions`);
+                const sessionsData = await sessionsRes.json();
+
+                for (const session of sessionsData.sessions.slice(0, 3)) {
+                    const sessionId = session.id;
+
+                    const logsRes = await fetch(`${API_URL}/api/sessions/${sessionId}/logs`);
+                    const logsData = await logsRes.json();
+
+                    const commitsRes = await fetch(`${API_URL}/api/sessions/${sessionId}/commits`);
+                    const commitsData = await commitsRes.json();
+
+                    log(`📊 Session: ${sessionId}`, 'info');
+                    log(`   └─ Logs: ${logsData.total}, Commits: ${commitsData.total}`, 'info');
+
+                    if (logsData.total > 0) {
+                        const pre = document.createElement('pre');
+                        pre.textContent = 'Sample logs:\n' + JSON.stringify(logsData.logs.slice(0, 3), null, 2);
+                        document.getElementById('output').appendChild(pre);
+                    }
+
+                    if (commitsData.total > 0) {
+                        const pre = document.createElement('pre');
+                        pre.textContent = 'Sample commits:\n' + JSON.stringify(commitsData.commits.slice(0, 2), null, 2);
+                        document.getElementById('output').appendChild(pre);
+                    }
+                }
+
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+                console.error('Full error:', error);
+            }
+        }
+
+        // Auto-check on load
+        window.addEventListener('load', () => {
+            setTimeout(checkData, 500);
+        });
+    </script>
+</body>
+</html>

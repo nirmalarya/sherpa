@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Test Data</title>
+</head>
+<body>
+    <h1>Adding test data...</h1>
+    <div id="output"></div>
+
+    <script>
+        async function addData() {
+            const output = document.getElementById('output');
+
+            try {
+                // Get first session
+                const sessionsRes = await fetch('http://localhost:8001/api/sessions');
+                const sessionsData = await sessionsRes.json();
+
+                if (sessionsData.sessions.length === 0) {
+                    output.innerHTML = '<p style="color: red;">No sessions found!</p>';
+                    return;
+                }
+
+                const sessionId = sessionsData.sessions[0].id;
+                output.innerHTML += `<p>Using session: ${sessionId}</p>`;
+
+                // Add test data
+                const addRes = await fetch(`http://localhost:8001/api/sessions/${sessionId}/test-data`, {
+                    method: 'POST'
+                });
+                const addData = await addRes.json();
+
+                output.innerHTML += `<pre>${JSON.stringify(addData, null, 2)}</pre>`;
+
+                if (addData.success) {
+                    output.innerHTML += '<p style="color: green; font-weight: bold;">✅ SUCCESS! Test data added.</p>';
+                    output.innerHTML += `<p><a href="http://localhost:3003/sessions/${sessionId}">View session in UI</a></p>`;
+                }
+            } catch (error) {
+                output.innerHTML += `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+
+        // Auto-run on load
+        window.addEventListener('load', addData);
+    </script>
+</body>
+</html>
