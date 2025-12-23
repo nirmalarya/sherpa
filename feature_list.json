@@ -1345,7 +1345,7 @@
       "Step 5: Verify file source active",
       "Step 6: Verify specs loaded from file source"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

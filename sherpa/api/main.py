@@ -3,7 +3,7 @@ SHERPA V1 - Main FastAPI Application
 Backend API server for the autonomous coding orchestrator
 """
 
-from fastapi import FastAPI, HTTPException, Body
+from fastapi import FastAPI, HTTPException, Body, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -933,6 +933,145 @@ async def add_test_data(session_id: str):
             "total_logs": len(logs),
             "total_commits": len(commits),
             "timestamp": datetime.utcnow().isoformat()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/file-sources")
+async def get_file_sources():
+    """Get configured file source paths"""
+    try:
+        db = await get_db()
+        conn = await db.connect()
+
+        # Get file_sources from configuration
+        cursor = await conn.execute(
+            "SELECT value FROM configuration WHERE key = ?",
+            ("file_sources",)
+        )
+        row = await cursor.fetchone()
+
+        if row:
+            import json
+            file_sources = json.loads(row[0])
+        else:
+            file_sources = []
+
+        return {
+            "file_sources": file_sources
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/file-sources")
+async def add_file_source(request: Request):
+    """Add a new file source path"""
+    try:
+        data = await request.json()
+        path = data.get('path', '').strip()
+
+        if not path:
+            raise HTTPException(status_code=400, detail="Path is required")
+
+        # Validate path format (basic validation)
+        import os
+        if not path.startswith('./') and not path.startswith('/') and not os.path.isabs(path):
+            raise HTTPException(
+                status_code=400,
+                detail="Path must be absolute or start with ./"
+            )
+
+        db = await get_db()
+        conn = await db.connect()
+
+        # Get existing file sources
+        cursor = await conn.execute(
+            "SELECT value FROM configuration WHERE key = ?",
+            ("file_sources",)
+        )
+        row = await cursor.fetchone()
+
+        import json
+        if row:
+            file_sources = json.loads(row[0])
+        else:
+            file_sources = []
+
+        # Check if path already exists
+        if path in file_sources:
+            raise HTTPException(status_code=400, detail="Path already exists")
+
+        # Add new path
+        file_sources.append(path)
+
+        # Save back to database
+        await conn.execute("""
+            INSERT OR REPLACE INTO configuration (key, value, updated_at)
+            VALUES (?, ?, ?)
+        """, ("file_sources", json.dumps(file_sources), datetime.utcnow().isoformat()))
+
+        await conn.commit()
+
+        return {
+            "success": True,
+            "message": "File source added successfully",
+            "path": path,
+            "file_sources": file_sources
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/file-sources")
+async def remove_file_source(request: Request):
+    """Remove a file source path"""
+    try:
+        data = await request.json()
+        path = data.get('path', '').strip()
+
+        if not path:
+            raise HTTPException(status_code=400, detail="Path is required")
+
+        db = await get_db()
+        conn = await db.connect()
+
+        # Get existing file sources
+        cursor = await conn.execute(
+            "SELECT value FROM configuration WHERE key = ?",
+            ("file_sources",)
+        )
+        row = await cursor.fetchone()
+
+        import json
+        if not row:
+            raise HTTPException(status_code=404, detail="No file sources configured")
+
+        file_sources = json.loads(row[0])
+
+        # Remove path if it exists
+        if path not in file_sources:
+            raise HTTPException(status_code=404, detail="Path not found")
+
+        file_sources.remove(path)
+
+        # Save back to database
+        await conn.execute("""
+            INSERT OR REPLACE INTO configuration (key, value, updated_at)
+            VALUES (?, ?, ?)
+        """, ("file_sources", json.dumps(file_sources), datetime.utcnow().isoformat()))
+
+        await conn.commit()
+
+        return {
+            "success": True,
+            "message": "File source removed successfully",
+            "file_sources": file_sources
         }
     except HTTPException:
         raise

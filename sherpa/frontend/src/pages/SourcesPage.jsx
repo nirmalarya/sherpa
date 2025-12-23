@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import api from '../lib/api'
 import AzureDevOpsConnector from '../components/AzureDevOpsConnector'
+import FileSourceConfig from '../components/FileSourceConfig'
 
 function SourcesPage() {
   const [syncStatus, setSyncStatus] = useState(null)
@@ -59,24 +60,8 @@ function SourcesPage() {
       )}
 
       {/* File Source Configuration */}
-      <div className="card mt-6">
-        <h2 className="text-xl font-semibold mb-4">File Sources</h2>
-        <p className="text-gray-600 mb-4">
-          Configure local file paths for spec files
-        </p>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Spec Directory
-          </label>
-          <input
-            type="text"
-            placeholder="./specs"
-            className="input w-full"
-          />
-        </div>
-        <button className="btn-primary mt-4">
-          Add Directory
-        </button>
+      <div className="mt-6">
+        <FileSourceConfig />
       </div>
     </div>
   )

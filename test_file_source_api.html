@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test File Source API</title>
+</head>
+<body>
+    <h1>Test File Source API</h1>
+    <button onclick="testAddFileSource()">Add File Source (./specs)</button>
+    <button onclick="testGetFileSources()">Get File Sources</button>
+    <pre id="result"></pre>
+
+    <script>
+        const API_URL = 'http://localhost:8001';
+
+        async function testAddFileSource() {
+            try {
+                const response = await fetch(`${API_URL}/api/file-sources`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ path: './specs' })
+                });
+                const data = await response.json();
+                document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+                console.log('Add response:', data);
+            } catch (error) {
+                document.getElementById('result').textContent = 'Error: ' + error.message;
+                console.error('Error:', error);
+            }
+        }
+
+        async function testGetFileSources() {
+            try {
+                const response = await fetch(`${API_URL}/api/file-sources`);
+                const data = await response.json();
+                document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+                console.log('Get response:', data);
+            } catch (error) {
+                document.getElementById('result').textContent = 'Error: ' + error.message;
+                console.error('Error:', error);
+            }
+        }
+    </script>
+</body>
+</html>
