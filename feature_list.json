@@ -898,7 +898,7 @@
       "Step 5: Verify AWS credentials from environment",
       "Step 6: Verify sensitive data redacted in UI"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

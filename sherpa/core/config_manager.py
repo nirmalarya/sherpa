@@ -7,12 +7,115 @@ Handles:
 - Validating configuration values
 - Updating configuration
 - Persisting changes
+- Encrypting/decrypting sensitive credentials
 """
 
 import json
+import os
+import base64
 from pathlib import Path
 from typing import Any, Optional, Dict
 from pydantic import BaseModel, Field, validator
+from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2
+from cryptography.hazmat.backends import default_backend
+
+
+# Encryption utilities
+def _get_encryption_key() -> bytes:
+    """
+    Get or generate encryption key for credentials
+
+    The key is derived from a machine-specific identifier (hostname + username)
+    combined with an optional environment variable salt.
+
+    Returns:
+        bytes: Fernet encryption key
+    """
+    # Get salt from environment or use default
+    salt = os.getenv("SHERPA_ENCRYPTION_SALT", "sherpa-v1-default-salt").encode()
+
+    # Create password from machine-specific data
+    import socket
+    import getpass
+    password = f"{socket.gethostname()}-{getpass.getuser()}-sherpa".encode()
+
+    # Derive key using PBKDF2
+    kdf = PBKDF2(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt,
+        iterations=100000,
+        backend=default_backend()
+    )
+    key = base64.urlsafe_b64encode(kdf.derive(password))
+    return key
+
+
+def encrypt_credential(plaintext: str) -> str:
+    """
+    Encrypt a credential (e.g., Azure DevOps PAT)
+
+    Args:
+        plaintext: The plaintext credential to encrypt
+
+    Returns:
+        str: Base64-encoded encrypted credential
+    """
+    if not plaintext:
+        return ""
+
+    key = _get_encryption_key()
+    fernet = Fernet(key)
+    encrypted = fernet.encrypt(plaintext.encode())
+    return base64.urlsafe_b64encode(encrypted).decode()
+
+
+def decrypt_credential(encrypted: str) -> str:
+    """
+    Decrypt a credential
+
+    Args:
+        encrypted: Base64-encoded encrypted credential
+
+    Returns:
+        str: Decrypted plaintext credential
+
+    Raises:
+        ValueError: If decryption fails
+    """
+    if not encrypted:
+        return ""
+
+    try:
+        key = _get_encryption_key()
+        fernet = Fernet(key)
+        encrypted_bytes = base64.urlsafe_b64decode(encrypted.encode())
+        decrypted = fernet.decrypt(encrypted_bytes)
+        return decrypted.decode()
+    except Exception as e:
+        raise ValueError(f"Failed to decrypt credential: {e}")
+
+
+def redact_credential(credential: Optional[str]) -> str:
+    """
+    Redact a credential for logging/display
+
+    Args:
+        credential: The credential to redact
+
+    Returns:
+        str: Redacted credential (e.g., "***...abc")
+    """
+    if not credential:
+        return ""
+
+    if len(credential) <= 6:
+        return "***"
+
+    # Show last 3 characters for verification
+    return f"***...{credential[-3:]}"
 
 
 class BedrockConfig(BaseModel):
@@ -274,23 +377,36 @@ class ConfigManager:
             }
         })
 
-    def set_azure_devops_config(self, organization: str, project: str, pat_encrypted: Optional[str] = None) -> None:
+    def set_azure_devops_config(self, organization: str, project: str, pat: Optional[str] = None) -> None:
         """
         Set Azure DevOps configuration
 
         Args:
             organization: Azure DevOps organization
             project: Azure DevOps project
-            pat_encrypted: Encrypted Personal Access Token
+            pat: Personal Access Token (will be encrypted before storage)
         """
         config_dict = {
             "organization": organization,
             "project": project
         }
-        if pat_encrypted:
-            config_dict["pat_encrypted"] = pat_encrypted
+        if pat:
+            # Encrypt the PAT before storing
+            config_dict["pat_encrypted"] = encrypt_credential(pat)
 
         self.update({"azure_devops": config_dict})
+
+    def get_azure_devops_pat(self) -> Optional[str]:
+        """
+        Get decrypted Azure DevOps PAT
+
+        Returns:
+            Decrypted PAT or None if not configured
+        """
+        config = self.get_azure_devops_config()
+        if config and config.pat_encrypted:
+            return decrypt_credential(config.pat_encrypted)
+        return None
 
     def set_s3_config(self, bucket_name: str, prefix: Optional[str] = None, enabled: bool = True) -> None:
         """

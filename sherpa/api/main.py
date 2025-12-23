@@ -31,6 +31,7 @@ from sherpa.core.bedrock_client import get_bedrock_client
 from sherpa.core.integrations.azure_devops_client import get_azure_devops_client
 from sherpa.core.file_watcher import get_file_watcher, reset_file_watcher
 from sherpa.core.git_integration import get_git_repository, GitIntegrationError
+from sherpa.core.config_manager import get_config_manager, encrypt_credential, decrypt_credential, redact_credential
 
 # Initialize logger
 logger = get_logger("sherpa.api")
@@ -1717,11 +1718,14 @@ async def connect_azure_devops(request: AzureDevOpsConnectRequest):
 
             logger.info(f"Successfully connected to Azure DevOps: {request.organization}/{request.project}")
 
-            # Save configuration to database for future use
+            # Save configuration to database with encrypted PAT
             db = await get_db()
             await db.set_config('azure_devops_org', request.organization)
             await db.set_config('azure_devops_project', request.project)
-            await db.set_config('azure_devops_pat', request.pat)  # Note: In production, encrypt this!
+            # Encrypt PAT before storing
+            encrypted_pat = encrypt_credential(request.pat)
+            await db.set_config('azure_devops_pat', encrypted_pat)
+            logger.info(f"Azure DevOps PAT stored encrypted: {redact_credential(encrypted_pat)}")
 
             return {
                 "success": True,
@@ -1761,13 +1765,23 @@ async def get_azure_devops_work_items(query: Optional[str] = None, top: int = 10
             db = await get_db()
             org = await db.get_config('azure_devops_org')
             project = await db.get_config('azure_devops_project')
-            pat = await db.get_config('azure_devops_pat')
+            encrypted_pat = await db.get_config('azure_devops_pat')
 
-            if not org or not project or not pat:
+            if not org or not project or not encrypted_pat:
                 logger.warning("Azure DevOps not configured - credentials not found in database")
                 raise HTTPException(
                     status_code=401,
                     detail="Azure DevOps not configured. Please connect first using POST /api/azure-devops/connect"
+                )
+
+            # Decrypt PAT before using
+            try:
+                pat = decrypt_credential(encrypted_pat)
+            except Exception as decrypt_error:
+                logger.error(f"Failed to decrypt Azure DevOps PAT: {decrypt_error}")
+                raise HTTPException(
+                    status_code=500,
+                    detail="Failed to decrypt credentials. Please reconnect to Azure DevOps."
                 )
 
             # Reconnect using stored credentials

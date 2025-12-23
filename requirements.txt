@@ -53,3 +53,6 @@ detect-secrets==1.4.0
 
 # Utilities
 python-dateutil==2.8.2
+
+# Security
+cryptography==42.0.0
