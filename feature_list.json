@@ -1199,7 +1199,7 @@
       "Step 5: Verify event timestamps shown",
       "Step 6: Verify events link to relevant pages"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

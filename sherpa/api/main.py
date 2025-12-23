@@ -740,6 +740,78 @@ async def get_azure_devops_status():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/activity")
+async def get_recent_activity(limit: int = 10):
+    """Get recent activity events from sessions"""
+    try:
+        db = await get_db()
+
+        # Get all sessions ordered by creation date
+        all_sessions = await db.get_sessions()
+
+        # Sort by started_at (most recent first)
+        sorted_sessions = sorted(
+            all_sessions,
+            key=lambda s: s.get('started_at', ''),
+            reverse=True
+        )
+
+        # Take the most recent sessions up to the limit
+        recent_sessions = sorted_sessions[:limit]
+
+        # Create activity events from sessions
+        activity_events = []
+        for session in recent_sessions:
+            session_name = session.get('spec_file') or session.get('id', 'Unknown')
+            status = session.get('status', 'unknown')
+            started_at = session.get('started_at')
+            completed_at = session.get('completed_at')
+
+            # Determine event type and message
+            if status == 'complete' and completed_at:
+                event_type = "session_completed"
+                message = f"Session '{session_name}' completed successfully"
+                timestamp = completed_at
+            elif status == 'error':
+                event_type = "session_error"
+                message = f"Session '{session_name}' encountered an error"
+                timestamp = completed_at or started_at
+            elif status == 'stopped':
+                event_type = "session_stopped"
+                message = f"Session '{session_name}' was stopped"
+                timestamp = completed_at or started_at
+            elif status == 'paused':
+                event_type = "session_paused"
+                message = f"Session '{session_name}' was paused"
+                timestamp = started_at
+            elif status == 'active':
+                event_type = "session_started"
+                message = f"Session '{session_name}' started"
+                timestamp = started_at
+            else:
+                event_type = "session_event"
+                message = f"Session '{session_name}' status: {status}"
+                timestamp = started_at
+
+            activity_events.append({
+                "id": f"event-{session.get('id')}-{event_type}",
+                "type": event_type,
+                "message": message,
+                "timestamp": timestamp,
+                "session_id": session.get('id'),
+                "session_name": session_name,
+                "status": status
+            })
+
+        return {
+            "events": activity_events,
+            "total": len(activity_events),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/sessions/{session_id}/test-data")
 async def add_test_data(session_id: str):
     """Add test logs and commits to a session for testing purposes"""
