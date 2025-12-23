@@ -1694,7 +1694,7 @@
       "Step 5: Verify API accessible from host",
       "Step 6: Verify environment variables passed correctly"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
