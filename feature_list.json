@@ -794,7 +794,7 @@
       "Step 5: Verify snippet higher priority than built-in",
       "Step 6: Verify snippet updates detected"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
