@@ -143,9 +143,32 @@ function HomePage() {
                 : 0
               const sessionName = session.spec_file || session.id
 
+              // Helper function to get status badge color
+              const getStatusColor = (status) => {
+                switch (status) {
+                  case 'active':
+                    return 'bg-blue-100 text-blue-800'
+                  case 'completed':
+                    return 'bg-green-100 text-green-800'
+                  case 'error':
+                    return 'bg-red-100 text-red-800'
+                  case 'paused':
+                    return 'bg-yellow-100 text-yellow-800'
+                  case 'stopped':
+                    return 'bg-orange-100 text-orange-800'
+                  default:
+                    return 'bg-gray-100 text-gray-800'
+                }
+              }
+
               return (
                 <Link key={session.id} to={`/sessions/${session.id}`} className="card hover:shadow-md transition-shadow">
-                  <h3 className="font-semibold text-lg mb-2">{sessionName}</h3>
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="font-semibold text-lg">{sessionName}</h3>
+                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${getStatusColor(session.status)}`}>
+                      {session.status || 'active'}
+                    </span>
+                  </div>
                   <div className="mb-3">
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-gray-600">Progress</span>
