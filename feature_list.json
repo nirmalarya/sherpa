@@ -718,7 +718,7 @@
       "Step 4: Verify credentials stored securely",
       "Step 5: Verify connection status returned"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

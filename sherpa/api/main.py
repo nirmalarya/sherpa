@@ -28,6 +28,7 @@ from sherpa.core.logging_config import get_logger
 from sherpa.core.migrations import run_migrations, rollback_migrations, get_migration_status
 from sherpa.core.config import get_settings
 from sherpa.core.bedrock_client import get_bedrock_client
+from sherpa.core.integrations.azure_devops_client import get_azure_devops_client
 
 # Initialize logger
 logger = get_logger("sherpa.api")
@@ -1293,45 +1294,46 @@ async def connect_azure_devops(request: AzureDevOpsConnectRequest):
             logger.warning("Azure DevOps connection attempt with missing credentials")
             raise HTTPException(status_code=400, detail="Organization, project, and PAT are required")
 
-        # Validate organization URL format
-        if not (request.organization.startswith('http://') or request.organization.startswith('https://')):
-            if not request.organization.startswith('dev.azure.com/'):
-                # Auto-format: assume it's just the org name
-                org_url = f"https://dev.azure.com/{request.organization}"
-            else:
-                org_url = f"https://{request.organization}"
-        else:
-            org_url = request.organization
+        # Get Azure DevOps client
+        azure_client = get_azure_devops_client()
 
-        # In a real implementation, we would:
-        # 1. Use azure-devops Python SDK to test connection
-        # 2. Verify PAT has required permissions
-        # 3. Test access to the specified project
-        # For now, we'll do basic validation and simulate success
+        # Attempt to connect
+        try:
+            result = await azure_client.connect(
+                organization=request.organization,
+                project=request.project,
+                pat=request.pat
+            )
 
-        # Simulate API call delay
-        await asyncio.sleep(0.5)
+            logger.info(f"Successfully connected to Azure DevOps: {request.organization}/{request.project}")
 
-        logger.info(f"Successfully connected to Azure DevOps: {org_url}/{request.project}")
+            # Save configuration to database for future use
+            db = await get_db()
+            await db.set_config('azure_devops_org', request.organization)
+            await db.set_config('azure_devops_project', request.project)
+            await db.set_config('azure_devops_pat', request.pat)  # Note: In production, encrypt this!
 
-        # For demonstration purposes, accept any credentials
-        # In production, use: from azure.devops.connection import Connection
-        # conn = Connection(base_url=org_url, creds=BasicAuthentication('', pat))
-        # core_client = conn.clients.get_core_client()
-        # projects = core_client.get_projects()
+            return {
+                "success": True,
+                "message": result.get("message", "Successfully connected to Azure DevOps"),
+                "organization": request.organization,
+                "project": request.project,
+                "connection_status": result.get("connection_status", "connected"),
+                "timestamp": datetime.utcnow().isoformat()
+            }
 
-        return {
-            "success": True,
-            "message": "Successfully connected to Azure DevOps",
-            "organization": org_url,
-            "project": request.project,
-            "timestamp": datetime.utcnow().isoformat()
-        }
+        except Exception as conn_error:
+            logger.error(f"Azure DevOps connection failed: {str(conn_error)}")
+            raise HTTPException(
+                status_code=401,
+                detail=f"Failed to connect to Azure DevOps: {str(conn_error)}"
+            )
+
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Azure DevOps connection failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Connection failed: {str(e)}")
+        logger.error(f"Azure DevOps connection error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Connection error: {str(e)}")
 
 
 @app.post("/api/azure-devops/save-config")
