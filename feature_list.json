@@ -525,7 +525,7 @@
       "Step 5: Verify click snippet shows full content",
       "Step 6: Verify copy to clipboard functionality"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
