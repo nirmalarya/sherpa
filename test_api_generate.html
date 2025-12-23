@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test POST /api/generate - SHERPA V1</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .test-section h2 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        .test-step {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+        }
+
+        .test-step.success {
+            border-color: #28a745;
+            background: #f0fff4;
+        }
+
+        .test-step.error {
+            border-color: #dc3545;
+            background: #fff5f5;
+        }
+
+        .test-step h3 {
+            color: #333;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .test-step p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+
+        .status.pending {
+            background: #ffc107;
+            color: #856404;
+        }
+
+        .status.running {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .status.success {
+            background: #28a745;
+            color: white;
+        }
+
+        .status.error {
+            background: #dc3545;
+            color: white;
+        }
+
+        .code-block {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 0.5rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .response-data {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 0.5rem 0;
+            border: 1px solid #dee2e6;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .summary h2 {
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .summary-stats {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: white;
+            border-radius: 6px;
+            margin: 0.5rem 0;
+            border: 1px solid #dee2e6;
+        }
+
+        .file-path {
+            font-family: 'Courier New', monospace;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .file-size {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .checkmark {
+            color: #28a745;
+            font-size: 1.5rem;
+            margin-right: 0.5rem;
+        }
+
+        .error-icon {
+            color: #dc3545;
+            font-size: 1.5rem;
+            margin-right: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏔️ SHERPA V1 - API Test Suite</h1>
+            <p>POST /api/generate - Generate Instruction Files</p>
+        </div>
+
+        <div class="content">
+            <div class="test-section">
+                <h2>📋 Test Description</h2>
+                <p>This test verifies that the POST /api/generate endpoint correctly generates instruction files (.cursor/rules/, CLAUDE.md, copilot-instructions.md) with organizational knowledge snippets injected.</p>
+            </div>
+
+            <div class="test-section">
+                <button id="runTestsBtn" class="button" onclick="runTests()">▶️ Run All Tests</button>
+            </div>
+
+            <div id="testSteps"></div>
+
+            <div id="summary" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000';
+        let testResults = {
+            total: 6,
+            passed: 0,
+            failed: 0,
+            steps: []
+        };
+
+        async function runTests() {
+            const btn = document.getElementById('runTestsBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Running Tests...';
+
+            testResults = {
+                total: 6,
+                passed: 0,
+                failed: 0,
+                steps: []
+            };
+
+            document.getElementById('testSteps').innerHTML = '';
+            document.getElementById('summary').style.display = 'none';
+
+            // Run tests sequentially
+            await testStep1();
+            await testStep2();
+            await testStep3();
+            await testStep4();
+            await testStep5();
+            await testStep6();
+
+            // Show summary
+            showSummary();
+
+            btn.disabled = false;
+            btn.textContent = '▶️ Run All Tests';
+        }
+
+        async function testStep1() {
+            const stepId = 'step1';
+            const stepTitle = 'Step 1: Send POST request to /api/generate';
+            const stepDescription = 'Send POST request without body (use current working directory as default)';
+
+            addTestStep(stepId, stepTitle, stepDescription, 'running');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/generate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                });
+
+                const data = await response.json();
+                window.generateResponse = data;
+                window.generateStatus = response.status;
+
+                updateTestStep(stepId, 'success', `✓ Request sent successfully. Status: ${response.status}`);
+                testResults.passed++;
+                testResults.steps.push({
+                    step: 1,
+                    name: stepTitle,
+                    status: 'passed'
+                });
+            } catch (error) {
+                updateTestStep(stepId, 'error', `✗ Request failed: ${error.message}`);
+                testResults.failed++;
+                testResults.steps.push({
+                    step: 1,
+                    name: stepTitle,
+                    status: 'failed',
+                    error: error.message
+                });
+            }
+        }
+
+        async function testStep2() {
+            const stepId = 'step2';
+            const stepTitle = 'Step 2: Verify 200 status code';
+            const stepDescription = 'Verify API returns 200 OK status';
+
+            addTestStep(stepId, stepTitle, stepDescription, 'running');
+
+            try {
+                const status = window.generateStatus;
+                const expected = 200;
+
+                if (status === expected) {
+                    updateTestStep(stepId, 'success', `✓ Status code matches! Expected: ${expected}, Actual: ${status}`);
+                    testResults.passed++;
+                    testResults.steps.push({
+                        step: 2,
+                        name: stepTitle,
+                        status: 'passed'
+                    });
+                } else {
+                    throw new Error(`Status code mismatch. Expected: ${expected}, Actual: ${status}`);
+                }
+            } catch (error) {
+                updateTestStep(stepId, 'error', `✗ ${error.message}`);
+                testResults.failed++;
+                testResults.steps.push({
+                    step: 2,
+                    name: stepTitle,
+                    status: 'failed',
+                    error: error.message
+                });
+            }
+        }
+
+        async function testStep3() {
+            const stepId = 'step3';
+            const stepTitle = 'Step 3: Verify .cursor/rules/ created';
+            const stepDescription = 'Verify response indicates .cursor/rules/00-sherpa-knowledge.md was created';
+
+            addTestStep(stepId, stepTitle, stepDescription, 'running');
+
+            try {
+                const data = window.generateResponse;
+                const files = data.success ? data.data.files : [];
+
+                const cursorFile = files.find(f => f.path.includes('.cursor/rules/00-sherpa-knowledge.md'));
+
+                if (cursorFile) {
+                    const fileInfo = `<div class="file-item">
+                        <span class="file-path">${cursorFile.path}</span>
+                        <span class="file-size">${cursorFile.size.toLocaleString()} bytes</span>
+                    </div>`;
+
+                    updateTestStep(stepId, 'success', `✓ .cursor/rules file created successfully!${fileInfo}`);
+                    testResults.passed++;
+                    testResults.steps.push({
+                        step: 3,
+                        name: stepTitle,
+                        status: 'passed'
+                    });
+                } else {
+                    throw new Error('.cursor/rules/00-sherpa-knowledge.md not found in response');
+                }
+            } catch (error) {
+                updateTestStep(stepId, 'error', `✗ ${error.message}`);
+                testResults.failed++;
+                testResults.steps.push({
+                    step: 3,
+                    name: stepTitle,
+                    status: 'failed',
+                    error: error.message
+                });
+            }
+        }
+
+        async function testStep4() {
+            const stepId = 'step4';
+            const stepTitle = 'Step 4: Verify CLAUDE.md created';
+            const stepDescription = 'Verify response indicates CLAUDE.md was created';
+
+            addTestStep(stepId, stepTitle, stepDescription, 'running');
+
+            try {
+                const data = window.generateResponse;
+                const files = data.success ? data.data.files : [];
+
+                const claudeFile = files.find(f => f.path === 'CLAUDE.md');
+
+                if (claudeFile) {
+                    const fileInfo = `<div class="file-item">
+                        <span class="file-path">${claudeFile.path}</span>
+                        <span class="file-size">${claudeFile.size.toLocaleString()} bytes</span>
+                    </div>`;
+
+                    updateTestStep(stepId, 'success', `✓ CLAUDE.md created successfully!${fileInfo}`);
+                    testResults.passed++;
+                    testResults.steps.push({
+                        step: 4,
+                        name: stepTitle,
+                        status: 'passed'
+                    });
+                } else {
+                    throw new Error('CLAUDE.md not found in response');
+                }
+            } catch (error) {
+                updateTestStep(stepId, 'error', `✗ ${error.message}`);
+                testResults.failed++;
+                testResults.steps.push({
+                    step: 4,
+                    name: stepTitle,
+                    status: 'failed',
+                    error: error.message
+                });
+            }
+        }
+
+        async function testStep5() {
+            const stepId = 'step5';
+            const stepTitle = 'Step 5: Verify copilot-instructions.md created';
+            const stepDescription = 'Verify response indicates copilot-instructions.md was created';
+
+            addTestStep(stepId, stepTitle, stepDescription, 'running');
+
+            try {
+                const data = window.generateResponse;
+                const files = data.success ? data.data.files : [];
+
+                const copilotFile = files.find(f => f.path === 'copilot-instructions.md');
+
+                if (copilotFile) {
+                    const fileInfo = `<div class="file-item">
+                        <span class="file-path">${copilotFile.path}</span>
+                        <span class="file-size">${copilotFile.size.toLocaleString()} bytes</span>
+                    </div>`;
+
+                    updateTestStep(stepId, 'success', `✓ copilot-instructions.md created successfully!${fileInfo}`);
+                    testResults.passed++;
+                    testResults.steps.push({
+                        step: 5,
+                        name: stepTitle,
+                        status: 'passed'
+                    });
+                } else {
+                    throw new Error('copilot-instructions.md not found in response');
+                }
+            } catch (error) {
+                updateTestStep(stepId, 'error', `✗ ${error.message}`);
+                testResults.failed++;
+                testResults.steps.push({
+                    step: 5,
+                    name: stepTitle,
+                    status: 'failed',
+                    error: error.message
+                });
+            }
+        }
+
+        async function testStep6() {
+            const stepId = 'step6';
+            const stepTitle = 'Step 6: Verify files contain injected snippets';
+            const stepDescription = 'Verify response indicates snippets were loaded and injected into files';
+
+            addTestStep(stepId, stepTitle, stepDescription, 'running');
+
+            try {
+                const data = window.generateResponse;
+
+                if (!data.success) {
+                    throw new Error('API request was not successful');
+                }
+
+                const totalSnippets = data.data.total_snippets;
+                const totalFiles = data.data.total_files;
+                const files = data.data.files;
+
+                // Verify all files have snippets
+                const allFilesHaveSnippets = files.every(f => f.snippets > 0);
+
+                if (totalSnippets > 0 && totalFiles === 3 && allFilesHaveSnippets) {
+                    const detailsHtml = `
+                        <div class="response-data">
+                            <strong>✓ Verification passed:</strong>
+                            <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
+                                <li>Total snippets loaded: <strong>${totalSnippets}</strong></li>
+                                <li>Total files generated: <strong>${totalFiles}</strong></li>
+                                <li>All files contain snippets: <strong>Yes</strong></li>
+                            </ul>
+                            <div style="margin-top: 1rem;">
+                                <strong>Files generated:</strong>
+                                ${files.map(f => `<div class="file-item">
+                                    <span class="file-path">${f.path}</span>
+                                    <span class="file-size">${f.snippets} snippets, ${f.size.toLocaleString()} bytes</span>
+                                </div>`).join('')}
+                            </div>
+                        </div>
+                    `;
+
+                    updateTestStep(stepId, 'success', `✓ Files contain injected snippets!${detailsHtml}`);
+                    testResults.passed++;
+                    testResults.steps.push({
+                        step: 6,
+                        name: stepTitle,
+                        status: 'passed'
+                    });
+                } else {
+                    throw new Error(`Snippets not properly injected. Snippets: ${totalSnippets}, Files: ${totalFiles}`);
+                }
+            } catch (error) {
+                updateTestStep(stepId, 'error', `✗ ${error.message}`);
+                testResults.failed++;
+                testResults.steps.push({
+                    step: 6,
+                    name: stepTitle,
+                    status: 'failed',
+                    error: error.message
+                });
+            }
+        }
+
+        function addTestStep(id, title, description, status) {
+            const stepsContainer = document.getElementById('testSteps');
+            const stepDiv = document.createElement('div');
+            stepDiv.id = id;
+            stepDiv.className = `test-step ${status}`;
+            stepDiv.innerHTML = `
+                <h3>${title} <span class="status ${status}">${status.toUpperCase()}</span></h3>
+                <p>${description}</p>
+            `;
+            stepsContainer.appendChild(stepDiv);
+        }
+
+        function updateTestStep(id, status, message) {
+            const stepDiv = document.getElementById(id);
+            stepDiv.className = `test-step ${status}`;
+            const statusSpan = stepDiv.querySelector('.status');
+            statusSpan.className = `status ${status}`;
+            statusSpan.textContent = status.toUpperCase();
+
+            const existingMessage = stepDiv.querySelector('.test-result');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'test-result';
+            messageDiv.innerHTML = `<p style="margin-top: 1rem; font-weight: 600;">${message}</p>`;
+            stepDiv.appendChild(messageDiv);
+        }
+
+        function showSummary() {
+            const summaryDiv = document.getElementById('summary');
+            const successRate = ((testResults.passed / testResults.total) * 100).toFixed(1);
+
+            summaryDiv.innerHTML = `
+                <div class="summary">
+                    <h2>📊 Test Summary</h2>
+                    <div class="summary-stats">
+                        <div class="stat">
+                            <div class="stat-value">${testResults.total}</div>
+                            <div class="stat-label">Total Tests</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">${testResults.passed}</div>
+                            <div class="stat-label">Passed</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">${testResults.failed}</div>
+                            <div class="stat-label">Failed</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">${successRate}%</div>
+                            <div class="stat-label">Success Rate</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            summaryDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

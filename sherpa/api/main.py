@@ -114,6 +114,19 @@ class AzureDevOpsUpdateWorkItemRequest(BaseModel):
         return v
 
 
+class GenerateInstructionFilesRequest(BaseModel):
+    target_directory: Optional[str] = Field(None, max_length=500, description="Target directory for generated files (defaults to current working directory)")
+
+    class Config:
+        extra = "forbid"
+
+    @validator('target_directory', allow_reuse=True)
+    def validate_target_directory(cls, v):
+        if v is not None and v.strip() == '':
+            raise ValueError('target_directory cannot be empty string')
+        return v
+
+
 class QuerySnippetsRequest(BaseModel):
     query: str = Field(..., min_length=1, max_length=500, description="Search query text")
     max_results: int = Field(default=5, ge=1, le=20, description="Maximum number of results")
@@ -1294,6 +1307,273 @@ async def set_environment(request: Request):
     except Exception as e:
         logger.error(f"Error setting environment: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/generate")
+async def generate_instruction_files(request: Optional[GenerateInstructionFilesRequest] = None):
+    """
+    Generate instruction files for interactive agents
+    Creates:
+    - .cursor/rules/00-sherpa-knowledge.md
+    - CLAUDE.md
+    - copilot-instructions.md
+
+    Files are generated in the specified target_directory or current working directory
+    with organizational knowledge snippets injected.
+    """
+    try:
+        logger.info(f"POST /api/generate - Generating instruction files")
+
+        # Determine target directory
+        if request and request.target_directory:
+            target_dir = Path(request.target_directory)
+        else:
+            target_dir = Path.cwd()
+
+        logger.info(f"Target directory: {target_dir}")
+
+        # Verify target directory exists
+        if not target_dir.exists():
+            logger.error(f"Target directory does not exist: {target_dir}")
+            raise HTTPException(status_code=400, detail=f"Target directory does not exist: {target_dir}")
+
+        # Get snippets from sherpa/snippets directory
+        sherpa_root = Path(__file__).parent.parent
+        snippets_dir = sherpa_root / "snippets"
+
+        # Load all snippet files
+        snippets = await load_snippets_for_generation(snippets_dir)
+
+        logger.info(f"Loaded {len(snippets)} snippets from {snippets_dir}")
+
+        # Create .cursor/rules/ directory
+        cursor_rules_dir = target_dir / ".cursor" / "rules"
+        cursor_rules_dir.mkdir(parents=True, exist_ok=True)
+
+        # Generate files
+        files_created = []
+
+        # 1. Generate .cursor/rules/00-sherpa-knowledge.md
+        cursor_rules_file = cursor_rules_dir / "00-sherpa-knowledge.md"
+        await generate_cursor_rules_content(cursor_rules_file, snippets)
+        files_created.append({
+            "path": str(cursor_rules_file.relative_to(target_dir)),
+            "size": cursor_rules_file.stat().st_size,
+            "snippets": len(snippets)
+        })
+        logger.info(f"Created: {cursor_rules_file}")
+
+        # 2. Generate CLAUDE.md
+        claude_file = target_dir / "CLAUDE.md"
+        await generate_claude_md_content(claude_file, snippets)
+        files_created.append({
+            "path": str(claude_file.relative_to(target_dir)),
+            "size": claude_file.stat().st_size,
+            "snippets": len(snippets)
+        })
+        logger.info(f"Created: {claude_file}")
+
+        # 3. Generate copilot-instructions.md
+        copilot_file = target_dir / "copilot-instructions.md"
+        await generate_copilot_instructions_content(copilot_file, snippets)
+        files_created.append({
+            "path": str(copilot_file.relative_to(target_dir)),
+            "size": copilot_file.stat().st_size,
+            "snippets": len(snippets)
+        })
+        logger.info(f"Created: {copilot_file}")
+
+        logger.info(f"Successfully generated {len(files_created)} instruction files")
+
+        return success_response(
+            data={
+                "files": files_created,
+                "total_files": len(files_created),
+                "total_snippets": len(snippets),
+                "target_directory": str(target_dir)
+            },
+            message=f"Successfully generated {len(files_created)} instruction files with {len(snippets)} snippets"
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating instruction files: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+async def load_snippets_for_generation(snippets_dir: Path) -> list:
+    """
+    Load all snippet files from the snippets directory
+    Returns list of dicts with snippet metadata and content
+    """
+    snippets = []
+
+    if not snippets_dir.exists():
+        logger.warning(f"Snippets directory does not exist: {snippets_dir}")
+        return snippets
+
+    # Find all .md files in snippets directory
+    for snippet_file in snippets_dir.glob("*.md"):
+        # Skip test files
+        if snippet_file.name.startswith("test-") or snippet_file.name.startswith("snippet-"):
+            continue
+
+        try:
+            content = snippet_file.read_text()
+
+            # Extract metadata from content
+            title = snippet_file.stem.replace("-", " ").title()
+            category = extract_category_from_content(content)
+
+            snippets.append({
+                "name": snippet_file.stem,
+                "title": title,
+                "category": category,
+                "content": content,
+                "file": snippet_file.name
+            })
+            logger.debug(f"Loaded snippet: {snippet_file.name}")
+        except Exception as e:
+            logger.warning(f"Could not load {snippet_file.name}: {str(e)}")
+
+    return snippets
+
+
+def extract_category_from_content(content: str) -> str:
+    """Extract category from snippet content"""
+    for line in content.split("\n"):
+        if line.startswith("## Category:"):
+            return line.replace("## Category:", "").strip()
+    return "general"
+
+
+async def generate_cursor_rules_content(file_path: Path, snippets: list):
+    """Generate .cursor/rules/00-sherpa-knowledge.md file"""
+    content = """# SHERPA Knowledge Base
+
+This file contains organizational knowledge and best practices injected by SHERPA.
+Use these patterns and snippets as reference when coding.
+
+"""
+
+    if snippets:
+        content += "## Available Knowledge Snippets\n\n"
+        for snippet in snippets:
+            content += f"### {snippet['title']}\n\n"
+            content += f"**Category:** {snippet['category']}\n\n"
+            content += snippet['content'] + "\n\n"
+            content += "---\n\n"
+    else:
+        content += """## Default Configuration
+
+No custom snippets found. Add snippets to `sherpa/snippets/` directory.
+
+### Example Snippet Structure
+
+Create `.md` files in `sherpa/snippets/` with this format:
+
+```markdown
+# Snippet Title
+
+## Category: category/subcategory
+## Language: python, javascript
+## Tags: tag1, tag2, tag3
+
+## Description
+
+Your snippet content here...
+```
+"""
+
+    file_path.write_text(content)
+
+
+async def generate_claude_md_content(file_path: Path, snippets: list):
+    """Generate CLAUDE.md file with injected knowledge"""
+    content = """# Claude Development Instructions
+
+This file contains development guidelines and organizational knowledge for Claude Code.
+
+## Project Context
+
+This project uses SHERPA to enhance development with organizational knowledge.
+
+## Knowledge Base
+
+"""
+
+    if snippets:
+        content += "The following knowledge snippets are available for reference:\n\n"
+        for snippet in snippets:
+            content += f"### {snippet['title']}\n\n"
+            content += snippet['content'] + "\n\n"
+    else:
+        content += """No custom snippets loaded. Add snippets to `sherpa/snippets/` directory.
+
+Run `sherpa generate` to regenerate this file after adding snippets.
+"""
+
+    content += """
+## Development Guidelines
+
+- Follow the patterns and best practices outlined in the knowledge snippets above
+- Use organizational standards for code structure and naming conventions
+- Refer to snippet examples when implementing similar functionality
+- Keep code consistent with existing patterns
+
+---
+
+*Generated by SHERPA V1 - Autonomous Coding Orchestrator*
+"""
+
+    file_path.write_text(content)
+
+
+async def generate_copilot_instructions_content(file_path: Path, snippets: list):
+    """Generate copilot-instructions.md file"""
+    content = """# GitHub Copilot Instructions
+
+This file provides context and instructions for GitHub Copilot.
+
+## Project Guidelines
+
+This project uses SHERPA for knowledge management and follows organizational best practices.
+
+## Code Patterns
+
+"""
+
+    if snippets:
+        content += "Please follow these organizational patterns when suggesting code:\n\n"
+        for snippet in snippets:
+            content += f"### {snippet['title']}\n\n"
+            content += f"Category: {snippet['category']}\n\n"
+            # Include first 500 characters of each snippet as context
+            snippet_preview = snippet['content'][:500]
+            if len(snippet['content']) > 500:
+                snippet_preview += "...\n\n[See full snippet in .cursor/rules/00-sherpa-knowledge.md]"
+            content += snippet_preview + "\n\n"
+    else:
+        content += """No custom patterns loaded. Add snippets to `sherpa/snippets/` directory.
+
+Run `sherpa generate` to regenerate this file.
+"""
+
+    content += """
+## Instructions
+
+- Follow organizational coding standards
+- Use patterns from the knowledge base above
+- Maintain consistency with existing code
+- Prioritize security and best practices
+
+---
+
+*Generated by SHERPA V1*
+"""
+
+    file_path.write_text(content)
 
 
 @app.post("/api/azure-devops/connect")
