@@ -1,10 +1,15 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Plus, FileText, Activity } from 'lucide-react'
+import NewSessionModal from '../components/NewSessionModal'
+import GenerateFilesModal from '../components/GenerateFilesModal'
 
 function HomePage() {
   const [sessions, setSessions] = useState([])
   const [loading, setLoading] = useState(true)
+  const [showNewSessionModal, setShowNewSessionModal] = useState(false)
+  const [showGenerateFilesModal, setShowGenerateFilesModal] = useState(false)
+  const navigate = useNavigate()
 
   useEffect(() => {
     fetchActiveSessions()
@@ -22,6 +27,18 @@ function HomePage() {
     }
   }
 
+  const handleNewSessionSuccess = (session) => {
+    // Navigate to the new session's detail page
+    navigate(`/sessions/${session.id}`)
+  }
+
+  const handleGenerateFilesSuccess = (result) => {
+    // Show success message or refresh page
+    console.log('Files generated:', result)
+    // Could show a toast notification here
+    alert('Files generated successfully!')
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
@@ -31,7 +48,10 @@ function HomePage() {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-        <button className="card flex items-center p-6 hover:shadow-md transition-shadow">
+        <button
+          onClick={() => setShowNewSessionModal(true)}
+          className="card flex items-center p-6 hover:shadow-md transition-shadow"
+        >
           <Plus className="h-8 w-8 text-primary-600" />
           <div className="ml-4 text-left">
             <h3 className="text-lg font-semibold">New Session</h3>
@@ -39,7 +59,10 @@ function HomePage() {
           </div>
         </button>
 
-        <button className="card flex items-center p-6 hover:shadow-md transition-shadow">
+        <button
+          onClick={() => setShowGenerateFilesModal(true)}
+          className="card flex items-center p-6 hover:shadow-md transition-shadow"
+        >
           <FileText className="h-8 w-8 text-primary-600" />
           <div className="ml-4 text-left">
             <h3 className="text-lg font-semibold">Generate Files</h3>
@@ -102,6 +125,18 @@ function HomePage() {
           <p className="text-gray-600">Activity feed will appear here</p>
         </div>
       </div>
+
+      {/* Modals */}
+      <NewSessionModal
+        isOpen={showNewSessionModal}
+        onClose={() => setShowNewSessionModal(false)}
+        onSuccess={handleNewSessionSuccess}
+      />
+      <GenerateFilesModal
+        isOpen={showGenerateFilesModal}
+        onClose={() => setShowGenerateFilesModal(false)}
+        onSuccess={handleGenerateFilesSuccess}
+      />
     </div>
   )
 }

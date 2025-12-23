@@ -1213,7 +1213,7 @@
       "Step 6: Click 'Generate Files' button",
       "Step 7: Verify generate dialog opens"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
