@@ -1476,7 +1476,7 @@
       "Step 5: Fix error",
       "Step 6: Verify error message clears"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
