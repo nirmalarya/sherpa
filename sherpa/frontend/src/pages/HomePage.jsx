@@ -81,10 +81,13 @@ function HomePage() {
   }
 
   const handleGenerateFilesSuccess = (result) => {
-    // Show success message or refresh page
     console.log('Files generated:', result)
-    // Could show a toast notification here
-    alert('Files generated successfully!')
+
+    // Create success message with file details
+    const fileList = result.files?.map(f => `  • ${f.path}`).join('\n') || ''
+    const message = `✅ Successfully generated ${result.total_files || 3} instruction files with ${result.total_snippets || 7} snippets!\n\n${fileList}`
+
+    alert(message)
   }
 
   return (
