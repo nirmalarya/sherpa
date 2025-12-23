@@ -418,7 +418,7 @@ async def get_snippet(snippet_id: str):
 
 @app.post("/api/snippets", status_code=201)
 async def create_snippet(snippet: CreateSnippetRequest):
-    """Create a new snippet and save to project snippets directory"""
+    """Create a new snippet and save to appropriate snippets directory based on source"""
     try:
         db = await get_db()
 
@@ -436,8 +436,15 @@ async def create_snippet(snippet: CreateSnippetRequest):
         # Create snippet in database
         snippet_id = await db.create_snippet(snippet_data)
 
-        # Save to file system (./sherpa/snippets/ directory)
-        snippets_dir = Path(__file__).parent.parent / "snippets"
+        # Determine target directory based on source
+        # local -> ./sherpa/snippets.local/
+        # project -> ./sherpa/snippets/
+        # org and built-in don't save to filesystem
+        if snippet.source == "local":
+            snippets_dir = Path(__file__).parent.parent / "snippets.local"
+        else:
+            snippets_dir = Path(__file__).parent.parent / "snippets"
+
         snippets_dir.mkdir(exist_ok=True)
 
         # Generate filename from snippet ID

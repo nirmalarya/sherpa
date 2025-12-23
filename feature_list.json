@@ -807,7 +807,7 @@
       "Step 5: Verify snippets.local/ in .gitignore",
       "Step 6: Verify snippet updates detected"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
