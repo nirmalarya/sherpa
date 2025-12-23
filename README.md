@@ -247,17 +247,138 @@ npm run lint
 - AWS credentials from environment variables
 - .env files gitignored
 
+## 📖 API Documentation
+
+The full API documentation is available when running the backend server:
+
+- **Interactive API Docs (Swagger UI)**: http://localhost:8000/docs
+- **Alternative API Docs (ReDoc)**: http://localhost:8000/redoc
+- **OpenAPI Schema**: http://localhost:8000/openapi.json
+
+### Main API Endpoints
+
+- `GET /health` - Health check endpoint
+- `GET /api/sessions` - List all sessions
+- `POST /api/sessions` - Create new session
+- `GET /api/sessions/{id}` - Get session details
+- `GET /api/sessions/{id}/progress` - SSE stream for real-time progress
+- `GET /api/snippets` - List all code snippets
+- `POST /api/snippets/query` - Search snippets with semantic search
+- `GET /api/azure-devops/work-items` - Fetch Azure DevOps work items
+- `POST /api/azure-devops/sync` - Sync with Azure DevOps
+
 ## 📝 License
 
-[License information to be added]
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+Copyright (c) 2025 SHERPA V1 Contributors
 
 ## 🤝 Contributing
 
-[Contributing guidelines to be added]
+We welcome contributions! Here's how to get started:
+
+### Getting Started
+
+1. **Fork the repository** on GitHub
+2. **Clone your fork** locally:
+   ```bash
+   git clone https://github.com/your-username/sherpa.git
+   cd sherpa
+   ```
+3. **Create a feature branch**:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+### Development Workflow
+
+1. **Set up development environment**:
+   ```bash
+   ./init.sh
+   source venv/bin/activate
+   ```
+
+2. **Make your changes** following the code style guidelines
+   - Backend: Follow PEP 8, use type hints
+   - Frontend: Follow ESLint rules, use TypeScript
+
+3. **Test your changes**:
+   ```bash
+   # Run backend tests
+   pytest
+
+   # Run frontend tests
+   cd sherpa/frontend && npm test
+
+   # Run E2E tests
+   npm run test:e2e
+   ```
+
+4. **Lint your code**:
+   ```bash
+   # Python
+   black sherpa/
+   flake8 sherpa/
+
+   # TypeScript
+   cd sherpa/frontend && npm run lint
+   ```
+
+5. **Commit your changes** using conventional commits:
+   ```bash
+   git commit -m "feat: add new feature"
+   git commit -m "fix: resolve bug in feature"
+   git commit -m "docs: update README"
+   ```
+
+6. **Push to your fork** and **create a Pull Request**
+
+### Contribution Guidelines
+
+- **Write tests** for new features
+- **Update documentation** for API changes
+- **Keep commits atomic** and well-described
+- **Follow existing code patterns** and architecture
+- **Add changelog entry** in CHANGELOG.md for user-facing changes
+- **Ensure all tests pass** before submitting PR
+
+### Code of Conduct
+
+- Be respectful and inclusive
+- Provide constructive feedback
+- Focus on collaboration and learning
 
 ## 📞 Support
 
-[Support information to be added]
+### Documentation
+
+- **README**: This file for getting started
+- **API Docs**: http://localhost:8000/docs (when server running)
+- **CHANGELOG**: See [CHANGELOG.md](CHANGELOG.md) for version history
+
+### Getting Help
+
+- **GitHub Issues**: Report bugs or request features
+- **Discussions**: Ask questions and share ideas
+
+### Reporting Issues
+
+When reporting a bug, please include:
+- SHERPA version (`sherpa --version` or check setup.py)
+- Operating system and version
+- Python version
+- Node.js version
+- Steps to reproduce
+- Expected vs actual behavior
+- Error messages and logs (from `sherpa/logs/`)
+
+### Feature Requests
+
+We welcome feature requests! Please:
+- Check existing issues first
+- Describe the use case
+- Explain how it benefits users
+- Provide examples if possible
 
 ---
 

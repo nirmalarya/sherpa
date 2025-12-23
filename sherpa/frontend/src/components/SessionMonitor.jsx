@@ -15,7 +15,6 @@ import { CheckCircle, XCircle, Loader, WifiOff } from 'lucide-react'
  */
 function SessionMonitor({ sessionId, onProgress, onComplete, onError }) {
   const [connectionStatus, setConnectionStatus] = useState('connecting') // connecting, connected, error, disconnected
-  const [eventSource, setEventSource] = useState(null)
   const [reconnectAttempt, setReconnectAttempt] = useState(0)
   const [lastEventTime, setLastEventTime] = useState(null)
 
@@ -34,7 +33,6 @@ function SessionMonitor({ sessionId, onProgress, onComplete, onError }) {
 
         // Create new EventSource connection
         es = new EventSource(`http://localhost:8001/api/sessions/${sessionId}/progress`)
-        setEventSource(es)
 
         // Connection opened
         es.onopen = () => {

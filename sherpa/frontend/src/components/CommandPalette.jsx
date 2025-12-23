@@ -208,7 +208,7 @@ function CommandPalette({ isOpen, onClose }) {
         >
           {filteredCommands.length === 0 ? (
             <div className="px-4 py-8 text-center text-gray-500" role="status">
-              No commands found for "{searchQuery}"
+              No commands found for &quot;{searchQuery}&quot;
             </div>
           ) : (
             <div className="py-2">

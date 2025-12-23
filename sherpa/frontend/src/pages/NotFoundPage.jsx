@@ -20,7 +20,7 @@ function NotFoundPage() {
 
         {/* Helpful Message */}
         <p className="text-gray-600 mb-8">
-          Sorry, we couldn't find the page you're looking for. The page may have been moved or doesn't exist.
+          Sorry, we couldn&apos;t find the page you&apos;re looking for. The page may have been moved or doesn&apos;t exist.
         </p>
 
         {/* Link Back to Home */}
@@ -35,7 +35,7 @@ function NotFoundPage() {
         {/* Additional Help */}
         <div className="mt-8 pt-8 border-t border-gray-200">
           <p className="text-sm text-gray-500">
-            You can also navigate using the menu above to find what you're looking for.
+            You can also navigate using the menu above to find what you&apos;re looking for.
           </p>
         </div>
       </div>
