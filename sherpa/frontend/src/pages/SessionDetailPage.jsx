@@ -5,6 +5,7 @@ import api from '../lib/api'
 import SessionMonitor from '../components/SessionMonitor'
 import ProgressChart from '../components/ProgressChart'
 import ConfirmDialog from '../components/ConfirmDialog'
+import Breadcrumb from '../components/Breadcrumb'
 
 function SessionDetailPage() {
   const { id } = useParams()
@@ -135,6 +136,15 @@ function SessionDetailPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Breadcrumb Navigation */}
+      <Breadcrumb
+        items={[
+          { label: 'Home', path: '/' },
+          { label: 'Sessions', path: '/sessions' },
+          { label: session?.spec_file || `Session ${id}` }
+        ]}
+      />
+
       {/* Header */}
       <div className="mb-8 flex justify-between items-start">
         <div>

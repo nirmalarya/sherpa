@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import api from '../lib/api'
 import AzureDevOpsConnector from '../components/AzureDevOpsConnector'
 import FileSourceConfig from '../components/FileSourceConfig'
+import Breadcrumb from '../components/Breadcrumb'
 
 function SourcesPage() {
   const [syncStatus, setSyncStatus] = useState(null)
@@ -22,6 +23,14 @@ function SourcesPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Breadcrumb Navigation */}
+      <Breadcrumb
+        items={[
+          { label: 'Home', path: '/' },
+          { label: 'Sources' }
+        ]}
+      />
+
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Sources</h1>
         <p className="mt-2 text-gray-600">Configure external sources for specs and work items</p>

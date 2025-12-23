@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Search, Filter, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, FolderOpen, Plus } from 'lucide-react'
 import api from '../lib/api'
 import ErrorMessage from '../components/ErrorMessage'
+import Breadcrumb from '../components/Breadcrumb'
 
 function SessionsPage() {
   const [sessions, setSessions] = useState([])
@@ -131,6 +132,14 @@ function SessionsPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Breadcrumb Navigation */}
+      <Breadcrumb
+        items={[
+          { label: 'Home', path: '/' },
+          { label: 'Sessions' }
+        ]}
+      />
+
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Sessions</h1>
         <p className="mt-2 text-gray-600">View and manage all coding sessions</p>

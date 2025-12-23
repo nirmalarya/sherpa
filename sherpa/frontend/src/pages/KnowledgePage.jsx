@@ -3,6 +3,7 @@ import api from '../lib/api'
 import SnippetBrowser from '../components/SnippetBrowser'
 import Alert from '../components/Alert'
 import ErrorMessage from '../components/ErrorMessage'
+import Breadcrumb from '../components/Breadcrumb'
 
 function KnowledgePage() {
   const [snippets, setSnippets] = useState([])
@@ -65,6 +66,14 @@ function KnowledgePage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Breadcrumb Navigation */}
+      <Breadcrumb
+        items={[
+          { label: 'Home', path: '/' },
+          { label: 'Knowledge' }
+        ]}
+      />
+
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Knowledge Base</h1>
         <p className="mt-2 text-gray-600">Browse and search code snippets</p>
