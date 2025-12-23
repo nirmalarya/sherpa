@@ -2057,7 +2057,7 @@
       "Step 5: Test at desktop breakpoint (1920px)",
       "Step 6: Verify layout optimized for desktop"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
