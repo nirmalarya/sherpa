@@ -682,7 +682,7 @@
       "Step 4: Verify snippet metadata included",
       "Step 5: Verify 404 for non-existent snippet"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

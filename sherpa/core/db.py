@@ -221,6 +221,16 @@ class Database:
         rows = await cursor.fetchall()
         return [dict(row) for row in rows]
 
+    async def get_snippet(self, snippet_id: str) -> Optional[Dict[str, Any]]:
+        """Get snippet by ID"""
+        conn = await self.connect()
+        cursor = await conn.execute("SELECT * FROM snippets WHERE id = ?", (snippet_id,))
+        row = await cursor.fetchone()
+
+        if row:
+            return dict(row)
+        return None
+
     # Configuration operations
     async def set_config(self, key: str, value: str):
         """Set configuration value"""

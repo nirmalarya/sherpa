@@ -386,6 +386,26 @@ async def get_snippets(category: Optional[str] = None):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/snippets/{snippet_id}")
+async def get_snippet(snippet_id: str):
+    """Get snippet by ID"""
+    try:
+        db = await get_db()
+        snippet = await db.get_snippet(snippet_id)
+
+        if not snippet:
+            raise HTTPException(status_code=404, detail=f"Snippet not found: {snippet_id}")
+
+        return {
+            "snippet": snippet,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/snippets/load-builtin")
 async def load_builtin_snippets():
     """Load built-in snippets from markdown files into database"""
