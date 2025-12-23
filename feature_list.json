@@ -1306,7 +1306,7 @@
       "Step 6: Enter valid data",
       "Step 7: Verify form submits successfully"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
