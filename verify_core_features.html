@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHERPA - Core Features Verification</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        h1 {
+            margin: 0 0 10px 0;
+        }
+        .status {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+        .test-result.pass {
+            background: #d4edda;
+            color: #155724;
+        }
+        .test-result.fail {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .test-result.running {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .icon {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .progress {
+            background: #e0e0e0;
+            height: 25px;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .progress-bar {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        .details {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .summary {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stat {
+            display: inline-block;
+            margin-right: 30px;
+            font-size: 18px;
+        }
+        .stat-value {
+            font-weight: bold;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏔️ SHERPA V1 - Core Features Verification</h1>
+        <p>Verifying critical features before implementing new ones</p>
+    </div>
+
+    <div class="status">
+        <h2>Verification Progress</h2>
+        <div class="progress">
+            <div class="progress-bar" id="progressBar">0%</div>
+        </div>
+        <button onclick="runAllTests()" id="runBtn">Run All Verification Tests</button>
+        <button onclick="location.reload()">Reset</button>
+    </div>
+
+    <div class="status">
+        <h2>Test Results</h2>
+        <div id="results"></div>
+    </div>
+
+    <div class="summary" id="summary" style="display: none;">
+        <h2>📊 Summary</h2>
+        <div class="stat">Total Tests: <span class="stat-value" id="totalTests">0</span></div>
+        <div class="stat">Passed: <span class="stat-value" id="passedTests" style="color: #28a745;">0</span></div>
+        <div class="stat">Failed: <span class="stat-value" id="failedTests" style="color: #dc3545;">0</span></div>
+        <div class="stat">Pass Rate: <span class="stat-value" id="passRate">0%</span></div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'http://localhost:8001';
+        const FRONTEND_URL = 'http://localhost:3003';
+
+        const tests = [
+            {
+                name: 'Backend Health Check',
+                description: 'Verify backend server responds to /health endpoint',
+                run: async () => {
+                    const response = await fetch(`${BACKEND_URL}/health`);
+                    if (!response.ok) throw new Error(`Status: ${response.status}`);
+                    const data = await response.json();
+                    return `Backend healthy: ${JSON.stringify(data)}`;
+                }
+            },
+            {
+                name: 'Backend CORS Configuration',
+                description: 'Verify CORS headers allow frontend origin',
+                run: async () => {
+                    const response = await fetch(`${BACKEND_URL}/health`);
+                    const corsHeader = response.headers.get('access-control-allow-origin');
+                    if (!corsHeader) throw new Error('No CORS header found');
+                    return `CORS configured: ${corsHeader}`;
+                }
+            },
+            {
+                name: 'Frontend Accessibility',
+                description: 'Verify frontend is accessible',
+                run: async () => {
+                    const response = await fetch(FRONTEND_URL);
+                    if (!response.ok) throw new Error(`Status: ${response.status}`);
+                    const text = await response.text();
+                    if (!text.includes('<div id="root"') && !text.includes('<div id=root')) {
+                        throw new Error('Frontend HTML does not contain root element');
+                    }
+                    return 'Frontend accessible and has root element';
+                }
+            },
+            {
+                name: 'API Sessions Endpoint',
+                description: 'Verify /api/sessions endpoint exists',
+                run: async () => {
+                    const response = await fetch(`${BACKEND_URL}/api/sessions`);
+                    if (!response.ok) throw new Error(`Status: ${response.status}`);
+                    const data = await response.json();
+                    return `Sessions endpoint working, returned ${Array.isArray(data) ? data.length : 'data'}`;
+                }
+            },
+            {
+                name: 'API Snippets Endpoint',
+                description: 'Verify /api/snippets endpoint exists',
+                run: async () => {
+                    const response = await fetch(`${BACKEND_URL}/api/snippets`);
+                    if (!response.ok) throw new Error(`Status: ${response.status}`);
+                    const data = await response.json();
+                    return `Snippets endpoint working, returned ${Array.isArray(data) ? data.length : 'data'}`;
+                }
+            }
+        ];
+
+        let passed = 0;
+        let failed = 0;
+
+        async function runAllTests() {
+            const btn = document.getElementById('runBtn');
+            btn.disabled = true;
+
+            passed = 0;
+            failed = 0;
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('summary').style.display = 'none';
+
+            for (let i = 0; i < tests.length; i++) {
+                await runTest(tests[i], i + 1);
+                updateProgress(i + 1, tests.length);
+            }
+
+            showSummary();
+            btn.disabled = false;
+        }
+
+        async function runTest(test, index) {
+            const resultsDiv = document.getElementById('results');
+
+            // Add running status
+            const testDiv = document.createElement('div');
+            testDiv.id = `test-${index}`;
+            testDiv.className = 'test-result running';
+            testDiv.innerHTML = `
+                <span class="icon">⏳</span>
+                <div>
+                    <strong>Test ${index}: ${test.name}</strong>
+                    <div style="font-size: 14px; margin-top: 5px;">${test.description}</div>
+                </div>
+            `;
+            resultsDiv.appendChild(testDiv);
+
+            try {
+                const result = await test.run();
+                testDiv.className = 'test-result pass';
+                testDiv.innerHTML = `
+                    <span class="icon">✅</span>
+                    <div>
+                        <strong>Test ${index}: ${test.name}</strong>
+                        <div style="font-size: 14px; margin-top: 5px;">${test.description}</div>
+                        <div class="details">${result}</div>
+                    </div>
+                `;
+                passed++;
+            } catch (error) {
+                testDiv.className = 'test-result fail';
+                testDiv.innerHTML = `
+                    <span class="icon">❌</span>
+                    <div>
+                        <strong>Test ${index}: ${test.name}</strong>
+                        <div style="font-size: 14px; margin-top: 5px;">${test.description}</div>
+                        <div class="details">Error: ${error.message}</div>
+                    </div>
+                `;
+                failed++;
+            }
+        }
+
+        function updateProgress(current, total) {
+            const percent = Math.round((current / total) * 100);
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = percent + '%';
+            progressBar.textContent = percent + '%';
+        }
+
+        function showSummary() {
+            const total = tests.length;
+            const passRate = Math.round((passed / total) * 100);
+
+            document.getElementById('summary').style.display = 'block';
+            document.getElementById('totalTests').textContent = total;
+            document.getElementById('passedTests').textContent = passed;
+            document.getElementById('failedTests').textContent = failed;
+            document.getElementById('passRate').textContent = passRate + '%';
+        }
+    </script>
+</body>
+</html>

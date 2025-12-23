@@ -166,23 +166,6 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# CORS configuration - allow frontend on ports 3001, 3002, 3003
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3001",
-        "http://localhost:3002",
-        "http://localhost:3003",
-        "http://127.0.0.1:3001",
-        "http://127.0.0.1:3002",
-        "http://127.0.0.1:3003",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
 # API Versioning Middleware - Add API-Version header to all responses
 class APIVersionMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -297,9 +280,30 @@ class MetricsMiddleware(BaseHTTPMiddleware):
             raise
 
 
+# Add middleware in correct order (they are applied in reverse for responses)
+# Order: Metrics -> Rate Limit -> API Version -> CORS (CORS is applied last to responses)
 app.add_middleware(APIVersionMiddleware)
 app.add_middleware(RateLimitMiddleware, max_requests=100, window_seconds=60)
 app.add_middleware(MetricsMiddleware)
+
+# CORS configuration - allow frontend on ports 3001, 3002, 3003
+# Added LAST so it's applied FIRST to responses (middleware wrapping order)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3001",
+        "http://localhost:3002",
+        "http://localhost:3003",
+        "http://127.0.0.1:3001",
+        "http://127.0.0.1:3002",
+        "http://127.0.0.1:3003",
+        "*",  # Allow all origins for now (remove in production)
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],  # Expose all headers to the client
+)
 
 
 # Global exception handler for request validation errors
