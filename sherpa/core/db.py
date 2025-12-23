@@ -189,7 +189,7 @@ class Database:
     async def create_snippet(self, snippet_data: Dict[str, Any]) -> str:
         """Create a new snippet"""
         conn = await self.connect()
-        snippet_id = snippet_data.get('id', f"snippet-{datetime.utcnow().timestamp()}")
+        snippet_id = snippet_data.get('id') or f"snippet-{datetime.utcnow().timestamp()}"
 
         await conn.execute("""
             INSERT INTO snippets (id, name, category, source, content, language, tags, created_at, updated_at)

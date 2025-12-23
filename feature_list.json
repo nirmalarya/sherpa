@@ -706,7 +706,7 @@
       "Step 4: Verify snippet ID returned",
       "Step 5: Verify snippet accessible via GET"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

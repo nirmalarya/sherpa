@@ -28,6 +28,16 @@ class CreateSessionRequest(BaseModel):
     git_branch: Optional[str] = None
 
 
+class CreateSnippetRequest(BaseModel):
+    id: Optional[str] = None
+    name: str
+    category: str
+    source: str = "project"
+    content: str
+    language: Optional[str] = None
+    tags: Optional[str] = None
+
+
 # Create FastAPI app
 app = FastAPI(
     title="SHERPA V1 API",
@@ -402,6 +412,51 @@ async def get_snippet(snippet_id: str):
         }
     except HTTPException:
         raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/snippets", status_code=201)
+async def create_snippet(snippet: CreateSnippetRequest):
+    """Create a new snippet and save to project snippets directory"""
+    try:
+        db = await get_db()
+
+        # Prepare snippet data manually from Pydantic model
+        snippet_data = {
+            'id': snippet.id,
+            'name': snippet.name,
+            'category': snippet.category,
+            'source': snippet.source,
+            'content': snippet.content,
+            'language': snippet.language,
+            'tags': snippet.tags
+        }
+
+        # Create snippet in database
+        snippet_id = await db.create_snippet(snippet_data)
+
+        # Save to file system (./sherpa/snippets/ directory)
+        snippets_dir = Path(__file__).parent.parent / "snippets"
+        snippets_dir.mkdir(exist_ok=True)
+
+        # Generate filename from snippet ID
+        filename = f"{snippet_id}.md"
+        file_path = snippets_dir / filename
+
+        # Write content to markdown file
+        with open(file_path, "w") as f:
+            f.write(snippet_data['content'])
+
+        # Retrieve the created snippet to return
+        created_snippet = await db.get_snippet(snippet_id)
+
+        return {
+            "snippet_id": snippet_id,
+            "snippet": created_snippet,
+            "file_path": str(file_path),
+            "timestamp": datetime.utcnow().isoformat()
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

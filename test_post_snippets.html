@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test POST /api/snippets - Create New Snippet</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            background: #e0e0e0;
+            border-radius: 10px;
+            height: 30px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50, #66bb6a);
+            width: 0%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        /* Test Summary */
+        .test-summary {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 30px;
+        }
+        .test-summary h2 {
+            margin-top: 0;
+            color: #1976d2;
+        }
+        .summary-stats {
+            display: flex;
+            gap: 30px;
+            margin-top: 15px;
+        }
+        .stat {
+            font-size: 18px;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+        .passed {
+            color: #4caf50;
+            font-weight: bold;
+        }
+        .failed {
+            color: #f44336;
+            font-weight: bold;
+        }
+
+        /* Test Steps */
+        .test-step {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            border-left: 4px solid #ccc;
+        }
+        .test-step.running {
+            border-left-color: #ffc107;
+            background: #fffbf0;
+        }
+        .test-step.success {
+            border-left-color: #4caf50;
+            background: #f1f8f4;
+        }
+        .test-step.error {
+            border-left-color: #f44336;
+            background: #fef5f5;
+        }
+        .step-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .step-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-badge.pending {
+            background: #e0e0e0;
+            color: #666;
+        }
+        .status-badge.running {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status-badge.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-badge.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .step-details {
+            margin-top: 10px;
+        }
+        .step-substep {
+            padding: 8px 0;
+            color: #666;
+            font-size: 14px;
+        }
+        .step-substep.completed {
+            color: #4caf50;
+        }
+        .step-substep.completed:before {
+            content: "✓ ";
+            font-weight: bold;
+        }
+
+        .result-box {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 13px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success-message {
+            color: #4caf50;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .error-message {
+            color: #f44336;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .snippet-preview {
+            background: #263238;
+            color: #aed581;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        button {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #1565c0;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .final-result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 6px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .final-result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #4caf50;
+        }
+        .final-result.failure {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 POST /api/snippets - Create New Snippet</h1>
+        <p class="subtitle">Comprehensive automated test for creating a new snippet via API</p>
+
+        <div class="test-summary">
+            <h2>Test Summary</h2>
+            <div class="summary-stats">
+                <div class="stat">
+                    <div class="stat-label">Total Tests:</div>
+                    <div id="totalTests">5</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Passed:</div>
+                    <div id="passedTests" class="passed">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Failed:</div>
+                    <div id="failedTests" class="failed">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar">0%</div>
+        </div>
+
+        <button id="runTests" onclick="runAllTests()">▶️ Run All Tests</button>
+
+        <div id="testResults" style="margin-top: 30px;"></div>
+
+        <div id="finalResult"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8001';
+        let testsPassed = 0;
+        let testsFailed = 0;
+        const totalTests = 5;
+
+        // Test snippet data
+        const testSnippet = {
+            name: "TypeScript Best Practices",
+            category: "typescript",
+            source: "project",
+            content: `# TypeScript Best Practices
+
+## Overview
+This snippet contains best practices for writing TypeScript code.
+
+## Key Principles
+
+1. **Use Strict Mode**
+   - Always enable strict mode in tsconfig.json
+   - Catches common errors at compile time
+
+2. **Proper Type Annotations**
+   - Avoid using 'any' type
+   - Use interfaces for object shapes
+   - Use type aliases for unions
+
+3. **Error Handling**
+   - Use custom error types
+   - Handle async errors with try/catch
+
+## Example Code
+
+\`\`\`typescript
+interface User {
+    id: string;
+    name: string;
+    email: string;
+}
+
+async function getUser(id: string): Promise<User> {
+    try {
+        const response = await fetch(\`/api/users/\${id}\`);
+        if (!response.ok) {
+            throw new Error(\`HTTP error! status: \${response.status}\`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Failed to fetch user:', error);
+        throw error;
+    }
+}
+\`\`\`
+
+## Resources
+- TypeScript Handbook: https://www.typescriptlang.org/docs/
+- Effective TypeScript: https://effectivetypescript.com/
+`,
+            language: "typescript",
+            tags: "typescript, best-practices, coding-standards, type-safety"
+        };
+
+        function updateProgress() {
+            const progress = ((testsPassed + testsFailed) / totalTests) * 100;
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = progress + '%';
+            progressBar.textContent = Math.round(progress) + '%';
+
+            document.getElementById('passedTests').textContent = testsPassed;
+            document.getElementById('failedTests').textContent = testsFailed;
+        }
+
+        function setStepStatus(stepId, status, details = '') {
+            const step = document.getElementById(stepId);
+            step.className = 'test-step ' + status;
+
+            const badge = step.querySelector('.status-badge');
+            badge.className = 'status-badge ' + status;
+            badge.textContent = status.toUpperCase();
+
+            if (details) {
+                const detailsDiv = step.querySelector('.step-details');
+                detailsDiv.innerHTML += details;
+            }
+        }
+
+        function markSubstepComplete(stepId, substepIndex) {
+            const step = document.getElementById(stepId);
+            const substeps = step.querySelectorAll('.step-substep');
+            if (substeps[substepIndex]) {
+                substeps[substepIndex].classList.add('completed');
+            }
+        }
+
+        async function runAllTests() {
+            document.getElementById('runTests').disabled = true;
+            testsPassed = 0;
+            testsFailed = 0;
+            document.getElementById('finalResult').innerHTML = '';
+
+            // Create test step elements
+            createTestSteps();
+
+            // Run tests sequentially
+            await testStep1();
+            await testStep2();
+            await testStep3();
+            await testStep4();
+            await testStep5();
+
+            // Show final result
+            showFinalResult();
+            document.getElementById('runTests').disabled = false;
+        }
+
+        function createTestSteps() {
+            const container = document.getElementById('testResults');
+            container.innerHTML = `
+                <div id="step1" class="test-step">
+                    <div class="step-header">
+                        <div class="step-title">Step 1: Send POST Request with Snippet Data</div>
+                        <span class="status-badge pending">PENDING</span>
+                    </div>
+                    <div class="step-details">
+                        <div class="step-substep">POST /api/snippets with snippet data</div>
+                        <div class="step-substep">Include name, category, content, language, tags</div>
+                        <div class="step-substep">Verify request sent successfully</div>
+                    </div>
+                </div>
+
+                <div id="step2" class="test-step">
+                    <div class="step-header">
+                        <div class="step-title">Step 2: Verify 201 Status Code</div>
+                        <span class="status-badge pending">PENDING</span>
+                    </div>
+                    <div class="step-details">
+                        <div class="step-substep">Response status should be 201 Created</div>
+                        <div class="step-substep">Verify successful creation status</div>
+                    </div>
+                </div>
+
+                <div id="step3" class="test-step">
+                    <div class="step-header">
+                        <div class="step-title">Step 3: Verify Snippet Saved to ./sherpa/snippets/</div>
+                        <span class="status-badge pending">PENDING</span>
+                    </div>
+                    <div class="step-details">
+                        <div class="step-substep">Response should include file_path</div>
+                        <div class="step-substep">File path should reference sherpa/snippets directory</div>
+                        <div class="step-substep">File should be a .md markdown file</div>
+                    </div>
+                </div>
+
+                <div id="step4" class="test-step">
+                    <div class="step-header">
+                        <div class="step-title">Step 4: Verify Snippet ID Returned</div>
+                        <span class="status-badge pending">PENDING</span>
+                    </div>
+                    <div class="step-details">
+                        <div class="step-substep">Response should include snippet_id</div>
+                        <div class="step-substep">snippet_id should be non-empty string</div>
+                        <div class="step-substep">Created snippet object should be returned</div>
+                    </div>
+                </div>
+
+                <div id="step5" class="test-step">
+                    <div class="step-header">
+                        <div class="step-title">Step 5: Verify Snippet Accessible via GET</div>
+                        <span class="status-badge pending">PENDING</span>
+                    </div>
+                    <div class="step-details">
+                        <div class="step-substep">GET /api/snippets/:id with created snippet ID</div>
+                        <div class="step-substep">Verify snippet data matches what was created</div>
+                        <div class="step-substep">Verify content is complete</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function testStep1() {
+            setStepStatus('step1', 'running');
+
+            try {
+                const response = await fetch(`${API_URL}/api/snippets`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testSnippet)
+                });
+
+                markSubstepComplete('step1', 0);
+
+                // Store response for later tests
+                window.createResponse = response;
+                window.createData = await response.json();
+
+                markSubstepComplete('step1', 1);
+                markSubstepComplete('step1', 2);
+
+                const resultHtml = `
+                    <div class="success-message">✓ POST request sent successfully</div>
+                    <div class="result-box">
+                        <strong>Request:</strong> POST ${API_URL}/api/snippets<br>
+                        <strong>Status:</strong> ${response.status}<br>
+                        <strong>Response:</strong><br>
+                        ${JSON.stringify(window.createData, null, 2)}
+                    </div>
+                `;
+                setStepStatus('step1', 'success', resultHtml);
+                testsPassed++;
+            } catch (error) {
+                const errorHtml = `
+                    <div class="error-message">✗ Failed to send POST request</div>
+                    <div class="result-box">Error: ${error.message}</div>
+                `;
+                setStepStatus('step1', 'error', errorHtml);
+                testsFailed++;
+            }
+            updateProgress();
+        }
+
+        async function testStep2() {
+            setStepStatus('step2', 'running');
+
+            try {
+                const status = window.createResponse.status;
+
+                if (status === 201) {
+                    markSubstepComplete('step2', 0);
+                    markSubstepComplete('step2', 1);
+
+                    const resultHtml = `
+                        <div class="success-message">✓ Status code is 201 Created</div>
+                        <div class="result-box">
+                            <strong>Expected:</strong> 201<br>
+                            <strong>Actual:</strong> ${status}
+                        </div>
+                    `;
+                    setStepStatus('step2', 'success', resultHtml);
+                    testsPassed++;
+                } else {
+                    throw new Error(`Expected status 201, got ${status}`);
+                }
+            } catch (error) {
+                const errorHtml = `
+                    <div class="error-message">✗ Status code verification failed</div>
+                    <div class="result-box">Error: ${error.message}</div>
+                `;
+                setStepStatus('step2', 'error', errorHtml);
+                testsFailed++;
+            }
+            updateProgress();
+        }
+
+        async function testStep3() {
+            setStepStatus('step3', 'running');
+
+            try {
+                const data = window.createData;
+
+                if (!data.file_path) {
+                    throw new Error('Response does not include file_path');
+                }
+                markSubstepComplete('step3', 0);
+
+                if (!data.file_path.includes('sherpa/snippets')) {
+                    throw new Error('file_path does not reference sherpa/snippets directory');
+                }
+                markSubstepComplete('step3', 1);
+
+                if (!data.file_path.endsWith('.md')) {
+                    throw new Error('file_path does not end with .md extension');
+                }
+                markSubstepComplete('step3', 2);
+
+                const resultHtml = `
+                    <div class="success-message">✓ Snippet saved to correct directory</div>
+                    <div class="result-box">
+                        <strong>File Path:</strong> ${data.file_path}
+                    </div>
+                `;
+                setStepStatus('step3', 'success', resultHtml);
+                testsPassed++;
+            } catch (error) {
+                const errorHtml = `
+                    <div class="error-message">✗ File path verification failed</div>
+                    <div class="result-box">Error: ${error.message}</div>
+                `;
+                setStepStatus('step3', 'error', errorHtml);
+                testsFailed++;
+            }
+            updateProgress();
+        }
+
+        async function testStep4() {
+            setStepStatus('step4', 'running');
+
+            try {
+                const data = window.createData;
+
+                if (!data.snippet_id) {
+                    throw new Error('Response does not include snippet_id');
+                }
+                markSubstepComplete('step4', 0);
+
+                if (typeof data.snippet_id !== 'string' || data.snippet_id.length === 0) {
+                    throw new Error('snippet_id is not a non-empty string');
+                }
+                markSubstepComplete('step4', 1);
+
+                if (!data.snippet) {
+                    throw new Error('Response does not include snippet object');
+                }
+                markSubstepComplete('step4', 2);
+
+                // Store snippet ID for next test
+                window.createdSnippetId = data.snippet_id;
+
+                const resultHtml = `
+                    <div class="success-message">✓ Snippet ID returned successfully</div>
+                    <div class="result-box">
+                        <strong>Snippet ID:</strong> ${data.snippet_id}<br>
+                        <strong>Snippet Name:</strong> ${data.snippet.name}<br>
+                        <strong>Category:</strong> ${data.snippet.category}<br>
+                        <strong>Source:</strong> ${data.snippet.source}
+                    </div>
+                `;
+                setStepStatus('step4', 'success', resultHtml);
+                testsPassed++;
+            } catch (error) {
+                const errorHtml = `
+                    <div class="error-message">✗ Snippet ID verification failed</div>
+                    <div class="result-box">Error: ${error.message}</div>
+                `;
+                setStepStatus('step4', 'error', errorHtml);
+                testsFailed++;
+            }
+            updateProgress();
+        }
+
+        async function testStep5() {
+            setStepStatus('step5', 'running');
+
+            try {
+                const snippetId = window.createdSnippetId;
+
+                if (!snippetId) {
+                    throw new Error('No snippet ID available from previous test');
+                }
+
+                const response = await fetch(`${API_URL}/api/snippets/${snippetId}`);
+                const data = await response.json();
+
+                markSubstepComplete('step5', 0);
+
+                if (!data.snippet) {
+                    throw new Error('GET request did not return snippet');
+                }
+
+                // Verify data matches
+                if (data.snippet.name !== testSnippet.name) {
+                    throw new Error('Snippet name does not match');
+                }
+                if (data.snippet.category !== testSnippet.category) {
+                    throw new Error('Snippet category does not match');
+                }
+                markSubstepComplete('step5', 1);
+
+                if (!data.snippet.content || data.snippet.content.length === 0) {
+                    throw new Error('Snippet content is empty');
+                }
+                markSubstepComplete('step5', 2);
+
+                const resultHtml = `
+                    <div class="success-message">✓ Snippet accessible via GET endpoint</div>
+                    <div class="result-box">
+                        <strong>GET Request:</strong> /api/snippets/${snippetId}<br>
+                        <strong>Status:</strong> ${response.status}<br>
+                        <strong>Name:</strong> ${data.snippet.name}<br>
+                        <strong>Category:</strong> ${data.snippet.category}<br>
+                        <strong>Content Length:</strong> ${data.snippet.content.length} characters
+                    </div>
+                    <div class="snippet-preview">
+                        ${data.snippet.content.substring(0, 300)}...
+                    </div>
+                `;
+                setStepStatus('step5', 'success', resultHtml);
+                testsPassed++;
+            } catch (error) {
+                const errorHtml = `
+                    <div class="error-message">✗ GET verification failed</div>
+                    <div class="result-box">Error: ${error.message}</div>
+                `;
+                setStepStatus('step5', 'error', errorHtml);
+                testsFailed++;
+            }
+            updateProgress();
+        }
+
+        function showFinalResult() {
+            const finalResultDiv = document.getElementById('finalResult');
+
+            if (testsFailed === 0) {
+                finalResultDiv.innerHTML = `
+                    <div class="final-result success">
+                        ✅ ALL TESTS PASSED (${testsPassed}/${totalTests}) - POST /api/snippets Working Perfectly!
+                    </div>
+                `;
+            } else {
+                finalResultDiv.innerHTML = `
+                    <div class="final-result failure">
+                        ❌ SOME TESTS FAILED - Passed: ${testsPassed}/${totalTests}, Failed: ${testsFailed}/${totalTests}
+                    </div>
+                `;
+            }
+        }
+
+        // Auto-run tests on page load
+        window.addEventListener('load', () => {
+            setTimeout(runAllTests, 500);
+        });
+    </script>
+</body>
+</html>
