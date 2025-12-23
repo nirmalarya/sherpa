@@ -1858,7 +1858,7 @@
       "Step 4: Verify sufficient contrast for accessibility",
       "Step 5: Verify colors defined in Tailwind config"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -1870,7 +1870,7 @@
       "Step 4: Verify line heights readable",
       "Step 5: Verify font weights used appropriately"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -1895,7 +1895,7 @@
       "Step 5: Verify hover states present",
       "Step 6: Verify loading states implemented"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
