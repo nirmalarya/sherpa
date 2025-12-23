@@ -247,6 +247,41 @@ async def stop_session(session_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/sessions/{session_id}/pause")
+async def pause_session(session_id: str):
+    """Pause a running session"""
+    try:
+        db = await get_db()
+
+        # Verify session exists
+        session = await db.get_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        # Verify session is active (can only pause active sessions)
+        current_status = session.get('status')
+        if current_status == 'paused':
+            raise HTTPException(status_code=400, detail="Session is already paused")
+        if current_status not in ['active', 'running']:
+            raise HTTPException(status_code=400, detail=f"Cannot pause session with status: {current_status}")
+
+        # Update session status to paused
+        await db.update_session(session_id, {
+            'status': 'paused'
+        })
+
+        return {
+            "id": session_id,
+            "status": "paused",
+            "message": "Session paused successfully",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/snippets")
 async def get_snippets(category: Optional[str] = None):
     """Get all code snippets"""

@@ -622,7 +622,7 @@
       "Step 4: Verify session pauses",
       "Step 5: Verify status updated to 'paused'"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
