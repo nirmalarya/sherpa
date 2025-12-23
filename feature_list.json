@@ -1668,7 +1668,7 @@
       "Step 5: Test endpoint from Swagger UI",
       "Step 6: Verify 'Try it out' works"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
