@@ -610,7 +610,7 @@
       "Step 4: Verify session stops",
       "Step 5: Verify status updated to 'stopped'"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

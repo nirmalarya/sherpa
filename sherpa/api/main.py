@@ -218,6 +218,35 @@ async def get_session_progress(session_id: str):
     )
 
 
+@app.post("/api/sessions/{session_id}/stop")
+async def stop_session(session_id: str):
+    """Stop a running session"""
+    try:
+        db = await get_db()
+
+        # Verify session exists
+        session = await db.get_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        # Update session status to stopped
+        await db.update_session(session_id, {
+            'status': 'stopped',
+            'completed_at': datetime.utcnow().isoformat()
+        })
+
+        return {
+            "id": session_id,
+            "status": "stopped",
+            "message": "Session stopped successfully",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/snippets")
 async def get_snippets(category: Optional[str] = None):
     """Get all code snippets"""
