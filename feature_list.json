@@ -62,7 +62,7 @@
       "Step 6: Remove project snippet and verify org snippet is used",
       "Step 7: Remove org snippet and verify built-in is used"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

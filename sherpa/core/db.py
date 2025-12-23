@@ -35,8 +35,11 @@ class Database:
             self._connection = None
 
     async def initialize(self):
-        """Initialize database schema"""
+        """Initialize database schema with migration support"""
         conn = await self.connect()
+
+        # Check if snippets table needs migration (old schema: id as PK, new: composite PK)
+        await self._migrate_snippets_table_if_needed(conn)
 
         # Sessions table
         await conn.execute("""
@@ -58,7 +61,7 @@ class Database:
         # Snippets table
         await conn.execute("""
             CREATE TABLE IF NOT EXISTS snippets (
-                id TEXT PRIMARY KEY,
+                id TEXT NOT NULL,
                 name TEXT NOT NULL,
                 category TEXT NOT NULL,
                 source TEXT NOT NULL,
@@ -66,7 +69,8 @@ class Database:
                 language TEXT,
                 tags TEXT,
                 created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL
+                updated_at TEXT NOT NULL,
+                PRIMARY KEY (id, source)
             )
         """)
 
@@ -187,12 +191,12 @@ class Database:
 
     # Snippet operations
     async def create_snippet(self, snippet_data: Dict[str, Any]) -> str:
-        """Create a new snippet"""
+        """Create a new snippet (allows same ID with different sources due to composite PK)"""
         conn = await self.connect()
         snippet_id = snippet_data.get('id') or f"snippet-{datetime.utcnow().timestamp()}"
 
         await conn.execute("""
-            INSERT INTO snippets (id, name, category, source, content, language, tags, created_at, updated_at)
+            INSERT OR REPLACE INTO snippets (id, name, category, source, content, language, tags, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             snippet_id,
@@ -222,8 +226,24 @@ class Database:
         return [dict(row) for row in rows]
 
     async def get_snippet(self, snippet_id: str) -> Optional[Dict[str, Any]]:
-        """Get snippet by ID"""
+        """Get snippet by ID with hierarchy resolution: local > project > org > built-in"""
         conn = await self.connect()
+
+        # Hierarchy order: local (highest) > project > org > built-in (lowest)
+        source_priority = ['local', 'project', 'org', 'built-in']
+
+        # Try to find snippet in priority order
+        for source in source_priority:
+            cursor = await conn.execute(
+                "SELECT * FROM snippets WHERE id = ? AND source = ?",
+                (snippet_id, source)
+            )
+            row = await cursor.fetchone()
+
+            if row:
+                return dict(row)
+
+        # If no snippet found with any source, try without source filter (backward compatibility)
         cursor = await conn.execute("SELECT * FROM snippets WHERE id = ?", (snippet_id,))
         row = await cursor.fetchone()
 
@@ -304,6 +324,82 @@ class Database:
 
         rows = await cursor.fetchall()
         return [dict(row) for row in rows]
+
+    async def _migrate_snippets_table_if_needed(self, conn):
+        """Migrate snippets table to support composite primary key (id, source)"""
+        try:
+            # Check if table exists
+            cursor = await conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='snippets'"
+            )
+            table_exists = await cursor.fetchone()
+
+            if not table_exists:
+                # Table doesn't exist yet, will be created with new schema
+                return
+
+            # Check current schema
+            cursor = await conn.execute("PRAGMA table_info(snippets)")
+            columns = await cursor.fetchall()
+            column_names = [col[1] for col in columns]
+
+            # Check if migration needed (old schema has id as single PK)
+            cursor = await conn.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='snippets'")
+            current_schema = await cursor.fetchone()
+
+            if current_schema and 'PRIMARY KEY (id, source)' in current_schema[0]:
+                # Already migrated
+                return
+
+            print("🔄 Migrating snippets table to support hierarchy (composite PK)...")
+
+            # Export existing data
+            cursor = await conn.execute("SELECT * FROM snippets")
+            existing_snippets = await cursor.fetchall()
+
+            # Drop old table
+            await conn.execute("DROP TABLE IF EXISTS snippets")
+
+            # Create new table with composite PK
+            await conn.execute("""
+                CREATE TABLE snippets (
+                    id TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    category TEXT NOT NULL,
+                    source TEXT NOT NULL,
+                    content TEXT NOT NULL,
+                    language TEXT,
+                    tags TEXT,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    PRIMARY KEY (id, source)
+                )
+            """)
+
+            # Re-insert existing data
+            for snippet in existing_snippets:
+                snippet_dict = dict(snippet)
+                await conn.execute("""
+                    INSERT OR REPLACE INTO snippets (id, name, category, source, content, language, tags, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    snippet_dict['id'],
+                    snippet_dict['name'],
+                    snippet_dict['category'],
+                    snippet_dict['source'],
+                    snippet_dict['content'],
+                    snippet_dict.get('language'),
+                    snippet_dict.get('tags'),
+                    snippet_dict.get('created_at', datetime.utcnow().isoformat()),
+                    snippet_dict.get('updated_at', datetime.utcnow().isoformat())
+                ))
+
+            await conn.commit()
+            print(f"✅ Migration complete: {len(existing_snippets)} snippets preserved")
+
+        except Exception as e:
+            print(f"⚠️  Migration warning: {e}")
+            # Don't fail initialization, just log the issue
 
 
 # Global database instance
