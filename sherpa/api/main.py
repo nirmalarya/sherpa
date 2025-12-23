@@ -386,6 +386,134 @@ async def get_snippets(category: Optional[str] = None):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/snippets/load-builtin")
+async def load_builtin_snippets():
+    """Load built-in snippets from markdown files into database"""
+    try:
+        # Built-in snippets metadata
+        BUILT_IN_SNIPPETS = [
+            {
+                "file": "security-auth.md",
+                "id": "snippet-security-auth",
+                "name": "Security & Authentication Patterns",
+                "category": "security",
+                "language": "python, javascript",
+                "tags": "authentication, authorization, security, jwt, oauth"
+            },
+            {
+                "file": "python-error-handling.md",
+                "id": "snippet-python-error-handling",
+                "name": "Python Error Handling Patterns",
+                "category": "python",
+                "language": "python",
+                "tags": "error-handling, exceptions, logging, debugging"
+            },
+            {
+                "file": "python-async.md",
+                "id": "snippet-python-async",
+                "name": "Python Async/Await Patterns",
+                "category": "python",
+                "language": "python",
+                "tags": "async, asyncio, concurrency, async-await"
+            },
+            {
+                "file": "react-hooks.md",
+                "id": "snippet-react-hooks",
+                "name": "React Hooks Patterns",
+                "category": "react",
+                "language": "javascript, typescript",
+                "tags": "react, hooks, useState, useEffect, frontend"
+            },
+            {
+                "file": "testing-unit.md",
+                "id": "snippet-testing-unit",
+                "name": "Unit Testing Patterns",
+                "category": "testing",
+                "language": "python, javascript",
+                "tags": "testing, unit-tests, pytest, jest, tdd"
+            },
+            {
+                "file": "api-rest.md",
+                "id": "snippet-api-rest",
+                "name": "REST API Best Practices",
+                "category": "api",
+                "language": "python, javascript",
+                "tags": "api, rest, http, fastapi, express"
+            },
+            {
+                "file": "git-commits.md",
+                "id": "snippet-git-commits",
+                "name": "Git Commit Best Practices",
+                "category": "git",
+                "language": "markdown",
+                "tags": "git, commits, version-control, best-practices"
+            }
+        ]
+
+        snippets_dir = Path(__file__).parent.parent / "snippets"
+
+        if not snippets_dir.exists():
+            raise HTTPException(status_code=500, detail=f"Snippets directory not found: {snippets_dir}")
+
+        db = await get_db()
+
+        # Check if snippets already exist
+        existing_snippets = await db.get_snippets()
+        if existing_snippets:
+            # Clear existing snippets
+            conn = await db.connect()
+            await conn.execute("DELETE FROM snippets")
+            await conn.commit()
+
+        # Load each snippet
+        loaded_count = 0
+        errors = []
+
+        for snippet_meta in BUILT_IN_SNIPPETS:
+            snippet_file = snippets_dir / snippet_meta["file"]
+
+            if not snippet_file.exists():
+                errors.append(f"Snippet file not found: {snippet_file}")
+                continue
+
+            # Read snippet content
+            with open(snippet_file, 'r') as f:
+                content = f.read()
+
+            # Create snippet in database
+            snippet_data = {
+                "id": snippet_meta["id"],
+                "name": snippet_meta["name"],
+                "category": snippet_meta["category"],
+                "source": "built-in",
+                "content": content,
+                "language": snippet_meta["language"],
+                "tags": snippet_meta["tags"]
+            }
+
+            try:
+                await db.create_snippet(snippet_data)
+                loaded_count += 1
+            except Exception as e:
+                errors.append(f"Failed to load {snippet_meta['name']}: {str(e)}")
+
+        # Get final count
+        all_snippets = await db.get_snippets()
+
+        return {
+            "status": "success",
+            "loaded": loaded_count,
+            "total_in_db": len(all_snippets),
+            "errors": errors if errors else None,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/config")
 async def get_config():
     """Get configuration"""

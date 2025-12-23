@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Load Built-in Snippets - SHERPA V1</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        .status.loading {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            color: #856404;
+        }
+        .status.success {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            color: #721c24;
+        }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 20px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .snippet-list {
+            margin-top: 20px;
+        }
+        .snippet-item {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .snippet-info {
+            flex: 1;
+        }
+        .snippet-name {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 16px;
+        }
+        .snippet-meta {
+            color: #666;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+        .badge.category {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        .badge.source {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏔️ Load Built-in Snippets</h1>
+        <p class="subtitle">Load all 7 built-in code snippets into the SHERPA database</p>
+
+        <button id="loadBtn" onclick="loadSnippets()">Load Snippets</button>
+        <button id="viewBtn" onclick="viewSnippets()" style="margin-left: 10px; background: #17a2b8;">View Loaded Snippets</button>
+
+        <div id="status"></div>
+        <div id="result"></div>
+        <div id="snippetsList"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8001';
+
+        async function loadSnippets() {
+            const statusDiv = document.getElementById('status');
+            const resultDiv = document.getElementById('result');
+            const loadBtn = document.getElementById('loadBtn');
+
+            loadBtn.disabled = true;
+            statusDiv.className = 'status loading';
+            statusDiv.textContent = '⏳ Loading built-in snippets...';
+            resultDiv.innerHTML = '';
+
+            try {
+                const response = await fetch(`${API_URL}/api/snippets/load-builtin`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    statusDiv.className = 'status success';
+                    statusDiv.textContent = `✅ Successfully loaded ${data.loaded} snippets!`;
+
+                    resultDiv.innerHTML = `
+                        <strong>Load Summary:</strong><br><br>
+                        Snippets Loaded: ${data.loaded}<br>
+                        Total in Database: ${data.total_in_db}<br>
+                        Timestamp: ${data.timestamp}<br>
+                        ${data.errors && data.errors.length > 0 ? `<br><strong style="color: #dc3545;">Errors:</strong><br>${data.errors.join('<br>')}` : ''}
+                    `;
+
+                    // Auto-load snippets view
+                    setTimeout(() => viewSnippets(), 1000);
+                } else {
+                    statusDiv.className = 'status error';
+                    statusDiv.textContent = `❌ Error: ${data.detail || 'Failed to load snippets'}`;
+                    resultDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.textContent = `❌ Error: ${error.message}`;
+                resultDiv.innerHTML = `<pre>${error.stack}</pre>`;
+            } finally {
+                loadBtn.disabled = false;
+            }
+        }
+
+        async function viewSnippets() {
+            const statusDiv = document.getElementById('status');
+            const snippetsListDiv = document.getElementById('snippetsList');
+            const viewBtn = document.getElementById('viewBtn');
+
+            viewBtn.disabled = true;
+            statusDiv.className = 'status loading';
+            statusDiv.textContent = '⏳ Fetching snippets from database...';
+
+            try {
+                const response = await fetch(`${API_URL}/api/snippets`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    statusDiv.className = 'status success';
+                    statusDiv.textContent = `✅ Found ${data.total} snippets in database`;
+
+                    if (data.snippets && data.snippets.length > 0) {
+                        let html = '<div class="snippet-list"><h3>Loaded Snippets:</h3>';
+
+                        data.snippets.forEach(snippet => {
+                            html += `
+                                <div class="snippet-item">
+                                    <div class="snippet-info">
+                                        <div class="snippet-name">${snippet.name}</div>
+                                        <div class="snippet-meta">
+                                            <span class="badge category">${snippet.category}</span>
+                                            <span class="badge source">${snippet.source}</span>
+                                            ${snippet.language ? `<span>Languages: ${snippet.language}</span>` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+
+                        html += '</div>';
+                        snippetsListDiv.innerHTML = html;
+                    } else {
+                        snippetsListDiv.innerHTML = '<p style="color: #666;">No snippets found in database. Click "Load Snippets" to load them.</p>';
+                    }
+                } else {
+                    statusDiv.className = 'status error';
+                    statusDiv.textContent = `❌ Error: ${data.detail || 'Failed to fetch snippets'}`;
+                }
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.textContent = `❌ Error: ${error.message}`;
+            } finally {
+                viewBtn.disabled = false;
+            }
+        }
+
+        // Auto-load snippets view on page load
+        window.addEventListener('load', () => {
+            viewSnippets();
+        });
+    </script>
+</body>
+</html>

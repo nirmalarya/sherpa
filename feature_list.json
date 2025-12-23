@@ -670,7 +670,7 @@
       "Step 4: Verify built-in snippets included",
       "Step 5: Verify snippet metadata included"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
