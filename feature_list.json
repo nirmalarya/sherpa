@@ -1107,7 +1107,7 @@
       "Step 6: Click sort by progress",
       "Step 7: Verify sessions ordered by completion %"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

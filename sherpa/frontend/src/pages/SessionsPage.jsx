@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, Filter } from 'lucide-react'
+import { Search, Filter, ArrowUp, ArrowDown } from 'lucide-react'
 import api from '../lib/api'
 import ErrorMessage from '../components/ErrorMessage'
 
@@ -10,6 +10,8 @@ function SessionsPage() {
   const [error, setError] = useState(null)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [sortBy, setSortBy] = useState('date') // 'date', 'status', 'progress'
+  const [sortDirection, setSortDirection] = useState('desc') // 'asc' or 'desc'
 
   useEffect(() => {
     fetchSessions()
@@ -33,9 +35,41 @@ function SessionsPage() {
     }
   }
 
+  const handleSort = (column) => {
+    if (sortBy === column) {
+      // Toggle direction if clicking same column
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      // Set new column and default to descending
+      setSortBy(column)
+      setSortDirection('desc')
+    }
+  }
+
   const filteredSessions = sessions.filter(session => {
     const sessionName = session.spec_file || session.id || ''
     return sessionName.toLowerCase().includes(search.toLowerCase())
+  })
+
+  // Sort the filtered sessions
+  const sortedSessions = [...filteredSessions].sort((a, b) => {
+    let comparison = 0
+
+    if (sortBy === 'date') {
+      const dateA = new Date(a.created_at || 0)
+      const dateB = new Date(b.created_at || 0)
+      comparison = dateA - dateB
+    } else if (sortBy === 'status') {
+      const statusA = a.status || ''
+      const statusB = b.status || ''
+      comparison = statusA.localeCompare(statusB)
+    } else if (sortBy === 'progress') {
+      const progressA = a.total_features > 0 ? (a.completed_features / a.total_features) : 0
+      const progressB = b.total_features > 0 ? (b.completed_features / b.total_features) : 0
+      comparison = progressA - progressB
+    }
+
+    return sortDirection === 'asc' ? comparison : -comparison
   })
 
   return (
@@ -105,19 +139,52 @@ function SessionsPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Session
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                  onClick={() => handleSort('status')}
+                  aria-label="Sort by status"
+                >
+                  <div className="flex items-center gap-1">
+                    <span>Status</span>
+                    {sortBy === 'status' && (
+                      sortDirection === 'asc' ?
+                        <ArrowUp className="h-4 w-4" aria-label="Sorted ascending" /> :
+                        <ArrowDown className="h-4 w-4" aria-label="Sorted descending" />
+                    )}
+                  </div>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Progress
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                  onClick={() => handleSort('progress')}
+                  aria-label="Sort by progress"
+                >
+                  <div className="flex items-center gap-1">
+                    <span>Progress</span>
+                    {sortBy === 'progress' && (
+                      sortDirection === 'asc' ?
+                        <ArrowUp className="h-4 w-4" aria-label="Sorted ascending" /> :
+                        <ArrowDown className="h-4 w-4" aria-label="Sorted descending" />
+                    )}
+                  </div>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Started
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                  onClick={() => handleSort('date')}
+                  aria-label="Sort by date"
+                >
+                  <div className="flex items-center gap-1">
+                    <span>Started</span>
+                    {sortBy === 'date' && (
+                      sortDirection === 'asc' ?
+                        <ArrowUp className="h-4 w-4" aria-label="Sorted ascending" /> :
+                        <ArrowDown className="h-4 w-4" aria-label="Sorted descending" />
+                    )}
+                  </div>
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredSessions.map((session) => {
+              {sortedSessions.map((session) => {
                 const progress = session.total_features > 0
                   ? Math.round((session.completed_features / session.total_features) * 100)
                   : 0
