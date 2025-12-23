@@ -258,8 +258,47 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         return response
 
 
+# Global metrics storage
+metrics_data = {
+    "request_count": 0,
+    "error_count": 0,
+    "requests_by_endpoint": defaultdict(int),
+    "errors_by_endpoint": defaultdict(int),
+    "start_time": datetime.utcnow().isoformat()
+}
+
+
+class MetricsMiddleware(BaseHTTPMiddleware):
+    """Middleware to track request metrics for monitoring"""
+
+    async def dispatch(self, request: Request, call_next):
+        # Increment total request count
+        metrics_data["request_count"] += 1
+
+        # Track requests by endpoint
+        endpoint = f"{request.method} {request.url.path}"
+        metrics_data["requests_by_endpoint"][endpoint] += 1
+
+        # Process request
+        try:
+            response = await call_next(request)
+
+            # Track errors (4xx and 5xx status codes)
+            if response.status_code >= 400:
+                metrics_data["error_count"] += 1
+                metrics_data["errors_by_endpoint"][endpoint] += 1
+
+            return response
+        except Exception as e:
+            # Track unhandled exceptions
+            metrics_data["error_count"] += 1
+            metrics_data["errors_by_endpoint"][endpoint] += 1
+            raise
+
+
 app.add_middleware(APIVersionMiddleware)
 app.add_middleware(RateLimitMiddleware, max_requests=100, window_seconds=60)
+app.add_middleware(MetricsMiddleware)
 
 
 # Global exception handler for request validation errors
@@ -423,6 +462,106 @@ async def health_check():
         data=health_data,
         message="Service is healthy"
     )
+
+
+@app.get("/metrics")
+async def get_metrics():
+    """
+    Metrics endpoint for monitoring system health and performance
+
+    Returns metrics in a format compatible with Prometheus and other monitoring tools:
+    - Total request count
+    - Error count and error rate
+    - Active sessions count
+    - Requests by endpoint
+    - Errors by endpoint
+    - Uptime information
+
+    Response format supports both JSON and Prometheus text format
+    """
+    try:
+        # Get active sessions count from database
+        db = await get_db()
+        sessions = await db.get_sessions(status="active")
+        active_sessions = len(sessions)
+
+        # Calculate error rate
+        total_requests = metrics_data["request_count"]
+        total_errors = metrics_data["error_count"]
+        error_rate = (total_errors / total_requests * 100) if total_requests > 0 else 0.0
+
+        # Calculate uptime
+        start_time = datetime.fromisoformat(metrics_data["start_time"])
+        uptime_seconds = (datetime.utcnow() - start_time).total_seconds()
+
+        # Build Prometheus-style metrics text
+        prometheus_metrics = []
+        prometheus_metrics.append("# HELP sherpa_requests_total Total number of HTTP requests")
+        prometheus_metrics.append("# TYPE sherpa_requests_total counter")
+        prometheus_metrics.append(f"sherpa_requests_total {total_requests}")
+        prometheus_metrics.append("")
+
+        prometheus_metrics.append("# HELP sherpa_errors_total Total number of HTTP errors")
+        prometheus_metrics.append("# TYPE sherpa_errors_total counter")
+        prometheus_metrics.append(f"sherpa_errors_total {total_errors}")
+        prometheus_metrics.append("")
+
+        prometheus_metrics.append("# HELP sherpa_error_rate Error rate percentage")
+        prometheus_metrics.append("# TYPE sherpa_error_rate gauge")
+        prometheus_metrics.append(f"sherpa_error_rate {error_rate:.2f}")
+        prometheus_metrics.append("")
+
+        prometheus_metrics.append("# HELP sherpa_active_sessions Number of active coding sessions")
+        prometheus_metrics.append("# TYPE sherpa_active_sessions gauge")
+        prometheus_metrics.append(f"sherpa_active_sessions {active_sessions}")
+        prometheus_metrics.append("")
+
+        prometheus_metrics.append("# HELP sherpa_uptime_seconds Service uptime in seconds")
+        prometheus_metrics.append("# TYPE sherpa_uptime_seconds counter")
+        prometheus_metrics.append(f"sherpa_uptime_seconds {uptime_seconds:.0f}")
+        prometheus_metrics.append("")
+
+        # Add per-endpoint metrics
+        prometheus_metrics.append("# HELP sherpa_requests_by_endpoint Requests per endpoint")
+        prometheus_metrics.append("# TYPE sherpa_requests_by_endpoint counter")
+        for endpoint, count in metrics_data["requests_by_endpoint"].items():
+            # Escape quotes in endpoint name for Prometheus format
+            endpoint_label = endpoint.replace('"', '\\"')
+            prometheus_metrics.append(f'sherpa_requests_by_endpoint{{endpoint="{endpoint_label}"}} {count}')
+        prometheus_metrics.append("")
+
+        prometheus_metrics.append("# HELP sherpa_errors_by_endpoint Errors per endpoint")
+        prometheus_metrics.append("# TYPE sherpa_errors_by_endpoint counter")
+        for endpoint, count in metrics_data["errors_by_endpoint"].items():
+            endpoint_label = endpoint.replace('"', '\\"')
+            prometheus_metrics.append(f'sherpa_errors_by_endpoint{{endpoint="{endpoint_label}"}} {count}')
+        prometheus_metrics.append("")
+
+        prometheus_text = "\n".join(prometheus_metrics)
+
+        # Build JSON response
+        metrics_json = {
+            "request_count": total_requests,
+            "error_count": total_errors,
+            "error_rate": round(error_rate, 2),
+            "active_sessions": active_sessions,
+            "uptime_seconds": int(uptime_seconds),
+            "start_time": metrics_data["start_time"],
+            "requests_by_endpoint": dict(metrics_data["requests_by_endpoint"]),
+            "errors_by_endpoint": dict(metrics_data["errors_by_endpoint"]),
+            "prometheus_format": prometheus_text
+        }
+
+        logger.info(f"Metrics requested - Requests: {total_requests}, Errors: {total_errors}, Active Sessions: {active_sessions}")
+
+        return success_response(
+            data=metrics_json,
+            message="Metrics retrieved successfully"
+        )
+
+    except Exception as e:
+        logger.error(f"Error retrieving metrics: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/sessions")

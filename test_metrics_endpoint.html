@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metrics Endpoint Test - Session 82</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .pass {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        .fail {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+        .pending {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+        button.run-all {
+            background: #27ae60;
+            font-size: 18px;
+            padding: 15px 30px;
+        }
+        button.run-all:hover {
+            background: #229954;
+        }
+        pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            max-height: 400px;
+        }
+        .summary {
+            background: #e8f4f8;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #3498db;
+        }
+        .metric-box {
+            display: inline-block;
+            background: white;
+            padding: 15px;
+            margin: 10px;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            min-width: 150px;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #3498db;
+        }
+        .metric-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+        }
+        .prometheus-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre;
+            max-height: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Metrics Endpoint Test - Session 82</h1>
+
+        <div class="info">
+            <strong>🎯 Feature:</strong> Metrics endpoint - /metrics for monitoring
+            <br><br>
+            <strong>📋 Test Steps:</strong>
+            <ol>
+                <li>Step 1: Call GET /metrics</li>
+                <li>Step 2: Verify response includes request count</li>
+                <li>Step 3: Verify response includes active sessions</li>
+                <li>Step 4: Verify response includes error rate</li>
+                <li>Step 5: Verify Prometheus format</li>
+            </ol>
+        </div>
+
+        <button class="run-all" onclick="runAllTests()">▶️ Run All Tests</button>
+        <button onclick="resetTests()">🔄 Reset Tests</button>
+
+        <h2>Step 1: Call GET /metrics</h2>
+        <div class="test-section">
+            <button onclick="testStep1()">Run Step 1</button>
+            <div id="step1-result"></div>
+        </div>
+
+        <h2>Step 2: Verify response includes request count</h2>
+        <div class="test-section">
+            <button onclick="testStep2()">Run Step 2</button>
+            <div id="step2-result"></div>
+        </div>
+
+        <h2>Step 3: Verify response includes active sessions</h2>
+        <div class="test-section">
+            <button onclick="testStep3()">Run Step 3</button>
+            <div id="step3-result"></div>
+        </div>
+
+        <h2>Step 4: Verify response includes error rate</h2>
+        <div class="test-section">
+            <button onclick="testStep4()">Run Step 4</button>
+            <div id="step4-result"></div>
+        </div>
+
+        <h2>Step 5: Verify Prometheus format</h2>
+        <div class="test-section">
+            <button onclick="testStep5()">Run Step 5</button>
+            <div id="step5-result"></div>
+        </div>
+
+        <div id="overall-summary"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8001';
+        let metricsResponse = null;
+        let testResults = {
+            step1: null,
+            step2: null,
+            step3: null,
+            step4: null,
+            step5: null
+        };
+
+        async function testStep1() {
+            const resultDiv = document.getElementById('step1-result');
+            resultDiv.innerHTML = '<div class="test-result pending">⏳ Calling GET /metrics...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/metrics`);
+                const data = await response.json();
+                metricsResponse = data;
+
+                let result = '<div class="test-result pass">✅ Step 1 PASSED - Metrics endpoint accessible</div>';
+                result += `<p><strong>Status Code:</strong> ${response.status}</p>`;
+                result += '<p><strong>Response Preview:</strong></p>';
+                result += '<pre>' + JSON.stringify(data, null, 2).substring(0, 1000) + '...</pre>';
+
+                if (response.status === 200 && data.success && data.data) {
+                    testResults.step1 = true;
+                    resultDiv.innerHTML = result;
+                } else {
+                    testResults.step1 = false;
+                    resultDiv.innerHTML = '<div class="test-result fail">❌ Step 1 FAILED - Invalid response</div>';
+                }
+
+                updateSummary();
+
+            } catch (error) {
+                testResults.step1 = false;
+                resultDiv.innerHTML = `<div class="test-result fail">❌ Step 1 FAILED: ${error.message}</div>`;
+                updateSummary();
+            }
+        }
+
+        async function testStep2() {
+            const resultDiv = document.getElementById('step2-result');
+
+            if (!metricsResponse) {
+                resultDiv.innerHTML = '<div class="test-result fail">❌ Please run Step 1 first</div>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<div class="test-result pending">⏳ Verifying request count...</div>';
+
+            const data = metricsResponse.data;
+            const hasRequestCount = data.request_count !== undefined;
+            const requestCount = data.request_count;
+
+            let result = '';
+            if (hasRequestCount && typeof requestCount === 'number' && requestCount >= 0) {
+                result = '<div class="test-result pass">✅ Step 2 PASSED - Request count present</div>';
+                result += `<div class="metric-box">
+                    <div class="metric-label">Request Count</div>
+                    <div class="metric-value">${requestCount}</div>
+                </div>`;
+                result += `<p>✓ Field exists: Yes</p>`;
+                result += `<p>✓ Type: ${typeof requestCount}</p>`;
+                result += `<p>✓ Value: ${requestCount}</p>`;
+                testResults.step2 = true;
+            } else {
+                result = '<div class="test-result fail">❌ Step 2 FAILED - Request count missing or invalid</div>';
+                result += `<p>Has request_count field: ${hasRequestCount}</p>`;
+                result += `<p>Value: ${requestCount}</p>`;
+                testResults.step2 = false;
+            }
+
+            resultDiv.innerHTML = result;
+            updateSummary();
+        }
+
+        async function testStep3() {
+            const resultDiv = document.getElementById('step3-result');
+
+            if (!metricsResponse) {
+                resultDiv.innerHTML = '<div class="test-result fail">❌ Please run Step 1 first</div>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<div class="test-result pending">⏳ Verifying active sessions...</div>';
+
+            const data = metricsResponse.data;
+            const hasActiveSessions = data.active_sessions !== undefined;
+            const activeSessions = data.active_sessions;
+
+            let result = '';
+            if (hasActiveSessions && typeof activeSessions === 'number' && activeSessions >= 0) {
+                result = '<div class="test-result pass">✅ Step 3 PASSED - Active sessions present</div>';
+                result += `<div class="metric-box">
+                    <div class="metric-label">Active Sessions</div>
+                    <div class="metric-value">${activeSessions}</div>
+                </div>`;
+                result += `<p>✓ Field exists: Yes</p>`;
+                result += `<p>✓ Type: ${typeof activeSessions}</p>`;
+                result += `<p>✓ Value: ${activeSessions}</p>`;
+                testResults.step3 = true;
+            } else {
+                result = '<div class="test-result fail">❌ Step 3 FAILED - Active sessions missing or invalid</div>';
+                result += `<p>Has active_sessions field: ${hasActiveSessions}</p>`;
+                result += `<p>Value: ${activeSessions}</p>`;
+                testResults.step3 = false;
+            }
+
+            resultDiv.innerHTML = result;
+            updateSummary();
+        }
+
+        async function testStep4() {
+            const resultDiv = document.getElementById('step4-result');
+
+            if (!metricsResponse) {
+                resultDiv.innerHTML = '<div class="test-result fail">❌ Please run Step 1 first</div>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<div class="test-result pending">⏳ Verifying error rate...</div>';
+
+            const data = metricsResponse.data;
+            const hasErrorRate = data.error_rate !== undefined;
+            const hasErrorCount = data.error_count !== undefined;
+            const errorRate = data.error_rate;
+            const errorCount = data.error_count;
+
+            let result = '';
+            if (hasErrorRate && hasErrorCount && typeof errorRate === 'number' && typeof errorCount === 'number') {
+                result = '<div class="test-result pass">✅ Step 4 PASSED - Error rate present</div>';
+                result += `<div class="metric-box">
+                    <div class="metric-label">Error Rate</div>
+                    <div class="metric-value">${errorRate}%</div>
+                </div>`;
+                result += `<div class="metric-box">
+                    <div class="metric-label">Error Count</div>
+                    <div class="metric-value">${errorCount}</div>
+                </div>`;
+                result += `<p>✓ error_rate field exists: Yes</p>`;
+                result += `<p>✓ error_count field exists: Yes</p>`;
+                result += `<p>✓ Error Rate: ${errorRate}%</p>`;
+                result += `<p>✓ Error Count: ${errorCount}</p>`;
+                testResults.step4 = true;
+            } else {
+                result = '<div class="test-result fail">❌ Step 4 FAILED - Error rate missing or invalid</div>';
+                result += `<p>Has error_rate: ${hasErrorRate}</p>`;
+                result += `<p>Has error_count: ${hasErrorCount}</p>`;
+                testResults.step4 = false;
+            }
+
+            resultDiv.innerHTML = result;
+            updateSummary();
+        }
+
+        async function testStep5() {
+            const resultDiv = document.getElementById('step5-result');
+
+            if (!metricsResponse) {
+                resultDiv.innerHTML = '<div class="test-result fail">❌ Please run Step 1 first</div>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<div class="test-result pending">⏳ Verifying Prometheus format...</div>';
+
+            const data = metricsResponse.data;
+            const hasPrometheusFormat = data.prometheus_format !== undefined;
+            const prometheusFormat = data.prometheus_format;
+
+            let result = '';
+            if (hasPrometheusFormat && typeof prometheusFormat === 'string' && prometheusFormat.length > 0) {
+                // Verify Prometheus format structure
+                const hasHelpLines = prometheusFormat.includes('# HELP');
+                const hasTypeLines = prometheusFormat.includes('# TYPE');
+                const hasMetricLines = prometheusFormat.includes('sherpa_');
+                const hasRequestsTotal = prometheusFormat.includes('sherpa_requests_total');
+                const hasActiveSessions = prometheusFormat.includes('sherpa_active_sessions');
+                const hasErrorRate = prometheusFormat.includes('sherpa_error_rate');
+
+                if (hasHelpLines && hasTypeLines && hasMetricLines && hasRequestsTotal && hasActiveSessions && hasErrorRate) {
+                    result = '<div class="test-result pass">✅ Step 5 PASSED - Prometheus format valid</div>';
+                    result += `<p>✓ prometheus_format field exists: Yes</p>`;
+                    result += `<p>✓ Contains # HELP lines: Yes</p>`;
+                    result += `<p>✓ Contains # TYPE lines: Yes</p>`;
+                    result += `<p>✓ Contains sherpa_requests_total: Yes</p>`;
+                    result += `<p>✓ Contains sherpa_active_sessions: Yes</p>`;
+                    result += `<p>✓ Contains sherpa_error_rate: Yes</p>`;
+                    result += '<p><strong>Prometheus Format Preview:</strong></p>';
+                    result += '<div class="prometheus-block">' + prometheusFormat.substring(0, 800) + '...</div>';
+                    testResults.step5 = true;
+                } else {
+                    result = '<div class="test-result fail">❌ Step 5 FAILED - Prometheus format incomplete</div>';
+                    result += `<p>Has HELP lines: ${hasHelpLines}</p>`;
+                    result += `<p>Has TYPE lines: ${hasTypeLines}</p>`;
+                    result += `<p>Has metric lines: ${hasMetricLines}</p>`;
+                    testResults.step5 = false;
+                }
+            } else {
+                result = '<div class="test-result fail">❌ Step 5 FAILED - Prometheus format missing</div>';
+                result += `<p>Has prometheus_format field: ${hasPrometheusFormat}</p>`;
+                testResults.step5 = false;
+            }
+
+            resultDiv.innerHTML = result;
+            updateSummary();
+        }
+
+        async function runAllTests() {
+            await testStep1();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await testStep2();
+            await new Promise(resolve => setTimeout(resolve, 300));
+            await testStep3();
+            await new Promise(resolve => setTimeout(resolve, 300));
+            await testStep4();
+            await new Promise(resolve => setTimeout(resolve, 300));
+            await testStep5();
+        }
+
+        function resetTests() {
+            metricsResponse = null;
+            testResults = {
+                step1: null,
+                step2: null,
+                step3: null,
+                step4: null,
+                step5: null
+            };
+            document.getElementById('step1-result').innerHTML = '';
+            document.getElementById('step2-result').innerHTML = '';
+            document.getElementById('step3-result').innerHTML = '';
+            document.getElementById('step4-result').innerHTML = '';
+            document.getElementById('step5-result').innerHTML = '';
+            document.getElementById('overall-summary').innerHTML = '';
+        }
+
+        function updateSummary() {
+            const results = Object.values(testResults);
+            const completed = results.filter(r => r !== null).length;
+            const passed = results.filter(r => r === true).length;
+            const failed = results.filter(r => r === false).length;
+
+            if (completed === 0) return;
+
+            let summary = '<div class="summary"><h2>📊 Test Summary</h2>';
+            summary += `<p><strong>Tests Completed:</strong> ${completed}/5</p>`;
+            summary += `<p><strong>Tests Passed:</strong> ${passed}</p>`;
+            summary += `<p><strong>Tests Failed:</strong> ${failed}</p>`;
+
+            if (completed === 5) {
+                if (failed === 0) {
+                    summary += '<div class="test-result pass" style="margin-top: 15px; font-size: 18px;">';
+                    summary += '🎉 <strong>ALL TESTS PASSED!</strong><br>';
+                    summary += 'Metrics endpoint is fully functional and ready for production.';
+                    summary += '</div>';
+                } else {
+                    summary += '<div class="test-result fail" style="margin-top: 15px; font-size: 18px;">';
+                    summary += '⚠️ <strong>SOME TESTS FAILED!</strong><br>';
+                    summary += 'Review failed tests above and fix issues.';
+                    summary += '</div>';
+                }
+            }
+
+            summary += '</div>';
+            document.getElementById('overall-summary').innerHTML = summary;
+        }
+
+        // Auto-run tests on page load
+        window.addEventListener('load', () => {
+            setTimeout(runAllTests, 500);
+        });
+    </script>
+</body>
+</html>
