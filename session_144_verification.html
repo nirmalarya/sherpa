@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Session 144 - SHERPA Verification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .test {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+        .pending { background: #fff3cd; border-color: #ffeaa7; }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 3px;
+            overflow: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🏔️ SHERPA V1 - Session 144 Verification</h1>
+    <p><strong>Date:</strong> December 23, 2024</p>
+    <p><strong>Purpose:</strong> Verify application functionality before proceeding with new work</p>
+
+    <div id="tests"></div>
+
+    <script>
+        const tests = [];
+        const testsDiv = document.getElementById('tests');
+
+        function addTest(name, status, details) {
+            const test = { name, status, details, timestamp: new Date() };
+            tests.push(test);
+            renderTests();
+        }
+
+        function renderTests() {
+            testsDiv.innerHTML = tests.map(t => `
+                <div class="test ${t.status}">
+                    <h3>${t.status === 'success' ? '✅' : t.status === 'error' ? '❌' : '⏳'} ${t.name}</h3>
+                    <p><strong>Status:</strong> ${t.status.toUpperCase()}</p>
+                    <p><strong>Time:</strong> ${t.timestamp.toLocaleTimeString()}</p>
+                    ${t.details ? `<pre>${JSON.stringify(t.details, null, 2)}</pre>` : ''}
+                </div>
+            `).join('');
+        }
+
+        async function runVerification() {
+            // Test 1: Backend Health Check
+            try {
+                addTest('Backend Health Check', 'pending', null);
+                const health = await fetch('http://localhost:8001/health');
+                const healthData = await health.json();
+                addTest('Backend Health Check', 'success', healthData);
+            } catch (error) {
+                addTest('Backend Health Check', 'error', { error: error.message });
+            }
+
+            // Test 2: API Sessions Endpoint
+            try {
+                addTest('Sessions API', 'pending', null);
+                const sessions = await fetch('http://localhost:8001/api/sessions');
+                const sessionsData = await sessions.json();
+                addTest('Sessions API', 'success', {
+                    status: sessions.status,
+                    count: Array.isArray(sessionsData) ? sessionsData.length : 'N/A',
+                    sample: Array.isArray(sessionsData) ? sessionsData[0] : sessionsData
+                });
+            } catch (error) {
+                addTest('Sessions API', 'error', { error: error.message });
+            }
+
+            // Test 3: Snippets API
+            try {
+                addTest('Snippets API', 'pending', null);
+                const snippets = await fetch('http://localhost:8001/api/snippets');
+                const snippetsData = await snippets.json();
+                addTest('Snippets API', 'success', {
+                    status: snippets.status,
+                    count: Array.isArray(snippetsData) ? snippetsData.length : 'N/A',
+                    categories: Array.isArray(snippetsData) ? [...new Set(snippetsData.map(s => s.category))] : []
+                });
+            } catch (error) {
+                addTest('Snippets API', 'error', { error: error.message });
+            }
+
+            // Test 4: Activity API
+            try {
+                addTest('Activity API', 'pending', null);
+                const activity = await fetch('http://localhost:8001/api/activity');
+                const activityData = await activity.json();
+                addTest('Activity API', 'success', {
+                    status: activity.status,
+                    count: Array.isArray(activityData) ? activityData.length : 'N/A'
+                });
+            } catch (error) {
+                addTest('Activity API', 'error', { error: error.message });
+            }
+
+            // Test 5: Frontend Connectivity (will fail if frontend not running)
+            try {
+                addTest('Frontend Connectivity', 'pending', null);
+                const frontend = await fetch('http://localhost:3003/');
+                const frontendOk = frontend.ok;
+                addTest('Frontend Connectivity', frontendOk ? 'success' : 'error', {
+                    status: frontend.status,
+                    statusText: frontend.statusText
+                });
+            } catch (error) {
+                addTest('Frontend Connectivity', 'error', {
+                    error: error.message,
+                    note: 'Frontend may not be running - this is OK, backend is primary concern'
+                });
+            }
+
+            // Summary
+            const successCount = tests.filter(t => t.status === 'success').length;
+            const total = tests.length;
+            testsDiv.innerHTML += `
+                <div class="test ${successCount === total ? 'success' : successCount > 0 ? 'pending' : 'error'}">
+                    <h2>Summary</h2>
+                    <p><strong>Tests Passed:</strong> ${successCount}/${total}</p>
+                    <p><strong>Backend Status:</strong> ${successCount >= 3 ? 'OPERATIONAL ✅' : 'ISSUES DETECTED ❌'}</p>
+                </div>
+            `;
+        }
+
+        runVerification();
+    </script>
+</body>
+</html>
