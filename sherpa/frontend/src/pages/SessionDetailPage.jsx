@@ -15,7 +15,7 @@ function SessionDetailPage() {
     fetchSessionDetails()
 
     // Setup SSE for real-time updates
-    const eventSource = new EventSource(`http://localhost:8000/api/sessions/${id}/progress`)
+    const eventSource = new EventSource(`http://localhost:8001/api/sessions/${id}/progress`)
 
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data)
@@ -37,8 +37,8 @@ function SessionDetailPage() {
 
       setSession(sessionRes.data)
       setFeatures(sessionRes.data.features || [])
-      setLogs(logsRes.data)
-      setCommits(commitsRes.data)
+      setLogs(logsRes.data.logs || [])
+      setCommits(commitsRes.data.commits || [])
     } catch (error) {
       console.error('Error fetching session details:', error)
     } finally {
@@ -89,8 +89,8 @@ function SessionDetailPage() {
       {/* Header */}
       <div className="mb-8 flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">{session?.name || `Session ${id}`}</h1>
-          <p className="mt-2 text-gray-600">Started {new Date(session?.created_at).toLocaleString()}</p>
+          <h1 className="text-3xl font-bold text-gray-900">{session?.spec_file || `Session ${id}`}</h1>
+          <p className="mt-2 text-gray-600">Started {session?.started_at ? new Date(session.started_at).toLocaleString() : 'N/A'}</p>
         </div>
         <div className="flex gap-2">
           {session?.status === 'active' && (
@@ -120,12 +120,20 @@ function SessionDetailPage() {
         <div className="mb-2">
           <div className="flex justify-between text-sm mb-1">
             <span className="text-gray-600">Overall Progress</span>
-            <span className="font-medium">{session?.progress || 0}%</span>
+            <span className="font-medium">
+              {session?.total_features > 0
+                ? Math.round((session.completed_features / session.total_features) * 100)
+                : 0}%
+            </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-3">
             <div
               className="bg-primary-600 h-3 rounded-full transition-all"
-              style={{ width: `${session?.progress || 0}%` }}
+              style={{
+                width: `${session?.total_features > 0
+                  ? Math.round((session.completed_features / session.total_features) * 100)
+                  : 0}%`
+              }}
             ></div>
           </div>
         </div>

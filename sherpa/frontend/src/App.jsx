@@ -4,14 +4,11 @@ import { Mountain } from 'lucide-react'
 // Pages
 import HomePage from './pages/HomePage'
 import SessionsPage from './pages/SessionsPage'
-// import SessionDetailPage from './pages/SessionDetailPage'
+import SessionDetailPage from './pages/SessionDetailPage'
 // import KnowledgePage from './pages/KnowledgePage'
 // import SourcesPage from './pages/SourcesPage'
 
 // Placeholder pages
-function SessionDetailPage() {
-  return <div className="p-8"><h1 className="text-3xl font-bold">Session Detail - Coming Soon</h1></div>
-}
 function KnowledgePage() {
   return <div className="p-8"><h1 className="text-3xl font-bold">Knowledge Page - Coming Soon</h1></div>
 }
