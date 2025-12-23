@@ -46,9 +46,11 @@ def run(spec, source):
 
 @cli.command()
 @click.argument("query_text")
-def query(query_text):
+@click.option("--max-results", default=5, help="Maximum number of results to return")
+def query(query_text, max_results):
     """Search Bedrock Knowledge Base for snippets"""
-    console.print(f"[yellow]Command 'query' not yet implemented for: {query_text}[/yellow]")
+    from sherpa.cli.commands.query import query_command
+    query_command(query_text, max_results)
 
 
 @cli.group()

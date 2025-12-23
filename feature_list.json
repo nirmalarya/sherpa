@@ -125,7 +125,7 @@
       "Step 4: Verify relevance scores shown",
       "Step 5: Verify snippet content preview displayed"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
