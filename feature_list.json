@@ -2020,7 +2020,7 @@
       "Step 4: Verify animations enhance UX (not distract)",
       "Step 5: Verify reduced motion preference respected"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
