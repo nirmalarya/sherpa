@@ -963,7 +963,7 @@
       "Step 5: Verify azure-devops included",
       "Step 6: Verify all other required packages included"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

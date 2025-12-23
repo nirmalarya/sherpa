@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHERPA - Requirements.txt Verification</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .test-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+
+        .test-step {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            background: #f8f9fa;
+            border-left: 4px solid #6c757d;
+        }
+
+        .test-step.pending {
+            border-left-color: #6c757d;
+        }
+
+        .test-step.running {
+            border-left-color: #ffc107;
+            background: #fff3cd;
+        }
+
+        .test-step.passed {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+
+        .test-step.failed {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+
+        .step-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .step-status {
+            font-size: 1.2rem;
+        }
+
+        .step-output {
+            margin-top: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .summary-card .number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .summary-card .label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .summary-card.total .number { color: #667eea; }
+        .summary-card.passed .number { color: #28a745; }
+        .summary-card.failed .number { color: #dc3545; }
+        .summary-card.rate .number { color: #764ba2; }
+
+        .run-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+            display: block;
+            margin: 0 auto 30px;
+        }
+
+        .run-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+
+        .run-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .dependency-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .dependency-item {
+            padding: 8px 12px;
+            background: white;
+            border-radius: 4px;
+            border-left: 3px solid #28a745;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏔️ SHERPA V1</h1>
+            <p>Requirements.txt Verification Test Suite</p>
+        </div>
+
+        <div class="summary">
+            <div class="summary-card total">
+                <div class="number" id="total-tests">6</div>
+                <div class="label">Total Tests</div>
+            </div>
+            <div class="summary-card passed">
+                <div class="number" id="passed-tests">0</div>
+                <div class="label">Tests Passed</div>
+            </div>
+            <div class="summary-card failed">
+                <div class="number" id="failed-tests">0</div>
+                <div class="label">Tests Failed</div>
+            </div>
+            <div class="summary-card rate">
+                <div class="number" id="success-rate">0%</div>
+                <div class="label">Success Rate</div>
+            </div>
+        </div>
+
+        <button class="run-button" onclick="runTests()" id="run-btn">Run Verification Tests</button>
+
+        <div class="test-card">
+            <h2>Requirements.txt Verification Steps</h2>
+
+            <div class="test-step pending" id="step-1">
+                <div class="step-title">
+                    <span class="step-status">⏳</span>
+                    <span>Step 1: Verify requirements.txt exists</span>
+                </div>
+                <div class="step-output" id="output-1"></div>
+            </div>
+
+            <div class="test-step pending" id="step-2">
+                <div class="step-title">
+                    <span class="step-status">⏳</span>
+                    <span>Step 2: Verify all dependencies listed with versions</span>
+                </div>
+                <div class="step-output" id="output-2"></div>
+            </div>
+
+            <div class="test-step pending" id="step-3">
+                <div class="step-title">
+                    <span class="step-status">⏳</span>
+                    <span>Step 3: Verify FastAPI included</span>
+                </div>
+                <div class="step-output" id="output-3"></div>
+            </div>
+
+            <div class="test-step pending" id="step-4">
+                <div class="step-title">
+                    <span class="step-status">⏳</span>
+                    <span>Step 4: Verify boto3 included</span>
+                </div>
+                <div class="step-output" id="output-4"></div>
+            </div>
+
+            <div class="test-step pending" id="step-5">
+                <div class="step-title">
+                    <span class="step-status">⏳</span>
+                    <span>Step 5: Verify azure-devops included</span>
+                </div>
+                <div class="step-output" id="output-5"></div>
+            </div>
+
+            <div class="test-step pending" id="step-6">
+                <div class="step-title">
+                    <span class="step-status">⏳</span>
+                    <span>Step 6: Verify all other required packages included</span>
+                </div>
+                <div class="step-output" id="output-6"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let passedCount = 0;
+        let failedCount = 0;
+
+        function updateSummary() {
+            document.getElementById('passed-tests').textContent = passedCount;
+            document.getElementById('failed-tests').textContent = failedCount;
+            const total = passedCount + failedCount;
+            const rate = total > 0 ? Math.round((passedCount / total) * 100) : 0;
+            document.getElementById('success-rate').textContent = rate + '%';
+        }
+
+        function setStepStatus(stepNum, status, output) {
+            const step = document.getElementById(`step-${stepNum}`);
+            const outputDiv = document.getElementById(`output-${stepNum}`);
+
+            step.className = `test-step ${status}`;
+
+            const statusIcon = {
+                'pending': '⏳',
+                'running': '⏱️',
+                'passed': '✅',
+                'failed': '❌'
+            }[status];
+
+            step.querySelector('.step-status').textContent = statusIcon;
+
+            if (output) {
+                outputDiv.textContent = output;
+                outputDiv.style.display = 'block';
+            }
+        }
+
+        async function runTests() {
+            const btn = document.getElementById('run-btn');
+            btn.disabled = true;
+            btn.textContent = 'Running Tests...';
+
+            passedCount = 0;
+            failedCount = 0;
+
+            try {
+                // Step 1: Verify requirements.txt exists
+                await runStep1();
+                await sleep(500);
+
+                // Step 2: Verify all dependencies have versions
+                await runStep2();
+                await sleep(500);
+
+                // Step 3: Verify FastAPI included
+                await runStep3();
+                await sleep(500);
+
+                // Step 4: Verify boto3 included
+                await runStep4();
+                await sleep(500);
+
+                // Step 5: Verify azure-devops included
+                await runStep5();
+                await sleep(500);
+
+                // Step 6: Verify all other required packages
+                await runStep6();
+
+            } catch (error) {
+                console.error('Test error:', error);
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Run Verification Tests';
+        }
+
+        async function runStep1() {
+            setStepStatus(1, 'running', 'Checking if requirements.txt file exists...');
+
+            try {
+                const response = await fetch('/requirements.txt');
+
+                if (response.ok) {
+                    const content = await response.text();
+
+                    if (content.length > 0) {
+                        setStepStatus(1, 'passed', `✓ requirements.txt exists\n✓ File size: ${content.length} bytes\n✓ Contains ${content.split('\n').length} lines`);
+                        passedCount++;
+                    } else {
+                        setStepStatus(1, 'failed', '✗ requirements.txt is empty');
+                        failedCount++;
+                    }
+                } else {
+                    setStepStatus(1, 'failed', `✗ requirements.txt not found (HTTP ${response.status})`);
+                    failedCount++;
+                }
+            } catch (error) {
+                setStepStatus(1, 'failed', `✗ Error: ${error.message}`);
+                failedCount++;
+            }
+
+            updateSummary();
+        }
+
+        async function runStep2() {
+            setStepStatus(2, 'running', 'Verifying all dependencies have version numbers...');
+
+            try {
+                const response = await fetch('/requirements.txt');
+                const content = await response.text();
+
+                const lines = content.split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line && !line.startsWith('#'));
+
+                const depsWithVersions = lines.filter(line => line.includes('=='));
+                const depsWithoutVersions = lines.filter(line => !line.includes('==') && !line.includes('['));
+
+                if (depsWithoutVersions.length === 0) {
+                    setStepStatus(2, 'passed',
+                        `✓ All ${depsWithVersions.length} dependencies have version numbers\n` +
+                        `✓ Format: package==version\n` +
+                        `✓ No unpinned dependencies found`
+                    );
+                    passedCount++;
+                } else {
+                    setStepStatus(2, 'failed',
+                        `✗ ${depsWithoutVersions.length} dependencies without versions:\n${depsWithoutVersions.join('\n')}`
+                    );
+                    failedCount++;
+                }
+            } catch (error) {
+                setStepStatus(2, 'failed', `✗ Error: ${error.message}`);
+                failedCount++;
+            }
+
+            updateSummary();
+        }
+
+        async function runStep3() {
+            setStepStatus(3, 'running', 'Checking for FastAPI dependency...');
+
+            try {
+                const response = await fetch('/requirements.txt');
+                const content = await response.text();
+
+                const fastapiLine = content.split('\n').find(line =>
+                    line.trim().toLowerCase().startsWith('fastapi')
+                );
+
+                if (fastapiLine) {
+                    const match = fastapiLine.match(/fastapi==(.+)/i);
+                    const version = match ? match[1] : 'unknown';
+
+                    setStepStatus(3, 'passed',
+                        `✓ FastAPI included\n` +
+                        `✓ Version: ${version}\n` +
+                        `✓ Line: ${fastapiLine.trim()}`
+                    );
+                    passedCount++;
+                } else {
+                    setStepStatus(3, 'failed', '✗ FastAPI not found in requirements.txt');
+                    failedCount++;
+                }
+            } catch (error) {
+                setStepStatus(3, 'failed', `✗ Error: ${error.message}`);
+                failedCount++;
+            }
+
+            updateSummary();
+        }
+
+        async function runStep4() {
+            setStepStatus(4, 'running', 'Checking for boto3 dependency...');
+
+            try {
+                const response = await fetch('/requirements.txt');
+                const content = await response.text();
+
+                const boto3Line = content.split('\n').find(line =>
+                    line.trim().toLowerCase().startsWith('boto3')
+                );
+
+                if (boto3Line) {
+                    const match = boto3Line.match(/boto3==(.+)/i);
+                    const version = match ? match[1] : 'unknown';
+
+                    setStepStatus(4, 'passed',
+                        `✓ boto3 included\n` +
+                        `✓ Version: ${version}\n` +
+                        `✓ Line: ${boto3Line.trim()}`
+                    );
+                    passedCount++;
+                } else {
+                    setStepStatus(4, 'failed', '✗ boto3 not found in requirements.txt');
+                    failedCount++;
+                }
+            } catch (error) {
+                setStepStatus(4, 'failed', `✗ Error: ${error.message}`);
+                failedCount++;
+            }
+
+            updateSummary();
+        }
+
+        async function runStep5() {
+            setStepStatus(5, 'running', 'Checking for azure-devops dependency...');
+
+            try {
+                const response = await fetch('/requirements.txt');
+                const content = await response.text();
+
+                const azureLine = content.split('\n').find(line =>
+                    line.trim().toLowerCase().startsWith('azure-devops')
+                );
+
+                if (azureLine) {
+                    const match = azureLine.match(/azure-devops==(.+)/i);
+                    const version = match ? match[1] : 'unknown';
+
+                    setStepStatus(5, 'passed',
+                        `✓ azure-devops included\n` +
+                        `✓ Version: ${version}\n` +
+                        `✓ Line: ${azureLine.trim()}`
+                    );
+                    passedCount++;
+                } else {
+                    setStepStatus(5, 'failed', '✗ azure-devops not found in requirements.txt');
+                    failedCount++;
+                }
+            } catch (error) {
+                setStepStatus(5, 'failed', `✗ Error: ${error.message}`);
+                failedCount++;
+            }
+
+            updateSummary();
+        }
+
+        async function runStep6() {
+            setStepStatus(6, 'running', 'Verifying all other required packages...');
+
+            try {
+                const response = await fetch('/requirements.txt');
+                const content = await response.text();
+
+                const requiredPackages = [
+                    'uvicorn',
+                    'aiosqlite',
+                    'GitPython',
+                    'watchdog',
+                    'click',
+                    'rich',
+                    'pydantic',
+                    'python-dotenv',
+                    'pytest',
+                    'httpx'
+                ];
+
+                const foundPackages = [];
+                const missingPackages = [];
+
+                for (const pkg of requiredPackages) {
+                    const found = content.split('\n').some(line =>
+                        line.trim().toLowerCase().startsWith(pkg.toLowerCase())
+                    );
+
+                    if (found) {
+                        foundPackages.push(pkg);
+                    } else {
+                        missingPackages.push(pkg);
+                    }
+                }
+
+                const allPackages = content.split('\n')
+                    .filter(line => line.trim() && !line.trim().startsWith('#'))
+                    .filter(line => line.includes('=='))
+                    .map(line => line.split('==')[0].trim());
+
+                if (missingPackages.length === 0) {
+                    let output = `✓ All ${requiredPackages.length} required packages found\n\n`;
+                    output += `Total packages in requirements.txt: ${allPackages.length}\n\n`;
+                    output += `Package list:\n`;
+                    allPackages.forEach(pkg => {
+                        output += `  • ${pkg}\n`;
+                    });
+
+                    setStepStatus(6, 'passed', output);
+                    passedCount++;
+                } else {
+                    setStepStatus(6, 'failed',
+                        `✗ Missing ${missingPackages.length} required packages:\n` +
+                        missingPackages.map(pkg => `  • ${pkg}`).join('\n')
+                    );
+                    failedCount++;
+                }
+            } catch (error) {
+                setStepStatus(6, 'failed', `✗ Error: ${error.message}`);
+                failedCount++;
+            }
+
+            updateSummary();
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+    </script>
+</body>
+</html>
