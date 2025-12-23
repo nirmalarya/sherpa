@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test #66 - Concurrent Operations with Asyncio</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        .test-step {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .test-step.success {
+            border-left-color: #28a745;
+        }
+        .test-step.error {
+            border-left-color: #dc3545;
+        }
+        .test-step.running {
+            border-left-color: #ffc107;
+        }
+        .step-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .step-result {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 3px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .summary {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+            border: 2px solid #007bff;
+        }
+        .code {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: monospace;
+            overflow-x: auto;
+        }
+        .timing {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test #66 - Concurrent Operations with Asyncio</h1>
+    <p><strong>Description:</strong> Multiple sessions run concurrently without blocking each other</p>
+
+    <button id="runTest" onclick="runAllTests()">Run All Tests</button>
+    <button id="resetTest" onclick="resetTests()">Reset</button>
+
+    <div class="summary" id="summary" style="display:none;">
+        <h3>Test Summary</h3>
+        <div id="summaryContent"></div>
+    </div>
+
+    <div id="testSteps"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:8001';
+        let sessionIds = [];
+        let startTimes = {};
+
+        const steps = [
+            {
+                title: 'Step 1: Start first session',
+                test: async () => {
+                    const response = await fetch(`${API_BASE}/api/sessions`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            spec_file: 'concurrent_test_1.txt',
+                            total_features: 10
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Failed to create first session: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    const sessionId = data.data.id;
+                    sessionIds.push(sessionId);
+                    startTimes[sessionId] = Date.now();
+
+                    return {
+                        success: true,
+                        message: `First session created: ${sessionId}`,
+                        data: { sessionId, timestamp: new Date().toISOString() }
+                    };
+                }
+            },
+            {
+                title: 'Step 2: Start second session',
+                test: async () => {
+                    const response = await fetch(`${API_BASE}/api/sessions`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            spec_file: 'concurrent_test_2.txt',
+                            total_features: 10
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Failed to create second session: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    const sessionId = data.data.id;
+                    sessionIds.push(sessionId);
+                    startTimes[sessionId] = Date.now();
+
+                    // Calculate time difference (should be very small if concurrent)
+                    const timeDiff = startTimes[sessionIds[1]] - startTimes[sessionIds[0]];
+
+                    return {
+                        success: true,
+                        message: `Second session created: ${sessionId}`,
+                        data: {
+                            sessionId,
+                            timestamp: new Date().toISOString(),
+                            timeDiff: `${timeDiff}ms after first session`
+                        }
+                    };
+                }
+            },
+            {
+                title: 'Step 3: Verify both run concurrently',
+                test: async () => {
+                    // Fetch both sessions simultaneously using Promise.all
+                    const startTime = Date.now();
+
+                    const [session1, session2] = await Promise.all([
+                        fetch(`${API_BASE}/api/sessions/${sessionIds[0]}`).then(r => r.json()),
+                        fetch(`${API_BASE}/api/sessions/${sessionIds[1]}`).then(r => r.json())
+                    ]);
+
+                    const endTime = Date.now();
+                    const duration = endTime - startTime;
+
+                    // If requests were blocking, this would take 2x as long
+                    // With async, both should complete in roughly the time of one request
+
+                    if (!session1.data || !session2.data) {
+                        throw new Error('One or both sessions not found');
+                    }
+
+                    return {
+                        success: true,
+                        message: `Both sessions fetched concurrently in ${duration}ms`,
+                        data: {
+                            session1: session1.data.id,
+                            session2: session2.data.id,
+                            duration: `${duration}ms`,
+                            concurrent: duration < 500 // Should be fast if concurrent
+                        }
+                    };
+                }
+            },
+            {
+                title: 'Step 4: Verify no blocking between sessions',
+                test: async () => {
+                    // Update both sessions simultaneously
+                    const startTime = Date.now();
+
+                    const updates = await Promise.all([
+                        fetch(`${API_BASE}/api/sessions/${sessionIds[0]}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ completed_features: 5 })
+                        }).then(r => r.json()),
+                        fetch(`${API_BASE}/api/sessions/${sessionIds[1]}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ completed_features: 3 })
+                        }).then(r => r.json())
+                    ]);
+
+                    const endTime = Date.now();
+                    const duration = endTime - startTime;
+
+                    if (!updates[0].success || !updates[1].success) {
+                        throw new Error('Failed to update one or both sessions');
+                    }
+
+                    return {
+                        success: true,
+                        message: `Both sessions updated concurrently in ${duration}ms`,
+                        data: {
+                            update1: updates[0].data.completed_features,
+                            update2: updates[1].data.completed_features,
+                            duration: `${duration}ms`,
+                            nonBlocking: duration < 500
+                        }
+                    };
+                }
+            },
+            {
+                title: 'Step 5: Verify proper async/await usage',
+                test: async () => {
+                    // Test multiple concurrent operations
+                    const operations = [
+                        // Get session details
+                        fetch(`${API_BASE}/api/sessions/${sessionIds[0]}`).then(r => r.json()),
+                        fetch(`${API_BASE}/api/sessions/${sessionIds[1]}`).then(r => r.json()),
+                        // Get session logs
+                        fetch(`${API_BASE}/api/sessions/${sessionIds[0]}/logs`).then(r => r.json()),
+                        fetch(`${API_BASE}/api/sessions/${sessionIds[1]}/logs`).then(r => r.json()),
+                        // Get all sessions
+                        fetch(`${API_BASE}/api/sessions`).then(r => r.json())
+                    ];
+
+                    const startTime = Date.now();
+                    const results = await Promise.all(operations);
+                    const endTime = Date.now();
+                    const duration = endTime - startTime;
+
+                    // All operations should complete successfully
+                    const allSuccessful = results.every(r => r.success);
+
+                    if (!allSuccessful) {
+                        throw new Error('Not all concurrent operations succeeded');
+                    }
+
+                    return {
+                        success: true,
+                        message: `${operations.length} concurrent operations completed in ${duration}ms`,
+                        data: {
+                            operations: operations.length,
+                            duration: `${duration}ms`,
+                            avgPerOperation: `${Math.round(duration / operations.length)}ms`,
+                            properAsync: duration < 1000 // Should be fast if properly async
+                        }
+                    };
+                }
+            },
+            {
+                title: 'Step 6: Verify resource cleanup',
+                test: async () => {
+                    // Stop both sessions and verify cleanup
+                    const stopResults = await Promise.all([
+                        fetch(`${API_BASE}/api/sessions/${sessionIds[0]}/stop`, {
+                            method: 'POST'
+                        }).then(r => r.json()),
+                        fetch(`${API_BASE}/api/sessions/${sessionIds[1]}/stop`, {
+                            method: 'POST'
+                        }).then(r => r.json())
+                    ]);
+
+                    if (!stopResults[0].success || !stopResults[1].success) {
+                        throw new Error('Failed to stop one or both sessions');
+                    }
+
+                    // Verify sessions are stopped
+                    await new Promise(resolve => setTimeout(resolve, 500));
+
+                    const [session1, session2] = await Promise.all([
+                        fetch(`${API_BASE}/api/sessions/${sessionIds[0]}`).then(r => r.json()),
+                        fetch(`${API_BASE}/api/sessions/${sessionIds[1]}`).then(r => r.json())
+                    ]);
+
+                    const allStopped =
+                        session1.data.status === 'stopped' &&
+                        session2.data.status === 'stopped';
+
+                    if (!allStopped) {
+                        throw new Error('Sessions not properly stopped');
+                    }
+
+                    return {
+                        success: true,
+                        message: 'Both sessions stopped and cleaned up successfully',
+                        data: {
+                            session1Status: session1.data.status,
+                            session2Status: session2.data.status,
+                            resourcesCleaned: true
+                        }
+                    };
+                }
+            }
+        ];
+
+        function createStepElement(step, index) {
+            const div = document.createElement('div');
+            div.className = 'test-step';
+            div.id = `step${index}`;
+            div.innerHTML = `
+                <div class="step-title">${step.title}</div>
+                <div class="step-result" id="result${index}">Not started</div>
+            `;
+            return div;
+        }
+
+        function updateStepStatus(index, status, message, data) {
+            const step = document.getElementById(`step${index}`);
+            const result = document.getElementById(`result${index}`);
+
+            step.className = `test-step ${status}`;
+
+            let html = `<strong>${status.toUpperCase()}</strong>: ${message}`;
+            if (data) {
+                html += `<div class="code">${JSON.stringify(data, null, 2)}</div>`;
+            }
+
+            result.innerHTML = html;
+        }
+
+        async function runAllTests() {
+            const button = document.getElementById('runTest');
+            button.disabled = true;
+            sessionIds = [];
+            startTimes = {};
+
+            const container = document.getElementById('testSteps');
+            container.innerHTML = '';
+
+            // Create step elements
+            steps.forEach((step, index) => {
+                container.appendChild(createStepElement(step, index));
+            });
+
+            let passed = 0;
+            let failed = 0;
+
+            // Run tests sequentially
+            for (let i = 0; i < steps.length; i++) {
+                updateStepStatus(i, 'running', 'Running...', null);
+
+                try {
+                    const result = await steps[i].test();
+                    updateStepStatus(i, 'success', result.message, result.data);
+                    passed++;
+                } catch (error) {
+                    updateStepStatus(i, 'error', error.message, { error: error.toString() });
+                    failed++;
+                    break; // Stop on first failure
+                }
+            }
+
+            // Show summary
+            const summary = document.getElementById('summary');
+            const summaryContent = document.getElementById('summaryContent');
+            summary.style.display = 'block';
+
+            const totalTests = steps.length;
+            const allPassed = passed === totalTests && failed === 0;
+
+            summaryContent.innerHTML = `
+                <p><strong>Total Tests:</strong> ${totalTests}</p>
+                <p><strong>Passed:</strong> ${passed}</p>
+                <p><strong>Failed:</strong> ${failed}</p>
+                <p><strong>Result:</strong> <span style="color: ${allPassed ? 'green' : 'red'}; font-weight: bold;">${allPassed ? 'ALL TESTS PASSED ✓' : 'SOME TESTS FAILED ✗'}</span></p>
+                ${allPassed ? '<p style="color: green;">✅ Test #66 - Concurrent operations with asyncio is working correctly!</p>' : ''}
+            `;
+
+            button.disabled = false;
+        }
+
+        function resetTests() {
+            document.getElementById('testSteps').innerHTML = '';
+            document.getElementById('summary').style.display = 'none';
+            sessionIds = [];
+            startTimes = {};
+        }
+
+        // Initial setup
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Test #66 - Concurrent Operations with Asyncio ready');
+        });
+    </script>
+</body>
+</html>

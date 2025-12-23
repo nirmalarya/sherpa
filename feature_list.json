@@ -846,7 +846,7 @@
       "Step 5: Verify proper async/await usage",
       "Step 6: Verify resource cleanup"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -859,7 +859,7 @@
       "Step 5: Verify session can resume",
       "Step 6: Verify progress preserved"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

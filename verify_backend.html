@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backend Verification</title>
+</head>
+<body>
+    <h1>Backend Verification</h1>
+    <div id="result"></div>
+
+    <script>
+        async function verifyBackend() {
+            const resultDiv = document.getElementById('result');
+
+            try {
+                // Test backend health endpoint
+                const response = await fetch('http://localhost:8001/health');
+                const data = await response.json();
+
+                resultDiv.innerHTML = `
+                    <h2>✅ Backend Health Check</h2>
+                    <p>Status: ${response.status}</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h2>❌ Backend Health Check Failed</h2>
+                    <p>Error: ${error.message}</p>
+                `;
+            }
+        }
+
+        verifyBackend();
+    </script>
+</body>
+</html>

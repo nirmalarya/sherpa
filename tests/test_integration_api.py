@@ -448,3 +448,375 @@ class TestDatabaseIntegration:
         # Verify all have unique IDs
         session_ids = [r.json()["id"] for r in responses]
         assert len(session_ids) == len(set(session_ids))  # All unique
+
+
+@pytest.mark.integration
+class TestConcurrentOperations:
+    """Test #66 - Concurrent operations with asyncio"""
+
+    @pytest.mark.asyncio
+    async def test_concurrent_session_creation(self, client):
+        """Test that multiple sessions can be created concurrently"""
+        import time
+        start_time = time.time()
+
+        # Create two sessions concurrently
+        tasks = [
+            client.post("/api/sessions", json={
+                "spec_file": "concurrent_test_1.txt",
+                "total_features": 10
+            }),
+            client.post("/api/sessions", json={
+                "spec_file": "concurrent_test_2.txt",
+                "total_features": 10
+            })
+        ]
+
+        responses = await asyncio.gather(*tasks)
+        duration = time.time() - start_time
+
+        # Both should succeed
+        assert all(r.status_code in [status.HTTP_200_OK, status.HTTP_201_CREATED] for r in responses)
+
+        # Should be fast (concurrent, not sequential)
+        assert duration < 2.0  # Should complete in under 2 seconds
+
+        # Get session IDs
+        session_ids = [r.json().get("data", {}).get("id") or r.json().get("id") for r in responses]
+        assert len(session_ids) == 2
+        assert all(session_ids)
+
+        return session_ids
+
+    @pytest.mark.asyncio
+    async def test_concurrent_session_fetch(self, client):
+        """Test that multiple sessions can be fetched concurrently without blocking"""
+        # Create sessions first
+        create_tasks = [
+            client.post("/api/sessions", json={
+                "spec_file": f"fetch_test_{i}.txt",
+                "total_features": 5
+            }) for i in range(3)
+        ]
+        create_responses = await asyncio.gather(*create_tasks)
+        session_ids = [r.json().get("data", {}).get("id") or r.json().get("id") for r in create_responses]
+
+        import time
+        start_time = time.time()
+
+        # Fetch all sessions concurrently
+        fetch_tasks = [client.get(f"/api/sessions/{sid}") for sid in session_ids]
+        fetch_responses = await asyncio.gather(*fetch_tasks)
+
+        duration = time.time() - start_time
+
+        # All should succeed
+        assert all(r.status_code == status.HTTP_200_OK for r in fetch_responses)
+
+        # Should be fast - concurrent fetches should not block each other
+        assert duration < 1.0
+
+    @pytest.mark.asyncio
+    async def test_concurrent_session_updates(self, client):
+        """Test that multiple sessions can be updated concurrently without blocking"""
+        # Create sessions
+        create_tasks = [
+            client.post("/api/sessions", json={
+                "spec_file": f"update_test_{i}.txt",
+                "total_features": 10
+            }) for i in range(3)
+        ]
+        create_responses = await asyncio.gather(*create_tasks)
+        session_ids = [r.json().get("data", {}).get("id") or r.json().get("id") for r in create_responses]
+
+        import time
+        start_time = time.time()
+
+        # Update all sessions concurrently
+        update_tasks = [
+            client.patch(f"/api/sessions/{sid}", json={
+                "completed_features": i * 2
+            }) for i, sid in enumerate(session_ids)
+        ]
+        update_responses = await asyncio.gather(*update_tasks)
+
+        duration = time.time() - start_time
+
+        # All should succeed
+        assert all(r.status_code == status.HTTP_200_OK for r in update_responses)
+
+        # Verify updates
+        for i, response in enumerate(update_responses):
+            data = response.json()
+            expected_completed = i * 2
+            actual_completed = data.get("data", {}).get("completed_features") or data.get("completed_features")
+            assert actual_completed == expected_completed
+
+        # Should be fast - concurrent updates should not block
+        assert duration < 1.0
+
+    @pytest.mark.asyncio
+    async def test_mixed_concurrent_operations(self, client):
+        """Test that different operations (create, read, update) can run concurrently"""
+        # Create a session first for updates
+        create_response = await client.post("/api/sessions", json={
+            "spec_file": "mixed_ops_test.txt",
+            "total_features": 10
+        })
+        existing_session_id = create_response.json().get("data", {}).get("id") or create_response.json().get("id")
+
+        import time
+        start_time = time.time()
+
+        # Mix of operations running concurrently
+        tasks = [
+            # Create operations
+            client.post("/api/sessions", json={"spec_file": "create_1.txt", "total_features": 5}),
+            client.post("/api/sessions", json={"spec_file": "create_2.txt", "total_features": 7}),
+            # Read operations
+            client.get(f"/api/sessions/{existing_session_id}"),
+            client.get("/api/sessions"),
+            # Update operation
+            client.patch(f"/api/sessions/{existing_session_id}", json={"completed_features": 3}),
+        ]
+
+        responses = await asyncio.gather(*tasks)
+        duration = time.time() - start_time
+
+        # All should succeed
+        assert responses[0].status_code in [status.HTTP_200_OK, status.HTTP_201_CREATED]  # Create
+        assert responses[1].status_code in [status.HTTP_200_OK, status.HTTP_201_CREATED]  # Create
+        assert responses[2].status_code == status.HTTP_200_OK  # Read single
+        assert responses[3].status_code == status.HTTP_200_OK  # Read list
+        assert responses[4].status_code == status.HTTP_200_OK  # Update
+
+        # Should complete quickly with proper async handling
+        assert duration < 2.0
+
+    @pytest.mark.asyncio
+    async def test_resource_cleanup_after_concurrent_operations(self, client):
+        """Test that resources are properly cleaned up after concurrent operations"""
+        # Create sessions
+        create_tasks = [
+            client.post("/api/sessions", json={
+                "spec_file": f"cleanup_test_{i}.txt",
+                "total_features": 5
+            }) for i in range(3)
+        ]
+        create_responses = await asyncio.gather(*create_tasks)
+        session_ids = [r.json().get("data", {}).get("id") or r.json().get("id") for r in create_responses]
+
+        # Stop all sessions concurrently
+        stop_tasks = [client.post(f"/api/sessions/{sid}/stop") for sid in session_ids]
+        stop_responses = await asyncio.gather(*stop_tasks)
+
+        # All should succeed
+        assert all(r.status_code == status.HTTP_200_OK for r in stop_responses)
+
+        # Wait a bit for cleanup
+        await asyncio.sleep(0.5)
+
+        # Verify all sessions are stopped
+        fetch_tasks = [client.get(f"/api/sessions/{sid}") for sid in session_ids]
+        fetch_responses = await asyncio.gather(*fetch_tasks)
+
+        for response in fetch_responses:
+            assert response.status_code == status.HTTP_200_OK
+            data = response.json()
+            status_value = data.get("data", {}).get("status") or data.get("status")
+            assert status_value == "stopped"
+
+    @pytest.mark.asyncio
+    async def test_high_concurrency_load(self, client):
+        """Test system under high concurrency load"""
+        import time
+        start_time = time.time()
+
+        # Create many concurrent requests
+        num_concurrent = 10
+        tasks = [
+            client.post("/api/sessions", json={
+                "spec_file": f"load_test_{i}.txt",
+                "total_features": i + 1
+            }) for i in range(num_concurrent)
+        ]
+
+        responses = await asyncio.gather(*tasks)
+        duration = time.time() - start_time
+
+        # All should succeed
+        assert all(r.status_code in [status.HTTP_200_OK, status.HTTP_201_CREATED] for r in responses)
+
+        # All should have unique IDs
+        session_ids = [r.json().get("data", {}).get("id") or r.json().get("id") for r in responses]
+        assert len(session_ids) == len(set(session_ids))
+
+        # Should handle load efficiently (async/await prevents blocking)
+        # If sequential, would take much longer
+        assert duration < 3.0  # Should complete in under 3 seconds
+
+        print(f"\n✅ Successfully handled {num_concurrent} concurrent requests in {duration:.2f}s")
+        print(f"   Average: {duration/num_concurrent:.3f}s per request")
+
+
+@pytest.mark.integration
+class TestSessionStatePersistence:
+    """Test #67 - Session state management - Sessions persist across restarts"""
+
+    @pytest.mark.asyncio
+    async def test_session_persists_in_database(self, client):
+        """Test that sessions are stored persistently in SQLite database"""
+        # Create a session with specific data
+        session_data = {
+            "spec_file": "persistence_test.txt",
+            "total_features": 15,
+            "work_item_id": "12345",
+            "git_branch": "feature/test-branch"
+        }
+
+        create_response = await client.post("/api/sessions", json=session_data)
+        assert create_response.status_code in [status.HTTP_200_OK, status.HTTP_201_CREATED]
+
+        created_data = create_response.json()
+        session_id = created_data.get("data", {}).get("id") or created_data.get("id")
+
+        # Update session with progress
+        update_response = await client.patch(f"/api/sessions/{session_id}", json={
+            "completed_features": 7,
+            "status": "active"
+        })
+        assert update_response.status_code == status.HTTP_200_OK
+
+        # Fetch session to verify data is stored
+        get_response = await client.get(f"/api/sessions/{session_id}")
+        assert get_response.status_code == status.HTTP_200_OK
+
+        session = get_response.json()
+        session_info = session.get("data") or session
+
+        # Verify all data persists
+        assert session_info["spec_file"] == "persistence_test.txt"
+        assert session_info["total_features"] == 15
+        assert session_info["completed_features"] == 7
+        assert session_info["status"] == "active"
+
+    @pytest.mark.asyncio
+    async def test_session_state_restored_after_query(self, client):
+        """Test that session state is consistently restored across multiple queries"""
+        # Create session
+        create_response = await client.post("/api/sessions", json={
+            "spec_file": "state_test.txt",
+            "total_features": 20
+        })
+        session_id = create_response.json().get("data", {}).get("id") or create_response.json().get("id")
+
+        # Update session
+        await client.patch(f"/api/sessions/{session_id}", json={
+            "completed_features": 10,
+            "status": "active"
+        })
+
+        # Query session multiple times to verify state consistency
+        for i in range(5):
+            response = await client.get(f"/api/sessions/{session_id}")
+            assert response.status_code == status.HTTP_200_OK
+
+            session = response.json().get("data") or response.json()
+            assert session["completed_features"] == 10
+            assert session["status"] == "active"
+            assert session["total_features"] == 20
+
+            await asyncio.sleep(0.1)
+
+    @pytest.mark.asyncio
+    async def test_session_resume_capability(self, client):
+        """Test that sessions can be resumed after being paused"""
+        # Create and start a session
+        create_response = await client.post("/api/sessions", json={
+            "spec_file": "resume_test.txt",
+            "total_features": 10
+        })
+        session_id = create_response.json().get("data", {}).get("id") or create_response.json().get("id")
+
+        # Update to active
+        await client.patch(f"/api/sessions/{session_id}", json={
+            "status": "active",
+            "completed_features": 3
+        })
+
+        # Pause the session
+        pause_response = await client.post(f"/api/sessions/{session_id}/pause")
+        assert pause_response.status_code == status.HTTP_200_OK
+
+        # Verify paused state
+        paused_session = await client.get(f"/api/sessions/{session_id}")
+        paused_data = paused_session.json().get("data") or paused_session.json()
+        assert paused_data["status"] == "paused"
+        assert paused_data["completed_features"] == 3  # Progress preserved
+
+        # Resume the session
+        resume_response = await client.post(f"/api/sessions/{session_id}/resume")
+        assert resume_response.status_code == status.HTTP_200_OK
+
+        # Verify resumed state and progress preserved
+        resumed_session = await client.get(f"/api/sessions/{session_id}")
+        resumed_data = resumed_session.json().get("data") or resumed_session.json()
+        assert resumed_data["status"] == "active"
+        assert resumed_data["completed_features"] == 3  # Progress still preserved
+
+    @pytest.mark.asyncio
+    async def test_progress_preservation(self, client):
+        """Test that session progress is preserved accurately"""
+        # Create session
+        create_response = await client.post("/api/sessions", json={
+            "spec_file": "progress_test.txt",
+            "total_features": 50
+        })
+        session_id = create_response.json().get("data", {}).get("id") or create_response.json().get("id")
+
+        # Simulate incremental progress updates
+        for completed in [5, 10, 15, 20, 25]:
+            update_response = await client.patch(f"/api/sessions/{session_id}", json={
+                "completed_features": completed
+            })
+            assert update_response.status_code == status.HTTP_200_OK
+
+            # Verify progress after each update
+            get_response = await client.get(f"/api/sessions/{session_id}")
+            session = get_response.json().get("data") or get_response.json()
+            assert session["completed_features"] == completed
+
+    @pytest.mark.asyncio
+    async def test_multiple_sessions_persist_independently(self, client):
+        """Test that multiple sessions maintain independent state"""
+        # Create multiple sessions with different states
+        sessions = []
+        for i in range(3):
+            create_response = await client.post("/api/sessions", json={
+                "spec_file": f"multi_session_{i}.txt",
+                "total_features": (i + 1) * 10
+            })
+            session_id = create_response.json().get("data", {}).get("id") or create_response.json().get("id")
+
+            # Update each with different progress
+            await client.patch(f"/api/sessions/{session_id}", json={
+                "completed_features": (i + 1) * 2,
+                "status": ["pending", "active", "completed"][i]
+            })
+
+            sessions.append({
+                "id": session_id,
+                "expected_total": (i + 1) * 10,
+                "expected_completed": (i + 1) * 2,
+                "expected_status": ["pending", "active", "completed"][i]
+            })
+
+        # Verify each session maintained its independent state
+        for session_info in sessions:
+            response = await client.get(f"/api/sessions/{session_info['id']}")
+            assert response.status_code == status.HTTP_200_OK
+
+            session = response.json().get("data") or response.json()
+            assert session["total_features"] == session_info["expected_total"]
+            assert session["completed_features"] == session_info["expected_completed"]
+            assert session["status"] == session_info["expected_status"]
