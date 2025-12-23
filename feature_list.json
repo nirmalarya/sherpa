@@ -380,7 +380,7 @@
       "Step 5: Verify chart responsive to screen size",
       "Step 6: Verify chart shows progress over time"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
