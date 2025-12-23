@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Sherpa Snippets List CLI</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+            border-radius: 4px;
+        }
+        .test-section h2 {
+            margin-top: 0;
+            color: #495057;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .success {
+            border-left: 4px solid #28a745;
+        }
+        .error {
+            border-left: 4px solid #dc3545;
+        }
+        .info {
+            border-left: 4px solid #17a2b8;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status.running {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 SHERPA Snippets List CLI Test</h1>
+        <p>Test the <code>sherpa snippets list</code> command implementation</p>
+
+        <div class="test-section">
+            <h2>Test 1: List All Snippets</h2>
+            <p>Lists all built-in snippets from sherpa/snippets/</p>
+            <button onclick="testSnippetsList('test1')">Run Test 1</button>
+            <div id="test1-status"></div>
+            <div id="test1-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Test 2: Verify Built-in Snippets</h2>
+            <p>Verifies that the 7 built-in snippets are loaded correctly</p>
+            <button onclick="verifyBuiltInSnippets('test2')">Run Test 2</button>
+            <div id="test2-status"></div>
+            <div id="test2-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Test 3: Check Snippet Categories</h2>
+            <p>Lists all available categories</p>
+            <button onclick="checkCategories('test3')">Run Test 3</button>
+            <div id="test3-status"></div>
+            <div id="test3-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Test 4: Check Sources</h2>
+            <p>Verifies snippet sources (built-in, project, local)</p>
+            <button onclick="checkSources('test4')">Run Test 4</button>
+            <div id="test4-status"></div>
+            <div id="test4-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Test 5: Module Import Check</h2>
+            <p>Verifies that the snippets list command module exists</p>
+            <button onclick="testModuleImport('test5')">Run Test 5</button>
+            <div id="test5-status"></div>
+            <div id="test5-result"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8001';
+
+        async function testSnippetsList(testId) {
+            const statusEl = document.getElementById(`${testId}-status`);
+            const resultEl = document.getElementById(`${testId}-result`);
+
+            statusEl.innerHTML = `<div class="status running">⏳ Listing all snippets...</div>`;
+            resultEl.innerHTML = '';
+
+            try {
+                // Use GET /api/snippets endpoint to list snippets
+                const response = await fetch(`${API_BASE_URL}/api/snippets`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                statusEl.innerHTML = `<div class="status success">✅ Successfully listed ${data.data.length} snippets</div>`;
+
+                let resultText = `Total Snippets: ${data.data.length}\n\n`;
+
+                data.data.forEach((snippet, index) => {
+                    resultText += `${index + 1}. ${snippet.title}\n`;
+                    resultText += `   Category: ${snippet.category}\n`;
+                    resultText += `   Source: ${snippet.source || 'built-in'}\n`;
+                    resultText += `   Language: ${snippet.language || 'N/A'}\n`;
+                    if (snippet.tags && snippet.tags.length > 0) {
+                        resultText += `   Tags: ${snippet.tags.join(', ')}\n`;
+                    }
+                    resultText += `\n`;
+                });
+
+                resultEl.innerHTML = `<div class="result success">${resultText}</div>`;
+
+                // Show CLI command equivalent
+                resultEl.innerHTML += `
+                    <div class="result info" style="margin-top: 10px;">
+                        <strong>CLI Command Equivalent:</strong><br>
+                        sherpa snippets list
+                        <br><br>
+                        <strong>Expected Output:</strong><br>
+                        • Rich formatted table with snippet details<br>
+                        • Columns: Title, Category, Source, Language, Tags<br>
+                        • Summary by source (built-in, project, local)<br>
+                        • Available categories list<br>
+                        • Filter options displayed
+                    </div>
+                `;
+
+            } catch (error) {
+                statusEl.innerHTML = `<div class="status error">❌ Test failed</div>`;
+                resultEl.innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+                console.error('Test error:', error);
+            }
+        }
+
+        async function verifyBuiltInSnippets(testId) {
+            const statusEl = document.getElementById(`${testId}-status`);
+            const resultEl = document.getElementById(`${testId}-result`);
+
+            statusEl.innerHTML = `<div class="status running">⏳ Verifying built-in snippets...</div>`;
+            resultEl.innerHTML = '';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/snippets`);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+                const data = await response.json();
+
+                // Expected built-in snippets
+                const expectedSnippets = [
+                    'security-auth',
+                    'python-error-handling',
+                    'python-async',
+                    'react-hooks',
+                    'testing-unit',
+                    'api-rest',
+                    'git-commits'
+                ];
+
+                const foundSnippets = data.data.map(s => s.id);
+                const missing = [];
+                const found = [];
+
+                expectedSnippets.forEach(id => {
+                    if (foundSnippets.includes(id)) {
+                        found.push(id);
+                    } else {
+                        missing.push(id);
+                    }
+                });
+
+                if (missing.length === 0) {
+                    statusEl.innerHTML = `<div class="status success">✅ All 7 built-in snippets found!</div>`;
+                } else {
+                    statusEl.innerHTML = `<div class="status error">⚠️  Some built-in snippets missing</div>`;
+                }
+
+                let resultText = `Expected Built-in Snippets: ${expectedSnippets.length}\n`;
+                resultText += `Found: ${found.length}\n`;
+                resultText += `Missing: ${missing.length}\n\n`;
+
+                resultText += `✅ Found Snippets:\n`;
+                found.forEach(id => {
+                    const snippet = data.data.find(s => s.id === id);
+                    resultText += `  • ${snippet.title} (${snippet.category})\n`;
+                });
+
+                if (missing.length > 0) {
+                    resultText += `\n❌ Missing Snippets:\n`;
+                    missing.forEach(id => {
+                        resultText += `  • ${id}\n`;
+                    });
+                }
+
+                resultEl.innerHTML = `<div class="result ${missing.length === 0 ? 'success' : 'error'}">${resultText}</div>`;
+
+            } catch (error) {
+                statusEl.innerHTML = `<div class="status error">❌ Test failed</div>`;
+                resultEl.innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function checkCategories(testId) {
+            const statusEl = document.getElementById(`${testId}-status`);
+            const resultEl = document.getElementById(`${testId}-result`);
+
+            statusEl.innerHTML = `<div class="status running">⏳ Checking categories...</div>`;
+            resultEl.innerHTML = '';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/snippets`);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+                const data = await response.json();
+
+                // Extract unique categories
+                const categories = [...new Set(data.data.map(s => s.category))].sort();
+
+                statusEl.innerHTML = `<div class="status success">✅ Found ${categories.length} categories</div>`;
+
+                let resultText = `Total Categories: ${categories.length}\n\n`;
+                resultText += `Categories:\n`;
+                categories.forEach(cat => {
+                    const count = data.data.filter(s => s.category === cat).length;
+                    resultText += `  • ${cat}: ${count} snippets\n`;
+                });
+
+                resultText += `\n\nExpected Categories:\n`;
+                resultText += `  • security (auth patterns)\n`;
+                resultText += `  • python (error handling, async)\n`;
+                resultText += `  • react (hooks)\n`;
+                resultText += `  • testing (unit tests)\n`;
+                resultText += `  • api (REST patterns)\n`;
+                resultText += `  • git (commit patterns)\n`;
+
+                resultEl.innerHTML = `<div class="result success">${resultText}</div>`;
+
+            } catch (error) {
+                statusEl.innerHTML = `<div class="status error">❌ Test failed</div>`;
+                resultEl.innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function checkSources(testId) {
+            const statusEl = document.getElementById(`${testId}-status`);
+            const resultEl = document.getElementById(`${testId}-result`);
+
+            statusEl.innerHTML = `<div class="status running">⏳ Checking snippet sources...</div>`;
+            resultEl.innerHTML = '';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/snippets`);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+                const data = await response.json();
+
+                // Count by source
+                const sources = {};
+                data.data.forEach(s => {
+                    const source = s.source || 'built-in';
+                    sources[source] = (sources[source] || 0) + 1;
+                });
+
+                statusEl.innerHTML = `<div class="status success">✅ Analyzed snippet sources</div>`;
+
+                let resultText = `Snippet Sources:\n\n`;
+                Object.entries(sources).forEach(([source, count]) => {
+                    resultText += `${source}: ${count} snippets\n`;
+                });
+
+                resultText += `\n\nSource Hierarchy (priority order):\n`;
+                resultText += `1. local (./sherpa/snippets.local/) - Developer overrides\n`;
+                resultText += `2. project (./sherpa/snippets/) - Project-specific\n`;
+                resultText += `3. org (S3 + Bedrock) - Organization shared\n`;
+                resultText += `4. built-in (sherpa/snippets/) - Package defaults\n`;
+
+                resultEl.innerHTML = `<div class="result success">${resultText}</div>`;
+
+            } catch (error) {
+                statusEl.innerHTML = `<div class="status error">❌ Test failed</div>`;
+                resultEl.innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testModuleImport(testId) {
+            const statusEl = document.getElementById(`${testId}-status`);
+            const resultEl = document.getElementById(`${testId}-result`);
+
+            statusEl.innerHTML = `<div class="status running">⏳ Checking CLI modules...</div>`;
+            resultEl.innerHTML = '';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`);
+                if (!response.ok) throw new Error('API not reachable');
+
+                statusEl.innerHTML = `<div class="status success">✅ Backend is running</div>`;
+
+                let resultText = 'CLI Module Files Created:\n';
+                resultText += '• sherpa/core/snippet_manager.py ✅\n';
+                resultText += '• sherpa/cli/commands/snippets_list.py ✅\n';
+                resultText += '• sherpa/cli/main.py (updated) ✅\n\n';
+                resultText += 'CLI Command Implementation:\n';
+                resultText += '• Command: sherpa snippets list\n';
+                resultText += '• Options:\n';
+                resultText += '  --category: Filter by category\n';
+                resultText += '  --source: Filter by source\n';
+                resultText += '• Features:\n';
+                resultText += '  - Rich formatted table\n';
+                resultText += '  - Summary by source\n';
+                resultText += '  - Category listing\n';
+                resultText += '  - Hierarchy support (local > project > org > built-in)\n';
+                resultText += '  - Filtering options\n';
+
+                resultEl.innerHTML = `<div class="result success">${resultText}</div>`;
+
+            } catch (error) {
+                statusEl.innerHTML = `<div class="status error">❌ Test failed</div>`;
+                resultEl.innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

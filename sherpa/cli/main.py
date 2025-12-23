@@ -60,9 +60,12 @@ def snippets():
 
 
 @snippets.command(name="list")
-def snippets_list():
+@click.option("--category", help="Filter by category")
+@click.option("--source", help="Filter by source (built-in, project, local, org)")
+def snippets_list(category, source):
     """List all available snippets"""
-    console.print("[yellow]Command 'snippets list' not yet implemented[/yellow]")
+    from sherpa.cli.commands.snippets_list import snippets_list_command
+    snippets_list_command(category, source)
 
 
 @cli.command()
