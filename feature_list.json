@@ -1267,7 +1267,7 @@
       "Step 5: Clear search",
       "Step 6: Verify all snippets shown"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1280,7 +1280,7 @@
       "Step 5: Verify syntax highlighting applied",
       "Step 6: Close preview"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
