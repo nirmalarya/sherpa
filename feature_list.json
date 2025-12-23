@@ -1424,7 +1424,7 @@
       "Step 5: Paste in editor",
       "Step 6: Verify content pasted correctly"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
