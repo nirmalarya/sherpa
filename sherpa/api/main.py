@@ -3,7 +3,7 @@ SHERPA V1 - Main FastAPI Application
 Backend API server for the autonomous coding orchestrator
 """
 
-from fastapi import FastAPI, HTTPException, Body, Request, APIRouter
+from fastapi import FastAPI, HTTPException, Body, Request, APIRouter, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, JSONResponse
 from fastapi.exceptions import RequestValidationError
@@ -824,6 +824,128 @@ async def get_session_progress(session_id: str):
             "X-Accel-Buffering": "no"  # Disable buffering in nginx
         }
     )
+
+
+@app.websocket("/api/sessions/{session_id}/ws")
+async def websocket_session_progress(websocket: WebSocket, session_id: str):
+    """WebSocket endpoint for real-time session progress updates"""
+    await websocket.accept()
+
+    try:
+        db = await get_db()
+
+        # Verify session exists
+        session = await db.get_session(session_id)
+        if not session:
+            await websocket.send_json({
+                'type': 'error',
+                'error': 'Session not found',
+                'timestamp': datetime.utcnow().isoformat()
+            })
+            await websocket.close()
+            return
+
+        # Send initial connection confirmation
+        await websocket.send_json({
+            'type': 'connected',
+            'session_id': session_id,
+            'timestamp': datetime.utcnow().isoformat()
+        })
+
+        # Send progress updates periodically
+        update_count = 0
+        while True:
+            try:
+                # Check if client sent any messages (for ping/pong or close)
+                # Use wait_for with timeout to avoid blocking indefinitely
+                try:
+                    message = await asyncio.wait_for(websocket.receive_text(), timeout=1.0)
+                    # Handle client messages if needed (e.g., "ping" -> "pong")
+                    if message == "ping":
+                        await websocket.send_json({'type': 'pong', 'timestamp': datetime.utcnow().isoformat()})
+                except asyncio.TimeoutError:
+                    # No message received, continue with progress updates
+                    pass
+
+                # Get latest session state
+                session = await db.get_session(session_id)
+                if not session:
+                    await websocket.send_json({
+                        'type': 'error',
+                        'error': 'Session no longer exists',
+                        'timestamp': datetime.utcnow().isoformat()
+                    })
+                    break
+
+                # Calculate progress percentage
+                total = session.get('total_features', 0)
+                completed = session.get('completed_features', 0)
+                progress_percent = (completed / total * 100) if total > 0 else 0
+
+                # Send progress update
+                update_count += 1
+                progress_data = {
+                    'type': 'progress',
+                    'session_id': session_id,
+                    'status': session.get('status', 'unknown'),
+                    'total_features': total,
+                    'completed_features': completed,
+                    'progress_percent': round(progress_percent, 2),
+                    'timestamp': datetime.utcnow().isoformat(),
+                    'update_number': update_count
+                }
+                await websocket.send_json(progress_data)
+
+                # Stop if session is no longer active
+                if session.get('status') not in ['active', 'running']:
+                    await websocket.send_json({
+                        'type': 'complete',
+                        'session_id': session_id,
+                        'final_status': session.get('status'),
+                        'timestamp': datetime.utcnow().isoformat()
+                    })
+                    break
+
+                # Limit updates for demo purposes (remove in production)
+                if update_count >= 10:
+                    await websocket.send_json({
+                        'type': 'complete',
+                        'session_id': session_id,
+                        'message': 'Demo update limit reached',
+                        'timestamp': datetime.utcnow().isoformat()
+                    })
+                    break
+
+            except WebSocketDisconnect:
+                logger.info(f"WebSocket client disconnected from session {session_id}")
+                break
+            except Exception as e:
+                logger.error(f"Error in WebSocket loop: {e}")
+                await websocket.send_json({
+                    'type': 'error',
+                    'error': str(e),
+                    'timestamp': datetime.utcnow().isoformat()
+                })
+                break
+
+    except WebSocketDisconnect:
+        logger.info(f"WebSocket disconnected during setup for session {session_id}")
+    except Exception as e:
+        logger.error(f"WebSocket error for session {session_id}: {e}")
+        try:
+            await websocket.send_json({
+                'type': 'error',
+                'error': str(e),
+                'timestamp': datetime.utcnow().isoformat()
+            })
+        except:
+            pass
+    finally:
+        # Ensure WebSocket is closed
+        try:
+            await websocket.close()
+        except:
+            pass
 
 
 @app.post("/api/sessions/{session_id}/stop")
