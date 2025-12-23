@@ -97,6 +97,7 @@ function HomePage() {
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
         <button
+          data-action="new-session"
           onClick={() => setShowNewSessionModal(true)}
           className="card flex items-center p-6 hover:shadow-md transition-shadow"
         >
@@ -108,6 +109,7 @@ function HomePage() {
         </button>
 
         <button
+          data-action="generate-files"
           onClick={() => setShowGenerateFilesModal(true)}
           className="card flex items-center p-6 hover:shadow-md transition-shadow"
         >

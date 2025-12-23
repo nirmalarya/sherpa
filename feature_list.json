@@ -1411,7 +1411,7 @@
       "Step 5: Use arrow keys in lists",
       "Step 6: Verify navigation works"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

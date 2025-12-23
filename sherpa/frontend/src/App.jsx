@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
 import { Mountain } from 'lucide-react'
 
@@ -10,9 +11,34 @@ import SourcesPage from './pages/SourcesPage'
 import NotFoundPage from './pages/NotFoundPage'
 import ErrorTestPage from './pages/ErrorTestPage'
 
+// Components
+import CommandPalette from './components/CommandPalette'
+
 function App() {
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
+
+  // Global keyboard shortcut: Ctrl+K or Cmd+K to open command palette
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Check for Ctrl+K (Windows/Linux) or Cmd+K (Mac)
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault()
+        setCommandPaletteOpen(true)
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
   return (
     <BrowserRouter>
+      {/* Command Palette - Global keyboard shortcuts */}
+      <CommandPalette
+        isOpen={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+      />
+
       <div className="min-h-screen flex flex-col">
         {/* Navigation */}
         <nav className="bg-white border-b border-gray-200 shadow-sm">
