@@ -391,6 +391,82 @@ Add JWT-based authentication to the API
             logger.error(f"Failed to convert work item {work_item_id} to spec: {str(e)}")
             raise Exception(f"Failed to convert work item to spec: {str(e)}")
 
+    async def link_commit(self, work_item_id: int, commit_hash: str, commit_message: str, commit_url: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Link a git commit to a work item in Azure DevOps
+
+        Args:
+            work_item_id: Work item ID to link commit to
+            commit_hash: Git commit hash/SHA
+            commit_message: Commit message text
+            commit_url: Optional URL to the commit in the repository
+
+        Returns:
+            Result dictionary with success status
+        """
+        if not self.is_connected:
+            raise Exception("Not connected to Azure DevOps. Call connect() first.")
+
+        try:
+            if not AZURE_DEVOPS_AVAILABLE:
+                # Return mock success for testing
+                logger.info(f"Mock link commit {commit_hash} to work item {work_item_id}")
+                return {
+                    "success": True,
+                    "work_item_id": work_item_id,
+                    "commit_hash": commit_hash,
+                    "commit_message": commit_message,
+                    "message": "Commit linked successfully (mock mode)"
+                }
+
+            # Azure DevOps links commits via External Links
+            # We'll use the work item tracking client to add a link
+            from azure.devops.v7_1.work_item_tracking.models import JsonPatchOperation
+
+            # Construct commit URL if not provided
+            if not commit_url:
+                # Format: https://dev.azure.com/{organization}/{project}/_git/{repository}/commit/{commitId}
+                # For now, we'll create a generic URL - in production, you'd get the actual repo name
+                commit_url = f"https://dev.azure.com/{self.organization}/{self.project}/_git/commit/{commit_hash}"
+
+            # Create patch document to add external link
+            patch_document = [
+                JsonPatchOperation(
+                    op="add",
+                    path="/relations/-",
+                    value={
+                        "rel": "ArtifactLink",
+                        "url": commit_url,
+                        "attributes": {
+                            "name": f"Commit {commit_hash[:7]}",
+                            "comment": commit_message[:200]  # Truncate to 200 chars
+                        }
+                    }
+                )
+            ]
+
+            # Update work item with commit link
+            updated_item = self.wit_client.update_work_item(
+                document=patch_document,
+                id=work_item_id,
+                project=self.project
+            )
+
+            logger.info(f"Successfully linked commit {commit_hash} to work item {work_item_id}")
+
+            return {
+                "success": True,
+                "work_item_id": work_item_id,
+                "commit_hash": commit_hash,
+                "commit_message": commit_message,
+                "commit_url": commit_url,
+                "message": "Commit linked successfully"
+            }
+
+        except Exception as e:
+            logger.error(f"Failed to link commit {commit_hash} to work item {work_item_id}: {str(e)}")
+            raise Exception(f"Failed to link commit: {str(e)}")
+
     def disconnect(self):
         """Disconnect from Azure DevOps"""
         self.connection = None

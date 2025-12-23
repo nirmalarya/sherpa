@@ -1990,6 +1990,107 @@ async def convert_work_item_to_spec(work_item_id: int):
         raise HTTPException(status_code=500, detail=f"Error converting work item to spec: {str(e)}")
 
 
+@app.post("/api/azure-devops/work-items/{work_item_id}/commits")
+async def link_commit_to_work_item(work_item_id: int, request: Request):
+    """
+    Link a git commit to a work item in Azure DevOps
+
+    Args:
+        work_item_id: ID of the work item to link commit to
+        request: Request body containing commit details
+
+    Returns:
+        Link result details
+    """
+    try:
+        body = await request.json()
+        commit_hash = body.get('commit_hash', body.get('hash', ''))
+        commit_message = body.get('commit_message', body.get('message', ''))
+        commit_url = body.get('commit_url', body.get('url', None))
+
+        if not commit_hash:
+            raise HTTPException(status_code=400, detail="commit_hash is required")
+
+        if not commit_message:
+            raise HTTPException(status_code=400, detail="commit_message is required")
+
+        logger.info(f"POST /api/azure-devops/work-items/{work_item_id}/commits - commit={commit_hash[:7]}")
+
+        # Get Azure DevOps client
+        azure_client = get_azure_devops_client()
+
+        # Check if connected
+        if not azure_client.is_connected:
+            logger.info("Azure DevOps client not connected, attempting to reconnect...")
+
+            # Try to restore connection from database
+            db = await get_db()
+            config = await db.get_all_config()
+
+            org = config.get('azure_devops_org')
+            project = config.get('azure_devops_project')
+            pat = config.get('azure_devops_pat')
+
+            if not org or not project or not pat:
+                logger.warning("Azure DevOps credentials not found in database")
+                raise HTTPException(
+                    status_code=401,
+                    detail="Azure DevOps not configured. Please connect first using POST /api/azure-devops/connect"
+                )
+
+            # Extract organization name from URL if needed
+            if org.startswith('https://dev.azure.com/'):
+                org_name = org.replace('https://dev.azure.com/', '').rstrip('/')
+            elif org.startswith('http://dev.azure.com/'):
+                org_name = org.replace('http://dev.azure.com/', '').rstrip('/')
+            else:
+                org_name = org
+
+            # Reconnect
+            try:
+                await azure_client.connect(org_name, project, pat)
+                logger.info("Successfully reconnected to Azure DevOps")
+            except Exception as reconnect_error:
+                logger.error(f"Failed to reconnect to Azure DevOps: {str(reconnect_error)}")
+                raise HTTPException(
+                    status_code=401,
+                    detail=f"Failed to reconnect to Azure DevOps: {str(reconnect_error)}"
+                )
+
+        # Link commit to work item
+        try:
+            result = await azure_client.link_commit(
+                work_item_id=work_item_id,
+                commit_hash=commit_hash,
+                commit_message=commit_message,
+                commit_url=commit_url
+            )
+            logger.info(f"Successfully linked commit {commit_hash} to work item {work_item_id}")
+
+            return {
+                "success": True,
+                "work_item_id": work_item_id,
+                "commit_hash": commit_hash,
+                "commit_message": commit_message,
+                "commit_url": result.get('commit_url'),
+                "result": result,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+
+        except Exception as link_error:
+            logger.error(f"Failed to link commit to work item {work_item_id}: {str(link_error)}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to link commit: {str(link_error)}"
+            )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error linking commit to work item {work_item_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error linking commit: {str(e)}")
+
+
 @app.post("/api/azure-devops/save-config")
 async def save_azure_devops_config(request: AzureDevOpsSaveConfigRequest):
     """Save Azure DevOps configuration to database"""

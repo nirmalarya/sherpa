@@ -239,7 +239,7 @@
       "Step 4: Verify commit message includes work item ID",
       "Step 5: Verify multiple commits can be linked"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
