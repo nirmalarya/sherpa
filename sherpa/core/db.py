@@ -214,7 +214,11 @@ class Database:
         return snippet_id
 
     async def get_snippets(self, category: Optional[str] = None) -> List[Dict[str, Any]]:
-        """Get all snippets, optionally filtered by category"""
+        """
+        Get all snippets with hierarchy resolution: local > project > org > built-in
+
+        If a snippet exists in multiple sources, only return the highest priority version.
+        """
         conn = await self.connect()
 
         if category:
@@ -223,7 +227,33 @@ class Database:
             cursor = await conn.execute("SELECT * FROM snippets ORDER BY category, name")
 
         rows = await cursor.fetchall()
-        return [dict(row) for row in rows]
+        all_snippets = [dict(row) for row in rows]
+
+        # Apply hierarchy resolution to remove duplicates
+        # Priority: local > project > org > built-in
+        source_priority = {'local': 0, 'project': 1, 'org': 2, 'built-in': 3}
+
+        # Group snippets by name (assuming snippets with same name but different sources are duplicates)
+        snippets_by_name = {}
+        for snippet in all_snippets:
+            name = snippet['name']
+            source = snippet['source']
+
+            if name not in snippets_by_name:
+                snippets_by_name[name] = snippet
+            else:
+                # Keep the snippet with higher priority (lower number = higher priority)
+                current_priority = source_priority.get(snippets_by_name[name]['source'], 999)
+                new_priority = source_priority.get(source, 999)
+
+                if new_priority < current_priority:
+                    snippets_by_name[name] = snippet
+
+        # Return deduplicated snippets, maintaining category/name sort order
+        deduplicated = list(snippets_by_name.values())
+        deduplicated.sort(key=lambda s: (s['category'], s['name']))
+
+        return deduplicated
 
     async def get_snippet(self, snippet_id: str) -> Optional[Dict[str, Any]]:
         """Get snippet by ID with hierarchy resolution: local > project > org > built-in"""
