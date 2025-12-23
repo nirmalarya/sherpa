@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Backend Health Check</title>
+</head>
+<body>
+    <h1>Backend Health Check</h1>
+    <div id="result"></div>
+
+    <script>
+        async function testBackend() {
+            const resultDiv = document.getElementById('result');
+
+            try {
+                // Test backend on port 8001
+                const response = await fetch('http://localhost:8001/health');
+                const data = await response.json();
+
+                resultDiv.innerHTML = `
+                    <p style="color: green;">✅ Backend is healthy!</p>
+                    <p>Status: ${response.status}</p>
+                    <p>Data: ${JSON.stringify(data, null, 2)}</p>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p style="color: red;">❌ Backend is not responding</p>
+                    <p>Error: ${error.message}</p>
+                `;
+            }
+        }
+
+        testBackend();
+    </script>
+</body>
+</html>
