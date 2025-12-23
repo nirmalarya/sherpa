@@ -17,7 +17,8 @@ function SessionsPage() {
     try {
       const params = statusFilter !== 'all' ? { status: statusFilter } : {}
       const response = await api.get('/api/sessions', { params })
-      setSessions(response.data)
+      // API returns { sessions: [...], total: N, timestamp: "..." }
+      setSessions(response.data.sessions || [])
     } catch (error) {
       console.error('Error fetching sessions:', error)
     } finally {
@@ -25,9 +26,10 @@ function SessionsPage() {
     }
   }
 
-  const filteredSessions = sessions.filter(session =>
-    session.name?.toLowerCase().includes(search.toLowerCase())
-  )
+  const filteredSessions = sessions.filter(session => {
+    const sessionName = session.spec_file || session.id || ''
+    return sessionName.toLowerCase().includes(search.toLowerCase())
+  })
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -95,38 +97,48 @@ function SessionsPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredSessions.map((session) => (
-                <tr key={session.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <Link to={`/sessions/${session.id}`} className="text-primary-600 hover:text-primary-700 font-medium">
-                      {session.name || session.id}
-                    </Link>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                      session.status === 'active' ? 'bg-green-100 text-green-800' :
-                      session.status === 'complete' ? 'bg-blue-100 text-blue-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {session.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center">
-                      <span className="text-sm font-medium mr-2">{session.progress}%</span>
-                      <div className="w-24 bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-primary-600 h-2 rounded-full"
-                          style={{ width: `${session.progress}%` }}
-                        ></div>
+              {filteredSessions.map((session) => {
+                const progress = session.total_features > 0
+                  ? Math.round((session.completed_features / session.total_features) * 100)
+                  : 0
+                const sessionName = session.spec_file || session.id
+
+                return (
+                  <tr key={session.id} className="hover:bg-gray-50 cursor-pointer">
+                    <td className="px-6 py-4">
+                      <Link to={`/sessions/${session.id}`} className="text-primary-600 hover:text-primary-700 font-medium">
+                        {sessionName}
+                      </Link>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {session.completed_features} / {session.total_features} features
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {new Date(session.created_at).toLocaleString()}
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                        session.status === 'active' ? 'bg-green-100 text-green-800' :
+                        session.status === 'complete' ? 'bg-blue-100 text-blue-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {session.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center">
+                        <span className="text-sm font-medium mr-2">{progress}%</span>
+                        <div className="w-24 bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-primary-600 h-2 rounded-full"
+                            style={{ width: `${progress}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {session.created_at ? new Date(session.created_at).toLocaleString() : 'N/A'}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         )}
