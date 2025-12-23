@@ -1,0 +1,69 @@
+# Frontend .dockerignore - Optimize Docker build context
+# Excludes unnecessary files from the build context
+
+# Node modules (will be installed during build)
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Development files
+.env.local
+.env.development
+.env.test
+.env*.local
+
+# Build output (will be generated during build)
+dist
+build
+.next
+out
+
+# Cache directories
+.cache
+.parcel-cache
+.vite
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+*.md
+!package.json
+
+# Test files
+__tests__
+*.test.js
+*.test.jsx
+*.test.ts
+*.test.tsx
+*.spec.js
+*.spec.jsx
+*.spec.ts
+*.spec.tsx
+coverage
+.nyc_output
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
+.circleci
+
+# Misc
+.editorconfig
+.eslintcache
+.prettierignore
+*.log

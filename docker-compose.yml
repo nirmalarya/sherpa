@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  # Backend API Service
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sherpa-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - SHERPA_ENV=${SHERPA_ENV:-development}
+      - SHERPA_HOST=0.0.0.0
+      - SHERPA_PORT=8000
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+    volumes:
+      - ./sherpa/data:/app/sherpa/data
+      - ./sherpa/logs:/app/sherpa/logs
+      - ./sherpa/snippets.local:/app/sherpa/snippets.local
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - sherpa-network
+    depends_on:
+      - db
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ./sherpa/frontend
+      dockerfile: Dockerfile
+    container_name: sherpa-frontend
+    ports:
+      - "3001:3001"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - sherpa-network
+    depends_on:
+      - backend
+
+  # Database Service (SQLite is file-based, but we use a volume for persistence)
+  # This service is a placeholder to demonstrate multi-container setup
+  # In production, you might use PostgreSQL or MySQL
+  db:
+    image: alpine:3.18
+    container_name: sherpa-db
+    command: tail -f /dev/null  # Keep container running
+    volumes:
+      - db-data:/data
+    networks:
+      - sherpa-network
+    healthcheck:
+      test: ["CMD", "ls", "/data"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+networks:
+  sherpa-network:
+    driver: bridge
+
+volumes:
+  db-data:
+    driver: local
