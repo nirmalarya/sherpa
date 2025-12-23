@@ -95,35 +95,40 @@ function HomePage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-        <button
-          data-action="new-session"
-          onClick={() => setShowNewSessionModal(true)}
-          className="card flex items-center p-6 hover:shadow-md transition-shadow"
-        >
-          <Plus className="h-8 w-8 text-primary-600" aria-label="New session icon" />
-          <div className="ml-4 text-left">
-            <h3 className="text-lg font-semibold">New Session</h3>
-            <p className="text-sm text-gray-600">Start autonomous coding session</p>
-          </div>
-        </button>
+      <section aria-labelledby="quick-actions-heading" className="mb-8">
+        <h2 id="quick-actions-heading" className="sr-only">Quick Actions</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <button
+            data-action="new-session"
+            onClick={() => setShowNewSessionModal(true)}
+            className="card flex items-center p-6 hover:shadow-md transition-shadow focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2"
+            aria-label="Start a new autonomous coding session"
+          >
+            <Plus className="h-8 w-8 text-primary-600" aria-hidden="true" />
+            <div className="ml-4 text-left">
+              <h3 className="text-lg font-semibold">New Session</h3>
+              <p className="text-sm text-gray-600">Start autonomous coding session</p>
+            </div>
+          </button>
 
-        <button
-          data-action="generate-files"
-          onClick={() => setShowGenerateFilesModal(true)}
-          className="card flex items-center p-6 hover:shadow-md transition-shadow"
-        >
-          <FileText className="h-8 w-8 text-primary-600" aria-label="Generate files icon" />
-          <div className="ml-4 text-left">
-            <h3 className="text-lg font-semibold">Generate Files</h3>
-            <p className="text-sm text-gray-600">Create instruction files for agents</p>
-          </div>
-        </button>
-      </div>
+          <button
+            data-action="generate-files"
+            onClick={() => setShowGenerateFilesModal(true)}
+            className="card flex items-center p-6 hover:shadow-md transition-shadow focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2"
+            aria-label="Generate instruction files for agents"
+          >
+            <FileText className="h-8 w-8 text-primary-600" aria-hidden="true" />
+            <div className="ml-4 text-left">
+              <h3 className="text-lg font-semibold">Generate Files</h3>
+              <p className="text-sm text-gray-600">Create instruction files for agents</p>
+            </div>
+          </button>
+        </div>
+      </section>
 
       {/* Active Sessions */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Active Sessions</h2>
+      <section aria-labelledby="active-sessions-heading" className="mb-8">
+        <h2 id="active-sessions-heading" className="text-2xl font-bold text-gray-900 mb-4">Active Sessions</h2>
 
         {/* Error Message */}
         {error && (
@@ -137,18 +142,18 @@ function HomePage() {
         )}
 
         {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <div className="text-center py-12" role="status" aria-live="polite">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto" aria-hidden="true"></div>
             <p className="mt-4 text-gray-600">Loading sessions...</p>
           </div>
         ) : sessions.length === 0 && !error ? (
-          <div className="card text-center py-12">
-            <Activity className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <div className="card text-center py-12" role="status">
+            <Activity className="h-12 w-12 text-gray-400 mx-auto mb-4" aria-hidden="true" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No active sessions</h3>
             <p className="text-gray-600">Start a new session to begin coding</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" role="list" aria-label="Active sessions">
             {sessions.map((session) => {
               const progress = session.total_features > 0
                 ? Math.round((session.completed_features / session.total_features) * 100)
@@ -174,19 +179,25 @@ function HomePage() {
               }
 
               return (
-                <Link key={session.id} to={`/sessions/${session.id}`} className="card hover:shadow-md transition-shadow">
+                <Link
+                  key={session.id}
+                  to={`/sessions/${session.id}`}
+                  className="card hover:shadow-md transition-shadow focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2"
+                  role="listitem"
+                  aria-label={`Session ${sessionName}, ${progress}% complete, ${session.status} status`}
+                >
                   <div className="flex items-start justify-between mb-2">
                     <h3 className="font-semibold text-lg">{sessionName}</h3>
-                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${getStatusColor(session.status)}`}>
+                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${getStatusColor(session.status)}`} aria-label={`Status: ${session.status || 'active'}`}>
                       {session.status || 'active'}
                     </span>
                   </div>
                   <div className="mb-3">
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-gray-600">Progress</span>
-                      <span className="font-medium">{progress}%</span>
+                      <span className="font-medium" aria-label={`${progress} percent complete`}>{progress}%</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-gray-200 rounded-full h-2" role="progressbar" aria-valuenow={progress} aria-valuemin="0" aria-valuemax="100" aria-label="Session progress">
                       <div
                         className="bg-primary-600 h-2 rounded-full transition-all"
                         style={{ width: `${progress}%` }}
@@ -201,11 +212,11 @@ function HomePage() {
             })}
           </div>
         )}
-      </div>
+      </section>
 
       {/* Recent Activity */}
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Recent Activity</h2>
+      <section aria-labelledby="recent-activity-heading">
+        <h2 id="recent-activity-heading" className="text-2xl font-bold text-gray-900 mb-4">Recent Activity</h2>
 
         {/* Activity Error Message */}
         {activityError && (
@@ -219,18 +230,18 @@ function HomePage() {
         )}
 
         {activityLoading ? (
-          <div className="card text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+          <div className="card text-center py-8" role="status" aria-live="polite">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto" aria-hidden="true"></div>
             <p className="mt-3 text-gray-600 text-sm">Loading activity...</p>
           </div>
         ) : activity.length === 0 && !activityError ? (
-          <div className="card text-center py-8">
-            <Activity className="h-10 w-10 text-gray-400 mx-auto mb-3" />
+          <div className="card text-center py-8" role="status">
+            <Activity className="h-10 w-10 text-gray-400 mx-auto mb-3" aria-hidden="true" />
             <p className="text-gray-600">No recent activity</p>
           </div>
         ) : (
           <div className="card">
-            <div className="space-y-3">
+            <ul className="space-y-3" role="list" aria-label="Recent activity events">
               {activity.map((event) => {
                 // Helper function to get icon for event type
                 const getEventIcon = (type) => {
@@ -251,30 +262,33 @@ function HomePage() {
                 }
 
                 return (
-                  <Link
-                    key={event.id}
-                    to={`/sessions/${event.session_id}`}
-                    className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200"
-                  >
-                    <div className="flex-shrink-0 mt-0.5">
-                      {getEventIcon(event.type)}
-                    </div>
-                    <div className="flex-grow min-w-0">
-                      <p className="text-sm text-gray-900 font-medium">{event.message}</p>
-                      <p
-                        className="text-xs text-gray-500 mt-0.5 cursor-help"
-                        title={formatAbsoluteTime(event.timestamp)}
-                      >
-                        {formatRelativeTime(event.timestamp)}
-                      </p>
-                    </div>
-                  </Link>
+                  <li key={event.id}>
+                    <Link
+                      to={`/sessions/${event.session_id}`}
+                      className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2"
+                      aria-label={`${event.message}, ${formatRelativeTime(event.timestamp)}`}
+                    >
+                      <div className="flex-shrink-0 mt-0.5" aria-hidden="true">
+                        {getEventIcon(event.type)}
+                      </div>
+                      <div className="flex-grow min-w-0">
+                        <p className="text-sm text-gray-900 font-medium">{event.message}</p>
+                        <time
+                          className="text-xs text-gray-500 mt-0.5 cursor-help"
+                          dateTime={event.timestamp}
+                          title={formatAbsoluteTime(event.timestamp)}
+                        >
+                          {formatRelativeTime(event.timestamp)}
+                        </time>
+                      </div>
+                    </Link>
+                  </li>
                 )
               })}
-            </div>
+            </ul>
           </div>
         )}
-      </div>
+      </section>
 
       {/* Modals */}
       <NewSessionModal

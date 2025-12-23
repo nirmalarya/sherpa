@@ -22,11 +22,11 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors;
+    @apply bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2;
   }
 
   .btn-secondary {
-    @apply bg-gray-200 text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors;
+    @apply bg-gray-200 text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
   }
 
   .card {
@@ -35,5 +35,40 @@
 
   .input {
     @apply border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+  }
+
+  /* Screen reader only - visually hidden but accessible to screen readers */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  /* Focus visible utilities for keyboard navigation */
+  .focus-visible:focus {
+    @apply outline-none ring-2 ring-primary-600 ring-offset-2;
+  }
+}
+
+@layer utilities {
+  /* Enhanced focus indicators for accessibility */
+  *:focus-visible {
+    outline: 2px solid theme('colors.primary.600');
+    outline-offset: 2px;
+  }
+
+  /* Skip to main content link (for keyboard users) */
+  .skip-to-main {
+    @apply absolute -top-full left-0 bg-primary-600 text-white px-4 py-2 z-50;
+  }
+
+  .skip-to-main:focus {
+    @apply top-0;
   }
 }

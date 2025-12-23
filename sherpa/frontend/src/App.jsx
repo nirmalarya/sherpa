@@ -50,26 +50,31 @@ function App() {
       />
 
       <div className="min-h-screen flex flex-col">
+        {/* Skip to main content link for keyboard users */}
+        <a href="#main-content" className="skip-to-main">
+          Skip to main content
+        </a>
+
         {/* Navigation */}
-        <nav className="bg-white border-b border-gray-200 shadow-sm">
+        <nav className="bg-white border-b border-gray-200 shadow-sm" role="navigation" aria-label="Main navigation">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16">
               <div className="flex">
-                <Link to="/" className="flex items-center">
-                  <Mountain className="h-8 w-8 text-primary-600" aria-label="SHERPA logo" />
+                <Link to="/" className="flex items-center" aria-label="SHERPA V1 home">
+                  <Mountain className="h-8 w-8 text-primary-600" aria-hidden="true" />
                   <span className="ml-2 text-xl font-bold text-gray-900">SHERPA V1</span>
                 </Link>
-                <div className="ml-10 flex items-center space-x-4">
-                  <Link to="/" className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium">
+                <div className="ml-10 flex items-center space-x-4" role="list">
+                  <Link to="/" className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2" role="listitem" aria-label="Navigate to Home">
                     Home
                   </Link>
-                  <Link to="/sessions" className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium">
+                  <Link to="/sessions" className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2" role="listitem" aria-label="Navigate to Sessions">
                     Sessions
                   </Link>
-                  <Link to="/knowledge" className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium">
+                  <Link to="/knowledge" className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2" role="listitem" aria-label="Navigate to Knowledge">
                     Knowledge
                   </Link>
-                  <Link to="/sources" className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium">
+                  <Link to="/sources" className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2" role="listitem" aria-label="Navigate to Sources">
                     Sources
                   </Link>
                 </div>
@@ -79,7 +84,7 @@ function App() {
         </nav>
 
         {/* Main Content */}
-        <main className="flex-1">
+        <main id="main-content" className="flex-1" role="main" aria-label="Main content">
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<HomePage />} />
@@ -94,7 +99,7 @@ function App() {
         </main>
 
         {/* Footer */}
-        <footer className="bg-white border-t border-gray-200 mt-auto">
+        <footer className="bg-white border-t border-gray-200 mt-auto" role="contentinfo">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <p className="text-center text-sm text-gray-500">
               🏔️ SHERPA V1 - Autonomous Coding Orchestrator

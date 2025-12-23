@@ -1539,7 +1539,7 @@
       "Step 5: Verify ARIA labels present",
       "Step 6: Verify semantic HTML used"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
