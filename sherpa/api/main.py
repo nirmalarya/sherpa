@@ -173,6 +173,44 @@ async def get_session(session_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.patch("/api/sessions/{session_id}")
+async def update_session(session_id: str, request: Request):
+    """Update session progress or status"""
+    try:
+        db = await get_db()
+
+        # Verify session exists
+        session = await db.get_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        # Parse request body
+        body = await request.json()
+
+        # Build updates dictionary - only allow specific fields
+        allowed_fields = ['completed_features', 'status', 'error_message']
+        updates = {k: v for k, v in body.items() if k in allowed_fields}
+
+        if not updates:
+            raise HTTPException(status_code=400, detail="No valid fields to update")
+
+        # Update session
+        await db.update_session(session_id, updates)
+
+        # Get updated session
+        updated_session = await db.get_session(session_id)
+
+        return {
+            "message": "Session updated successfully",
+            "session": updated_session,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/sessions/{session_id}/progress")
 async def get_session_progress(session_id: str):
     """Server-Sent Events endpoint for real-time session progress updates"""

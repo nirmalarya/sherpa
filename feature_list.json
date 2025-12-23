@@ -1358,7 +1358,7 @@
       "Step 5: Verify progress shows 80%",
       "Step 6: Verify progress bar reflects percentage"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
