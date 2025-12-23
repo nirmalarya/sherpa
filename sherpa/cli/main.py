@@ -32,7 +32,8 @@ def init():
 @cli.command()
 def generate():
     """Create instruction files for interactive agents"""
-    console.print("[yellow]Command 'generate' not yet implemented[/yellow]")
+    from sherpa.cli.commands.generate import generate_command
+    generate_command()
 
 
 @cli.command()
