@@ -101,6 +101,19 @@ class AzureDevOpsSaveConfigRequest(BaseModel):
         return v
 
 
+class AzureDevOpsUpdateWorkItemRequest(BaseModel):
+    updates: Dict[str, Any] = Field(..., description="Dictionary of field updates (e.g., {'State': 'Active', 'Title': 'New title'})")
+
+    class Config:
+        extra = "forbid"
+
+    @validator('updates')
+    def validate_updates_not_empty(cls, v):
+        if not v:
+            raise ValueError('updates dictionary cannot be empty')
+        return v
+
+
 class QuerySnippetsRequest(BaseModel):
     query: str = Field(..., min_length=1, max_length=500, description="Search query text")
     max_results: int = Field(default=5, ge=1, le=20, description="Maximum number of results")
@@ -1400,6 +1413,90 @@ async def get_azure_devops_work_items(query: Optional[str] = None, top: int = 10
     except Exception as e:
         logger.error(f"Error fetching work items: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error fetching work items: {str(e)}")
+
+
+@app.post("/api/azure-devops/work-items/{work_item_id}/update")
+async def update_azure_devops_work_item(work_item_id: int, request: AzureDevOpsUpdateWorkItemRequest):
+    """
+    Update a work item in Azure DevOps
+
+    Args:
+        work_item_id: ID of the work item to update
+        request: Update request containing field updates
+
+    Returns:
+        Updated work item details
+    """
+    try:
+        logger.info(f"POST /api/azure-devops/work-items/{work_item_id}/update - updates={list(request.updates.keys())}")
+
+        # Get Azure DevOps client
+        from sherpa.core.integrations.azure_devops_client import get_azure_devops_client
+        azure_client = get_azure_devops_client()
+
+        # Check if connected
+        if not azure_client.is_connected:
+            logger.info("Azure DevOps client not connected, attempting to reconnect...")
+
+            # Try to restore connection from database
+            db = await get_db()
+            config = await db.get_all_config()
+
+            org = config.get('azure_devops_org')
+            project = config.get('azure_devops_project')
+            pat = config.get('azure_devops_pat')
+
+            if not org or not project or not pat:
+                logger.warning("Azure DevOps credentials not found in database")
+                raise HTTPException(
+                    status_code=401,
+                    detail="Azure DevOps not configured. Please connect first using POST /api/azure-devops/connect"
+                )
+
+            # Extract organization name from URL if needed
+            if org.startswith('https://dev.azure.com/'):
+                org_name = org.replace('https://dev.azure.com/', '').rstrip('/')
+            elif org.startswith('http://dev.azure.com/'):
+                org_name = org.replace('http://dev.azure.com/', '').rstrip('/')
+            else:
+                org_name = org
+
+            # Reconnect
+            try:
+                await azure_client.connect(org_name, project, pat)
+                logger.info("Successfully reconnected to Azure DevOps")
+            except Exception as reconnect_error:
+                logger.error(f"Failed to reconnect to Azure DevOps: {str(reconnect_error)}")
+                raise HTTPException(
+                    status_code=401,
+                    detail=f"Failed to reconnect to Azure DevOps: {str(reconnect_error)}"
+                )
+
+        # Update work item
+        try:
+            result = await azure_client.update_work_item(work_item_id, request.updates)
+            logger.info(f"Successfully updated work item {work_item_id}")
+
+            return {
+                "success": True,
+                "work_item_id": work_item_id,
+                "updates": request.updates,
+                "result": result,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+
+        except Exception as update_error:
+            logger.error(f"Failed to update work item {work_item_id}: {str(update_error)}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to update work item: {str(update_error)}"
+            )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating work item {work_item_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error updating work item: {str(e)}")
 
 
 @app.post("/api/azure-devops/save-config")

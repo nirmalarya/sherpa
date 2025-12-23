@@ -742,7 +742,7 @@
       "Step 4: Verify work item updated in Azure DevOps",
       "Step 5: Verify new status reflected"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
