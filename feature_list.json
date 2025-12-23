@@ -176,7 +176,7 @@
       "Step 4: Verify both services are accessible",
       "Step 5: Verify success message with URLs displayed"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

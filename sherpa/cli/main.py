@@ -84,11 +84,12 @@ def logs(session_id):
 
 
 @cli.command()
-@click.option("--port", default=8000, help="Backend port (default: 8000)")
-@click.option("--frontend-port", default=3001, help="Frontend port (default: 3001)")
+@click.option("--port", default=8001, help="Backend port (default: 8001)")
+@click.option("--frontend-port", default=3003, help="Frontend port (default: 3003)")
 def serve(port, frontend_port):
     """Start web dashboard with backend and frontend"""
-    console.print("[yellow]Command 'serve' not yet implemented[/yellow]")
+    from sherpa.cli.commands.serve import serve_command
+    serve_command(port, frontend_port)
 
 
 if __name__ == "__main__":
