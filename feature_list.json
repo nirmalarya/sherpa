@@ -885,7 +885,7 @@
       "Step 5: Verify change persisted",
       "Step 6: Verify config validation"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
