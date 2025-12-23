@@ -64,4 +64,7 @@ htmlcov/
 
 # Misc
 *.log
+*.log.gz
 .cache/
+logs/
+*-audit.json
