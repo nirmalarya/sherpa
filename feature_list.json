@@ -188,7 +188,7 @@
       "Step 4: Verify credentials stored securely",
       "Step 5: Verify test API call succeeds"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

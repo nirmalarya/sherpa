@@ -89,7 +89,14 @@ function AzureDevOpsConnector() {
     setConnectionStatus(null)
 
     try {
-      await api.post('/api/azure-devops/connect', config)
+      // Extract organization name from URL if full URL provided
+      const orgName = config.organization.replace('https://dev.azure.com/', '').replace(/\/$/, '')
+
+      await api.post('/api/azure-devops/connect', {
+        organization: orgName,
+        project: config.project,
+        pat: config.pat
+      })
       setConnectionStatus({
         success: true,
         message: 'Connection successful! Azure DevOps is configured correctly.'
@@ -113,7 +120,14 @@ function AzureDevOpsConnector() {
     setSaving(true)
 
     try {
-      await api.post('/api/azure-devops/save-config', config)
+      // Extract organization name from URL if full URL provided
+      const orgName = config.organization.replace('https://dev.azure.com/', '').replace(/\/$/, '')
+
+      await api.post('/api/azure-devops/save-config', {
+        organization: orgName,
+        project: config.project,
+        pat: config.pat
+      })
       setConnectionStatus({
         success: true,
         message: 'Configuration saved successfully!'
