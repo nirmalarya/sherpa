@@ -549,7 +549,7 @@
       "Step 3: Verify response contains status: ok",
       "Step 4: Verify response time under 100ms"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

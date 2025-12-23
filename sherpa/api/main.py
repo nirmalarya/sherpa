@@ -112,7 +112,7 @@ async def root():
 async def health_check():
     """Health check endpoint"""
     return {
-        "status": "healthy",
+        "status": "ok",
         "service": "sherpa-api",
         "timestamp": datetime.utcnow().isoformat(),
         "version": "1.0.0"
