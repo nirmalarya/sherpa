@@ -983,7 +983,13 @@ async def get_snippets(
             for s in snippets
         ]
 
-        return snippets_data
+        return success_response(
+            data={
+                "snippets": snippets_data,
+                "total": len(snippets_data)
+            },
+            message=f"Retrieved {len(snippets_data)} snippets"
+        )
     except Exception as e:
         logger.error(f"Error getting snippets: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
