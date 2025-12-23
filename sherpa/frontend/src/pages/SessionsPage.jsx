@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, Filter, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, Filter, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, FolderOpen, Plus } from 'lucide-react'
 import api from '../lib/api'
 import ErrorMessage from '../components/ErrorMessage'
 
@@ -186,8 +186,34 @@ function SessionsPage() {
             <p className="mt-4 text-gray-600">Loading sessions...</p>
           </div>
         ) : filteredSessions.length === 0 && !error ? (
-          <div className="text-center py-12">
-            <p className="text-gray-600">No sessions found</p>
+          <div className="text-center py-16 px-4">
+            {/* Empty State Icon */}
+            <div className="flex justify-center mb-6">
+              <div className="rounded-full bg-gray-100 p-6">
+                <FolderOpen className="h-16 w-16 text-gray-400" />
+              </div>
+            </div>
+
+            {/* Empty State Message */}
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              {sessions.length === 0 ? 'No sessions yet' : 'No sessions found'}
+            </h3>
+            <p className="text-gray-600 mb-8 max-w-md mx-auto">
+              {sessions.length === 0
+                ? 'Start your first autonomous coding session to see it appear here.'
+                : 'Try adjusting your search or filter criteria to find what you\'re looking for.'}
+            </p>
+
+            {/* Call to Action - only show if there are truly no sessions */}
+            {sessions.length === 0 && (
+              <Link
+                to="/"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors"
+              >
+                <Plus className="h-5 w-5" />
+                Create Your First Session
+              </Link>
+            )}
           </div>
         ) : (
           <table className="min-w-full divide-y divide-gray-200">

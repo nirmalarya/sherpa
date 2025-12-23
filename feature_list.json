@@ -1449,7 +1449,7 @@
       "Step 4: Verify helpful illustration/icon shown",
       "Step 5: Click CTA creates first session"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
