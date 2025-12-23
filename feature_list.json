@@ -87,7 +87,7 @@
       "Step 5: Verify all files contain relevant knowledge snippets",
       "Step 6: Verify success message with file paths displayed"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
