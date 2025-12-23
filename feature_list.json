@@ -1080,7 +1080,7 @@
       "Step 5: View UI on mobile (375px)",
       "Step 6: Verify layout usable on mobile"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
