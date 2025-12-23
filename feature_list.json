@@ -646,7 +646,7 @@
       "Step 4: Verify logs array returned",
       "Step 5: Verify logs in chronological order"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

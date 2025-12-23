@@ -319,6 +319,32 @@ async def resume_session(session_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/sessions/{session_id}/logs")
+async def get_session_logs(session_id: str):
+    """Get session logs"""
+    try:
+        db = await get_db()
+
+        # Verify session exists
+        session = await db.get_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        # Get logs for this session
+        logs = await db.get_logs(session_id)
+
+        return {
+            "session_id": session_id,
+            "logs": logs,
+            "total": len(logs),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/snippets")
 async def get_snippets(category: Optional[str] = None):
     """Get all code snippets"""
