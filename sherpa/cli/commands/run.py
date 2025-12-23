@@ -15,17 +15,19 @@ from rich.table import Table
 
 from sherpa.core.db import Database
 from sherpa.core.integrations.azure_devops_client import get_azure_devops_client
+from sherpa.core.harness.autonomous_runner import run_autonomous_harness as run_harness_loop
 
 console = Console()
 
 
-async def run_autonomous_harness(spec_file: str, source: Optional[str] = None):
+async def run_autonomous_harness(spec_file: str, source: Optional[str] = None, max_iterations: Optional[int] = None):
     """
     Execute autonomous coding harness with spec file
 
     Args:
         spec_file: Path to specification file
         source: Optional source type (azure-devops, file, etc.)
+        max_iterations: Optional maximum number of iterations
     """
     db = Database()
 
@@ -41,9 +43,10 @@ async def run_autonomous_harness(spec_file: str, source: Optional[str] = None):
 
         spec_content = spec_path.read_text()
 
-        # Generate session ID
+        # Generate session ID and project directory
         timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
         session_id = f"session_{timestamp}"
+        project_dir = Path.cwd() / session_id
 
         # Create session in database
         console.print("\n[cyan]Creating new autonomous coding session...[/cyan]")
@@ -59,7 +62,8 @@ async def run_autonomous_harness(spec_file: str, source: Optional[str] = None):
             'metadata': json.dumps({
                 'source': source,
                 'spec_length': len(spec_content),
-                'created_via': 'cli'
+                'created_via': 'cli',
+                'project_dir': str(project_dir)
             })
         }
 
@@ -70,29 +74,7 @@ async def run_autonomous_harness(spec_file: str, source: Optional[str] = None):
             created_session_id,
             'info',
             f'Session initialized with spec file: {spec_file}',
-            json.dumps({'source': source})
-        )
-
-        # Generate feature_list.json
-        console.print("[cyan]Generating feature list...[/cyan]")
-        feature_list = await generate_feature_list(spec_content, created_session_id)
-
-        # Save feature_list.json to current directory
-        feature_list_path = Path.cwd() / "feature_list.json"
-        feature_list_path.write_text(json.dumps(feature_list, indent=2))
-
-        # Update session with feature count
-        await db.update_session(created_session_id, {
-            'total_features': len(feature_list),
-            'status': 'active'
-        })
-
-        # Log feature list generation
-        await db.add_log(
-            created_session_id,
-            'info',
-            f'Feature list generated with {len(feature_list)} features',
-            json.dumps({'feature_list_path': str(feature_list_path)})
+            json.dumps({'source': source, 'project_dir': str(project_dir)})
         )
 
         # Display session info
@@ -104,25 +86,30 @@ async def run_autonomous_harness(spec_file: str, source: Optional[str] = None):
 
         table.add_row("Session ID", created_session_id)
         table.add_row("Spec File", spec_file)
-        table.add_row("Status", "active")
-        table.add_row("Total Features", str(len(feature_list)))
-        table.add_row("Feature List", str(feature_list_path))
+        table.add_row("Project Directory", str(project_dir))
+        table.add_row("Status", "initializing")
 
         console.print(table)
 
-        # Simulate initializer agent start
-        console.print("\n[cyan]Starting initializer agent...[/cyan]")
-        await db.add_log(
-            created_session_id,
-            'info',
-            'Initializer agent started',
-            json.dumps({'agent_type': 'initializer'})
+        # Run autonomous harness
+        console.print("\n[cyan]Starting autonomous harness with two-agent system...[/cyan]")
+        console.print("[cyan]- Initializer agent will create comprehensive feature list[/cyan]")
+        console.print("[cyan]- Coding agents will implement features with knowledge injection[/cyan]")
+        console.print("[cyan]- Auto-continue enabled with 3s delay between iterations[/cyan]\n")
+
+        # Run the autonomous harness loop
+        await run_harness_loop(
+            session_id=created_session_id,
+            spec_content=spec_content,
+            project_dir=project_dir,
+            db=db,
+            max_iterations=max_iterations,
+            enable_knowledge_injection=True
         )
 
-        console.print("\n[yellow]Note: Full autonomous harness execution not yet implemented.[/yellow]")
-        console.print("[yellow]Session created and tracked in database.[/yellow]")
-        console.print(f"\n[green]View session status: sherpa status[/green]")
+        console.print(f"\n[green]✓ Session {created_session_id} completed![/green]")
         console.print(f"[green]View session logs: sherpa logs {created_session_id}[/green]")
+        console.print(f"[green]Project directory: {project_dir}[/green]")
 
         return created_session_id
 
@@ -292,9 +279,10 @@ async def run_with_azure_devops():
             console.print(f"\n[red]Error: Failed to convert work item: {str(e)}[/red]")
             return None
 
-        # Generate session ID
+        # Generate session ID and project directory
         timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
         session_id = f"session_{timestamp}"
+        project_dir = Path.cwd() / session_id
 
         # Create session in database
         console.print("\n[cyan]Creating new autonomous coding session...[/cyan]")
@@ -314,7 +302,8 @@ async def run_with_azure_devops():
                 'work_item_id': work_item_id,
                 'work_item_title': selected_work_item['title'],
                 'work_item_type': selected_work_item['type'],
-                'created_via': 'cli'
+                'created_via': 'cli',
+                'project_dir': str(project_dir)
             })
         }
 
@@ -325,29 +314,7 @@ async def run_with_azure_devops():
             created_session_id,
             'info',
             f'Session initialized with Azure DevOps work item #{work_item_id}',
-            json.dumps({'work_item': selected_work_item})
-        )
-
-        # Generate feature_list.json
-        console.print("[cyan]Generating feature list...[/cyan]")
-        feature_list = await generate_feature_list(spec_content, created_session_id)
-
-        # Save feature_list.json to current directory
-        feature_list_path = Path.cwd() / "feature_list.json"
-        feature_list_path.write_text(json.dumps(feature_list, indent=2))
-
-        # Update session with feature count
-        await db.update_session(created_session_id, {
-            'total_features': len(feature_list),
-            'status': 'active'
-        })
-
-        # Log feature list generation
-        await db.add_log(
-            created_session_id,
-            'info',
-            f'Feature list generated with {len(feature_list)} features',
-            json.dumps({'feature_list_path': str(feature_list_path)})
+            json.dumps({'work_item': selected_work_item, 'project_dir': str(project_dir)})
         )
 
         # Display session info
@@ -361,25 +328,30 @@ async def run_with_azure_devops():
         table.add_row("Work Item", f"#{work_item_id}")
         table.add_row("Work Item Title", selected_work_item['title'])
         table.add_row("Spec File", str(spec_path))
-        table.add_row("Status", "active")
-        table.add_row("Total Features", str(len(feature_list)))
-        table.add_row("Feature List", str(feature_list_path))
+        table.add_row("Project Directory", str(project_dir))
+        table.add_row("Status", "initializing")
 
         console.print(table)
 
-        # Simulate initializer agent start
-        console.print("\n[cyan]Starting initializer agent...[/cyan]")
-        await db.add_log(
-            created_session_id,
-            'info',
-            'Initializer agent started',
-            json.dumps({'agent_type': 'initializer', 'source': 'azure-devops'})
+        # Run autonomous harness
+        console.print("\n[cyan]Starting autonomous harness with two-agent system...[/cyan]")
+        console.print("[cyan]- Initializer agent will create comprehensive feature list[/cyan]")
+        console.print("[cyan]- Coding agents will implement features with knowledge injection[/cyan]")
+        console.print("[cyan]- Auto-continue enabled with 3s delay between iterations[/cyan]\n")
+
+        # Run the autonomous harness loop
+        await run_harness_loop(
+            session_id=created_session_id,
+            spec_content=spec_content,
+            project_dir=project_dir,
+            db=db,
+            max_iterations=None,  # Unlimited for Azure DevOps
+            enable_knowledge_injection=True
         )
 
-        console.print("\n[yellow]Note: Full autonomous harness execution not yet implemented.[/yellow]")
-        console.print("[yellow]Session created and tracked in database.[/yellow]")
-        console.print(f"\n[green]View session status: sherpa status[/green]")
+        console.print(f"\n[green]✓ Session {created_session_id} completed![/green]")
         console.print(f"[green]View session logs: sherpa logs {created_session_id}[/green]")
+        console.print(f"[green]Project directory: {project_dir}[/green]")
 
         return created_session_id
 

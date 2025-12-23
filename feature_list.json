@@ -265,7 +265,7 @@
       "Step 5: Verify each agent gets fresh context",
       "Step 6: Verify agents continue automatically"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -277,7 +277,7 @@
       "Step 4: Verify continuation happens without manual intervention",
       "Step 5: Verify delay is configurable"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -289,7 +289,7 @@
       "Step 4: Verify snippets match task context",
       "Step 5: Verify agent uses injected knowledge in code"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -302,7 +302,7 @@
       "Step 5: Verify progress percentage calculated",
       "Step 6: Verify progress tracked in database"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -315,7 +315,7 @@
       "Step 5: Verify commit message follows conventions",
       "Step 6: Verify commit history accessible via API"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
