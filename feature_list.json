@@ -1513,7 +1513,7 @@
       "Step 5: Verify smooth animations",
       "Step 6: Verify no janky scrolling"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SHERPA Performance Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        .metric {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-left: 4px solid #4CAF50;
+        }
+        .metric.warning {
+            border-left-color: #ff9800;
+        }
+        .metric.error {
+            border-left-color: #f44336;
+        }
+        button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1976D2;
+        }
+        .results {
+            margin-top: 20px;
+        }
+        .pass {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .fail {
+            color: #f44336;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 SHERPA Performance Test</h1>
+
+        <div class="test-section">
+            <h2>Page Load Performance</h2>
+            <button onclick="testPageLoad()">Test Page Load Time</button>
+            <div id="pageLoadResults"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>API Response Times</h2>
+            <button onclick="testAPIPerformance()">Test API Endpoints</button>
+            <div id="apiResults"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Animation Performance</h2>
+            <button onclick="testAnimations()">Test Animation Smoothness</button>
+            <div id="animationResults"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Summary</h2>
+            <div id="summary"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8001';
+
+        function testPageLoad() {
+            const results = document.getElementById('pageLoadResults');
+            results.innerHTML = '<p>Testing page load performance...</p>';
+
+            // Get navigation timing
+            const perfData = performance.getEntriesByType('navigation')[0];
+            if (!perfData) {
+                results.innerHTML = '<p class="fail">❌ Navigation timing not available</p>';
+                return;
+            }
+
+            const loadTime = perfData.loadEventEnd - perfData.fetchStart;
+            const domReady = perfData.domContentLoadedEventEnd - perfData.fetchStart;
+            const firstPaint = performance.getEntriesByName('first-paint')[0];
+            const fcp = performance.getEntriesByName('first-contentful-paint')[0];
+
+            const metricsHTML = `
+                <div class="results">
+                    <div class="metric ${loadTime < 2000 ? '' : 'error'}">
+                        <strong>Total Load Time:</strong> ${loadTime.toFixed(0)}ms
+                        ${loadTime < 2000 ? '<span class="pass">✓ PASS</span>' : '<span class="fail">✗ FAIL (should be < 2000ms)</span>'}
+                    </div>
+                    <div class="metric">
+                        <strong>DOM Ready:</strong> ${domReady.toFixed(0)}ms
+                    </div>
+                    ${firstPaint ? `<div class="metric">
+                        <strong>First Paint:</strong> ${firstPaint.startTime.toFixed(0)}ms
+                    </div>` : ''}
+                    ${fcp ? `<div class="metric">
+                        <strong>First Contentful Paint:</strong> ${fcp.startTime.toFixed(0)}ms
+                    </div>` : ''}
+                </div>
+            `;
+
+            results.innerHTML = metricsHTML;
+            updateSummary();
+        }
+
+        async function testAPIPerformance() {
+            const results = document.getElementById('apiResults');
+            results.innerHTML = '<p>Testing API endpoints...</p>';
+
+            const endpoints = [
+                { name: 'GET /health', url: `${API_BASE}/health` },
+                { name: 'GET /api/sessions', url: `${API_BASE}/api/sessions` },
+                { name: 'GET /api/snippets', url: `${API_BASE}/api/snippets` }
+            ];
+
+            let html = '<div class="results">';
+
+            for (const endpoint of endpoints) {
+                try {
+                    const start = performance.now();
+                    const response = await fetch(endpoint.url);
+                    const end = performance.now();
+                    const duration = end - start;
+
+                    const passed = duration < 500;
+                    html += `
+                        <div class="metric ${passed ? '' : 'warning'}">
+                            <strong>${endpoint.name}:</strong> ${duration.toFixed(0)}ms
+                            ${passed ? '<span class="pass">✓ PASS</span>' : '<span class="fail">✗ FAIL (should be < 500ms)</span>'}
+                        </div>
+                    `;
+                } catch (error) {
+                    html += `
+                        <div class="metric error">
+                            <strong>${endpoint.name}:</strong> Error - ${error.message}
+                        </div>
+                    `;
+                }
+            }
+
+            html += '</div>';
+            results.innerHTML = html;
+            updateSummary();
+        }
+
+        function testAnimations() {
+            const results = document.getElementById('animationResults');
+
+            // Check for CSS transitions and animations
+            const hasTransitions = getComputedStyle(document.body).transition !== 'all 0s ease 0s';
+
+            // Test frame rate
+            let frames = 0;
+            let lastTime = performance.now();
+            let frameRates = [];
+
+            function measureFrameRate() {
+                frames++;
+                const currentTime = performance.now();
+                const elapsed = currentTime - lastTime;
+
+                if (elapsed >= 1000) {
+                    const fps = Math.round((frames * 1000) / elapsed);
+                    frameRates.push(fps);
+                    frames = 0;
+                    lastTime = currentTime;
+
+                    if (frameRates.length < 3) {
+                        requestAnimationFrame(measureFrameRate);
+                    } else {
+                        const avgFps = frameRates.reduce((a, b) => a + b, 0) / frameRates.length;
+                        const isSmooth = avgFps >= 55; // Close to 60fps
+
+                        results.innerHTML = `
+                            <div class="results">
+                                <div class="metric ${isSmooth ? '' : 'warning'}">
+                                    <strong>Average Frame Rate:</strong> ${avgFps.toFixed(1)} FPS
+                                    ${isSmooth ? '<span class="pass">✓ PASS (smooth animations)</span>' : '<span class="fail">✗ WARNING (may have janky animations)</span>'}
+                                </div>
+                                <div class="metric">
+                                    <strong>Frame Rates:</strong> ${frameRates.join(', ')} FPS
+                                </div>
+                            </div>
+                        `;
+                        updateSummary();
+                    }
+                } else {
+                    requestAnimationFrame(measureFrameRate);
+                }
+            }
+
+            results.innerHTML = '<p>Measuring animation performance (3 seconds)...</p>';
+            requestAnimationFrame(measureFrameRate);
+        }
+
+        function updateSummary() {
+            const summary = document.getElementById('summary');
+            const perfData = performance.getEntriesByType('navigation')[0];
+
+            let checks = [];
+
+            if (perfData) {
+                const loadTime = perfData.loadEventEnd - perfData.fetchStart;
+                checks.push({
+                    name: 'Page loads under 2 seconds',
+                    pass: loadTime < 2000,
+                    value: `${loadTime.toFixed(0)}ms`
+                });
+            }
+
+            let summaryHTML = '<h3>Test Results Summary</h3>';
+            if (checks.length > 0) {
+                summaryHTML += '<ul>';
+                checks.forEach(check => {
+                    summaryHTML += `<li>${check.pass ? '✓' : '✗'} ${check.name}: ${check.value}</li>`;
+                });
+                summaryHTML += '</ul>';
+            } else {
+                summaryHTML += '<p>Run tests to see summary</p>';
+            }
+
+            summary.innerHTML = summaryHTML;
+        }
+
+        // Run page load test automatically on load
+        window.addEventListener('load', () => {
+            setTimeout(testPageLoad, 500);
+        });
+    </script>
+</body>
+</html>
