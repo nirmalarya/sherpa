@@ -1226,7 +1226,7 @@
       "Step 5: Clear search",
       "Step 6: Verify all sessions shown again"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1241,7 +1241,7 @@
       "Step 7: Select 'error' filter",
       "Step 8: Verify only errored sessions shown"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

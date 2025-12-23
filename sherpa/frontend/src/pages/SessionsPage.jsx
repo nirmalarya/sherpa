@@ -61,6 +61,8 @@ function SessionsPage() {
           >
             <option value="all">All Status</option>
             <option value="active">Active</option>
+            <option value="stopped">Stopped</option>
+            <option value="paused">Paused</option>
             <option value="complete">Complete</option>
             <option value="error">Error</option>
           </select>
