@@ -52,7 +52,7 @@ function HomePage() {
           onClick={() => setShowNewSessionModal(true)}
           className="card flex items-center p-6 hover:shadow-md transition-shadow"
         >
-          <Plus className="h-8 w-8 text-primary-600" />
+          <Plus className="h-8 w-8 text-primary-600" aria-label="New session icon" />
           <div className="ml-4 text-left">
             <h3 className="text-lg font-semibold">New Session</h3>
             <p className="text-sm text-gray-600">Start autonomous coding session</p>
@@ -63,7 +63,7 @@ function HomePage() {
           onClick={() => setShowGenerateFilesModal(true)}
           className="card flex items-center p-6 hover:shadow-md transition-shadow"
         >
-          <FileText className="h-8 w-8 text-primary-600" />
+          <FileText className="h-8 w-8 text-primary-600" aria-label="Generate files icon" />
           <div className="ml-4 text-left">
             <h3 className="text-lg font-semibold">Generate Files</h3>
             <p className="text-sm text-gray-600">Create instruction files for agents</p>

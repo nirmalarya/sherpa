@@ -2069,7 +2069,7 @@
       "Step 4: Verify lazy loading for images",
       "Step 5: Verify alt text present"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
