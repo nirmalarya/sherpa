@@ -30,6 +30,7 @@ from sherpa.core.config import get_settings
 from sherpa.core.bedrock_client import get_bedrock_client
 from sherpa.core.integrations.azure_devops_client import get_azure_devops_client
 from sherpa.core.file_watcher import get_file_watcher, reset_file_watcher
+from sherpa.core.git_integration import get_git_repository, GitIntegrationError
 
 # Initialize logger
 logger = get_logger("sherpa.api")
@@ -140,6 +141,37 @@ class QuerySnippetsRequest(BaseModel):
     def validate_query(cls, v):
         if v.strip() == '':
             raise ValueError('query cannot be empty string')
+        return v
+
+
+class CreateCommitRequest(BaseModel):
+    message: str = Field(..., min_length=1, max_length=1000, description="Commit message")
+    files: Optional[List[str]] = Field(None, description="List of files to commit (None = use staged)")
+    author_name: Optional[str] = Field(None, max_length=100, description="Override author name")
+    author_email: Optional[str] = Field(None, max_length=200, description="Override author email")
+    add_all: bool = Field(default=False, description="Add all tracked files")
+
+    class Config:
+        extra = "forbid"
+
+    @validator('message', allow_reuse=True)
+    def validate_message(cls, v):
+        if v.strip() == '':
+            raise ValueError('message cannot be empty string')
+        return v
+
+
+class CreateBranchRequest(BaseModel):
+    branch_name: str = Field(..., min_length=1, max_length=200, description="Name of new branch")
+    checkout: bool = Field(default=False, description="Checkout new branch after creation")
+
+    class Config:
+        extra = "forbid"
+
+    @validator('branch_name', allow_reuse=True)
+    def validate_branch_name(cls, v):
+        if v.strip() == '':
+            raise ValueError('branch_name cannot be empty string')
         return v
 
 
@@ -2950,6 +2982,289 @@ async def rollback_db_migrations(request: Request):
 
 
 # ============================================================================
+# GIT INTEGRATION ENDPOINTS
+# ============================================================================
+
+@app.get("/api/git/status")
+async def get_git_status(repo_path: Optional[str] = "."):
+    """Get repository status"""
+    try:
+        logger.info(f"GET /api/git/status - Getting status for {repo_path}")
+
+        git_repo = get_git_repository(repo_path)
+
+        if not git_repo.is_repository():
+            return {
+                "status": "not_initialized",
+                "is_repository": False,
+                "message": "No git repository found at this path"
+            }
+
+        state = git_repo.get_repository_state()
+        logger.info(f"Repository status retrieved: {state['current_branch']}")
+
+        return {
+            "status": "success",
+            "data": state,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+    except GitIntegrationError as e:
+        logger.error(f"Git integration error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error getting git status: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/git/init")
+async def initialize_git_repository(repo_path: Optional[str] = "."):
+    """Initialize a new git repository"""
+    try:
+        logger.info(f"POST /api/git/init - Initializing repository at {repo_path}")
+
+        git_repo = get_git_repository(repo_path)
+
+        if git_repo.is_repository():
+            return {
+                "status": "already_exists",
+                "message": "Git repository already initialized",
+                "path": str(git_repo.repo_path)
+            }
+
+        success = git_repo.initialize_repository()
+
+        if success:
+            logger.info(f"Repository initialized at {repo_path}")
+            return {
+                "status": "success",
+                "message": "Git repository initialized",
+                "path": str(git_repo.repo_path),
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        else:
+            return {
+                "status": "already_exists",
+                "message": "Repository already exists",
+                "path": str(git_repo.repo_path)
+            }
+
+    except GitIntegrationError as e:
+        logger.error(f"Git integration error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error initializing git repository: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/git/commit")
+async def create_git_commit(request: CreateCommitRequest, repo_path: Optional[str] = "."):
+    """Create a new commit"""
+    try:
+        logger.info(f"POST /api/git/commit - Creating commit: {request.message[:50]}...")
+
+        git_repo = get_git_repository(repo_path)
+
+        if not git_repo.is_repository():
+            raise HTTPException(status_code=400, detail="No git repository found")
+
+        commit_sha = git_repo.create_commit(
+            message=request.message,
+            files=request.files,
+            author_name=request.author_name,
+            author_email=request.author_email,
+            add_all=request.add_all
+        )
+
+        logger.info(f"Commit created: {commit_sha[:8]}")
+
+        return {
+            "status": "success",
+            "data": {
+                "commit_sha": commit_sha,
+                "short_sha": commit_sha[:8],
+                "message": request.message
+            },
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+    except GitIntegrationError as e:
+        logger.error(f"Git integration error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error creating commit: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/git/history")
+async def get_git_history(
+    repo_path: Optional[str] = ".",
+    max_count: int = 100,
+    branch: Optional[str] = None
+):
+    """Get commit history"""
+    try:
+        logger.info(f"GET /api/git/history - Getting history (max_count={max_count}, branch={branch})")
+
+        git_repo = get_git_repository(repo_path)
+
+        if not git_repo.is_repository():
+            raise HTTPException(status_code=400, detail="No git repository found")
+
+        history = git_repo.get_commit_history(max_count=max_count, branch=branch)
+
+        logger.info(f"Retrieved {len(history)} commits")
+
+        return {
+            "status": "success",
+            "data": {
+                "commits": history,
+                "count": len(history)
+            },
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+    except GitIntegrationError as e:
+        logger.error(f"Git integration error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error getting commit history: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/git/commit/{commit_sha}")
+async def get_git_commit_details(commit_sha: str, repo_path: Optional[str] = "."):
+    """Get detailed information about a specific commit"""
+    try:
+        logger.info(f"GET /api/git/commit/{commit_sha} - Getting commit details")
+
+        git_repo = get_git_repository(repo_path)
+
+        if not git_repo.is_repository():
+            raise HTTPException(status_code=400, detail="No git repository found")
+
+        details = git_repo.get_commit_details(commit_sha)
+
+        logger.info(f"Retrieved details for commit {commit_sha[:8]}")
+
+        return {
+            "status": "success",
+            "data": details,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+    except GitIntegrationError as e:
+        logger.error(f"Git integration error: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error getting commit details: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/git/branches")
+async def get_git_branches(repo_path: Optional[str] = ".", remote: bool = False):
+    """List all branches"""
+    try:
+        logger.info(f"GET /api/git/branches - Listing branches (remote={remote})")
+
+        git_repo = get_git_repository(repo_path)
+
+        if not git_repo.is_repository():
+            raise HTTPException(status_code=400, detail="No git repository found")
+
+        branches = git_repo.list_branches(remote=remote)
+        current_branch = git_repo.get_current_branch()
+
+        logger.info(f"Found {len(branches)} branches, current: {current_branch}")
+
+        return {
+            "status": "success",
+            "data": {
+                "branches": branches,
+                "current_branch": current_branch,
+                "count": len(branches)
+            },
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+    except GitIntegrationError as e:
+        logger.error(f"Git integration error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error listing branches: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/git/branch")
+async def create_git_branch(request: CreateBranchRequest, repo_path: Optional[str] = "."):
+    """Create a new branch"""
+    try:
+        logger.info(f"POST /api/git/branch - Creating branch: {request.branch_name}")
+
+        git_repo = get_git_repository(repo_path)
+
+        if not git_repo.is_repository():
+            raise HTTPException(status_code=400, detail="No git repository found")
+
+        success = git_repo.create_branch(
+            branch_name=request.branch_name,
+            checkout=request.checkout
+        )
+
+        logger.info(f"Branch created: {request.branch_name}, checked out: {request.checkout}")
+
+        return {
+            "status": "success",
+            "data": {
+                "branch_name": request.branch_name,
+                "checked_out": request.checkout
+            },
+            "message": f"Branch '{request.branch_name}' created successfully",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+    except GitIntegrationError as e:
+        logger.error(f"Git integration error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error creating branch: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/git/checkout/{branch_name}")
+async def checkout_git_branch(branch_name: str, repo_path: Optional[str] = "."):
+    """Checkout a branch"""
+    try:
+        logger.info(f"POST /api/git/checkout/{branch_name} - Checking out branch")
+
+        git_repo = get_git_repository(repo_path)
+
+        if not git_repo.is_repository():
+            raise HTTPException(status_code=400, detail="No git repository found")
+
+        success = git_repo.checkout_branch(branch_name)
+
+        logger.info(f"Checked out branch: {branch_name}")
+
+        return {
+            "status": "success",
+            "data": {
+                "branch_name": branch_name,
+                "current_branch": git_repo.get_current_branch()
+            },
+            "message": f"Switched to branch '{branch_name}'",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+    except GitIntegrationError as e:
+        logger.error(f"Git integration error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error checking out branch: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
 # API VERSIONING - V1 ROUTER
 # ============================================================================
 # Create a v1 router that includes all API endpoints
@@ -3011,6 +3326,16 @@ v1_router.add_api_route("/file-watcher/start", start_file_watcher, methods=["POS
 v1_router.add_api_route("/file-watcher/stop", stop_file_watcher, methods=["POST"])
 v1_router.add_api_route("/file-watcher/status", get_file_watcher_status, methods=["GET"])
 v1_router.add_api_route("/file-watcher/events", get_file_watcher_events, methods=["GET"])
+
+# Git integration endpoints
+v1_router.add_api_route("/git/status", get_git_status, methods=["GET"])
+v1_router.add_api_route("/git/init", initialize_git_repository, methods=["POST"])
+v1_router.add_api_route("/git/commit", create_git_commit, methods=["POST"])
+v1_router.add_api_route("/git/history", get_git_history, methods=["GET"])
+v1_router.add_api_route("/git/commit/{commit_sha}", get_git_commit_details, methods=["GET"])
+v1_router.add_api_route("/git/branches", get_git_branches, methods=["GET"])
+v1_router.add_api_route("/git/branch", create_git_branch, methods=["POST"])
+v1_router.add_api_route("/git/checkout/{branch_name}", checkout_git_branch, methods=["POST"])
 
 # Include v1 router under /api/v1 prefix
 app.include_router(v1_router, prefix="/api")
