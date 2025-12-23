@@ -18,7 +18,7 @@ function KnowledgePage() {
     try {
       setError(null) // Clear any previous errors
       const response = await api.get('/api/snippets')
-      const loadedSnippets = response.data.snippets || []
+      const loadedSnippets = response.data.data?.snippets || []
       setSnippets(loadedSnippets)
 
       // Show warning if no snippets available
