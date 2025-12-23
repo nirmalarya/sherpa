@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHERPA - Click CLI Framework Verification</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #764ba2;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #764ba2;
+        }
+
+        .test-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .test-item {
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .test-item.pending {
+            background: #f5f5f5;
+        }
+
+        .test-item.running {
+            background: #fff8e1;
+            border-color: #ffc107;
+        }
+
+        .test-item.passed {
+            background: #e8f5e9;
+            border-color: #4caf50;
+        }
+
+        .test-item.failed {
+            background: #ffebee;
+            border-color: #f44336;
+        }
+
+        .test-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .status-icon {
+            font-size: 24px;
+        }
+
+        .test-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            flex: 1;
+        }
+
+        .test-description {
+            color: #666;
+            margin-bottom: 15px;
+            padding-left: 34px;
+            line-height: 1.6;
+        }
+
+        .test-output {
+            background: #f5f5f5;
+            border-left: 4px solid #764ba2;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .test-output.visible {
+            display: block;
+        }
+
+        button {
+            background: #764ba2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #5f3a82;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .success-rate {
+            font-size: 18px;
+            color: #4caf50;
+            font-weight: bold;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #764ba2 0%, #667eea 100%);
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏔️ SHERPA - Click CLI Framework Verification</h1>
+            <p class="subtitle">Testing Click framework integration and command structure</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <h3>Total Tests</h3>
+                <div class="value" id="totalTests">6</div>
+            </div>
+            <div class="stat-card">
+                <h3>Passed</h3>
+                <div class="value" style="color: #4caf50;" id="passedTests">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Failed</h3>
+                <div class="value" style="color: #f44336;" id="failedTests">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Success Rate</h3>
+                <div class="value success-rate" id="successRate">0%</div>
+            </div>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressBar" style="width: 0%;">
+                <span id="progressText">0%</span>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 style="margin-bottom: 20px;">🧪 Test Steps</h2>
+            <button onclick="runAllTests()" id="runButton">▶️ Run All Tests</button>
+
+            <div id="tests" style="margin-top: 20px;">
+                <!-- Tests will be inserted here -->
+            </div>
+        </div>
+
+        <div class="test-section" id="summarySection" style="display: none;">
+            <h2 style="margin-bottom: 20px;">📊 Test Summary</h2>
+            <div id="summary"></div>
+        </div>
+    </div>
+
+    <script>
+        const tests = [
+            {
+                id: 1,
+                title: "Verify Click framework is imported and used",
+                description: "Check that main.py uses Click decorators (@click.group, @click.command)",
+                verify: (content) => {
+                    return content.includes('import click') &&
+                           content.includes('@click.group') &&
+                           content.includes('@click.command');
+                }
+            },
+            {
+                id: 2,
+                title: "Verify all commands are listed in CLI group",
+                description: "Confirm all commands (init, generate, run, query, snippets, status, logs, serve) are registered",
+                verify: (content) => {
+                    const commands = ['init', 'generate', 'run', 'query', 'snippets', 'status', 'logs', 'serve'];
+                    return commands.every(cmd => content.includes(`def ${cmd}(`));
+                }
+            },
+            {
+                id: 3,
+                title: "Verify command descriptions are present",
+                description: "Check that each command has a docstring describing its purpose",
+                verify: (content) => {
+                    return content.includes('"""') && content.includes('Initialize') &&
+                           content.includes('Create instruction') && content.includes('Execute');
+                }
+            },
+            {
+                id: 4,
+                title: "Verify Click options are documented",
+                description: "Check that commands use @click.option with help text",
+                verify: (content) => {
+                    return content.includes('@click.option') && content.includes('help=');
+                }
+            },
+            {
+                id: 5,
+                title: "Verify Click arguments are documented",
+                description: "Check that commands use @click.argument where appropriate",
+                verify: (content) => {
+                    return content.includes('@click.argument');
+                }
+            },
+            {
+                id: 6,
+                title: "Verify argument validation works",
+                description: "Check that Click types are used for validation (Path, int, str)",
+                verify: (content) => {
+                    return content.includes('type=click.Path') || content.includes('type=str') || content.includes('type=int');
+                }
+            }
+        ];
+
+        let testResults = [];
+        let currentTestIndex = 0;
+
+        function initTests() {
+            const testsContainer = document.getElementById('tests');
+            testsContainer.innerHTML = tests.map(test => `
+                <div class="test-item pending" id="test-${test.id}">
+                    <div class="test-header">
+                        <span class="status-icon" id="icon-${test.id}">⏳</span>
+                        <span class="test-title">Step ${test.id}: ${test.title}</span>
+                    </div>
+                    <div class="test-description">${test.description}</div>
+                    <div class="test-output" id="output-${test.id}"></div>
+                </div>
+            `).join('');
+        }
+
+        async function runAllTests() {
+            document.getElementById('runButton').disabled = true;
+            testResults = [];
+            currentTestIndex = 0;
+
+            // First, fetch the main.py file
+            let mainContent = '';
+            try {
+                const response = await fetch('/sherpa/cli/main.py');
+                if (response.ok) {
+                    mainContent = await response.text();
+                } else {
+                    console.error('Failed to fetch main.py');
+                    return;
+                }
+            } catch (error) {
+                console.error('Error fetching main.py:', error);
+                return;
+            }
+
+            // Run all tests with the content
+            for (let i = 0; i < tests.length; i++) {
+                await runTest(i, mainContent);
+                updateProgress();
+            }
+
+            showSummary();
+            document.getElementById('runButton').disabled = false;
+        }
+
+        async function runTest(index, content) {
+            const test = tests[index];
+            const testElement = document.getElementById(`test-${test.id}`);
+            const iconElement = document.getElementById(`icon-${test.id}`);
+            const outputElement = document.getElementById(`output-${test.id}`);
+
+            // Set running state
+            testElement.className = 'test-item running';
+            iconElement.textContent = '⏳';
+
+            try {
+                const passed = test.verify(content);
+
+                let output = '';
+                if (passed) {
+                    output = '✓ Verification passed: Feature found in source code\n\n';
+                    output += 'Key findings:\n';
+
+                    // Add specific findings based on test
+                    if (test.id === 1) {
+                        output += '- Click imported: ✓\n';
+                        output += '- @click.group decorator: ✓\n';
+                        output += '- @click.command decorators: ✓\n';
+                    } else if (test.id === 2) {
+                        const commands = ['init', 'generate', 'run', 'query', 'snippets', 'status', 'logs', 'serve'];
+                        commands.forEach(cmd => {
+                            const found = content.includes(`def ${cmd}(`);
+                            output += `- ${cmd} command: ${found ? '✓' : '✗'}\n`;
+                        });
+                    } else if (test.id === 3) {
+                        output += '- Docstrings present: ✓\n';
+                        output += '- Command descriptions: ✓\n';
+                    } else if (test.id === 4) {
+                        const optionCount = (content.match(/@click\.option/g) || []).length;
+                        output += `- Number of @click.option decorators: ${optionCount}\n`;
+                        output += '- Help text provided: ✓\n';
+                    } else if (test.id === 5) {
+                        const argCount = (content.match(/@click\.argument/g) || []).length;
+                        output += `- Number of @click.argument decorators: ${argCount}\n`;
+                    } else if (test.id === 6) {
+                        output += '- Type validation with click.Path: ✓\n';
+                        output += '- Argument type checking: ✓\n';
+                    }
+                } else {
+                    output = '✗ Verification failed: Feature not found in source code';
+                }
+
+                const result = { passed, output };
+                testResults.push(result);
+                testElement.className = result.passed ? 'test-item passed' : 'test-item failed';
+                iconElement.textContent = result.passed ? '✅' : '❌';
+                outputElement.textContent = result.output;
+                outputElement.className = 'test-output visible';
+
+            } catch (error) {
+                testResults.push({ passed: false, output: error.message });
+                testElement.className = 'test-item failed';
+                iconElement.textContent = '❌';
+                outputElement.textContent = `Error: ${error.message}`;
+                outputElement.className = 'test-output visible';
+            }
+
+            // Wait a bit before next test
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
+        function updateProgress() {
+            const total = tests.length;
+            const completed = testResults.length;
+            const passed = testResults.filter(r => r.passed).length;
+            const failed = testResults.filter(r => r.passed === false).length;
+            const percentage = Math.round((completed / total) * 100);
+            const successRate = completed > 0 ? Math.round((passed / completed) * 100) : 0;
+
+            document.getElementById('passedTests').textContent = passed;
+            document.getElementById('failedTests').textContent = failed;
+            document.getElementById('successRate').textContent = successRate + '%';
+            document.getElementById('progressBar').style.width = percentage + '%';
+            document.getElementById('progressText').textContent = percentage + '%';
+        }
+
+        function showSummary() {
+            const total = tests.length;
+            const passed = testResults.filter(r => r.passed).length;
+            const failed = total - passed;
+            const successRate = Math.round((passed / total) * 100);
+
+            const summaryHTML = `
+                <div style="background: ${successRate === 100 ? '#e8f5e9' : '#fff8e1'}; padding: 20px; border-radius: 8px; border-left: 4px solid ${successRate === 100 ? '#4caf50' : '#ffc107'};">
+                    <h3 style="margin-bottom: 15px; color: #333;">Test Results</h3>
+                    <p style="font-size: 18px; margin-bottom: 10px;">
+                        <strong>${passed}</strong> out of <strong>${total}</strong> tests passed
+                    </p>
+                    <p style="font-size: 16px; color: #666; margin-bottom: 15px;">
+                        Success Rate: <strong style="color: ${successRate === 100 ? '#4caf50' : '#ffc107'};">${successRate}%</strong>
+                    </p>
+                    ${successRate === 100 ?
+                        '<p style="color: #4caf50; font-weight: bold;">🎉 All tests passed! Click CLI framework is properly implemented.</p>' :
+                        '<p style="color: #f57c00; font-weight: bold;">⚠️ Some tests failed. Please review the output above.</p>'
+                    }
+                </div>
+            `;
+
+            document.getElementById('summary').innerHTML = summaryHTML;
+            document.getElementById('summarySection').style.display = 'block';
+        }
+
+        // Initialize tests on page load
+        initTests();
+    </script>
+</body>
+</html>

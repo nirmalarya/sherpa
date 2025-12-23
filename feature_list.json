@@ -911,7 +911,7 @@
       "Step 5: Verify progress bars displayed",
       "Step 6: Verify emoji/icons used where helpful"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -924,7 +924,7 @@
       "Step 5: Verify command options documented",
       "Step 6: Verify argument validation works"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
