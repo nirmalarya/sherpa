@@ -1552,7 +1552,7 @@
       "Step 5: Verify sensitive data redacted",
       "Step 6: Verify logs rotated/managed"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

@@ -18,6 +18,10 @@ import json
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from sherpa.core.db import get_db
+from sherpa.core.logging_config import get_logger
+
+# Initialize logger
+logger = get_logger("sherpa.api")
 
 
 # Pydantic models
@@ -79,22 +83,22 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup_event():
     """Initialize on startup"""
-    print("🏔️  SHERPA V1 Backend Starting...")
-    print("📊 API Documentation: http://localhost:8000/docs")
-    print("⚛️  Frontend: http://localhost:3001")
+    logger.info("🏔️  SHERPA V1 Backend Starting...")
+    logger.info("📊 API Documentation: http://localhost:8000/docs")
+    logger.info("⚛️  Frontend: http://localhost:3001")
 
     # Initialize database
     try:
         db = await get_db()
-        print("✅ Database initialized successfully")
+        logger.info("✅ Database initialized successfully")
     except Exception as e:
-        print(f"❌ Database initialization failed: {e}")
+        logger.error(f"❌ Database initialization failed: {e}", exc_info=True)
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Cleanup on shutdown"""
-    print("👋 SHERPA V1 Backend Shutting Down...")
+    logger.info("👋 SHERPA V1 Backend Shutting Down...")
 
 
 @app.get("/")
@@ -123,14 +127,17 @@ async def health_check():
 async def get_sessions(status: Optional[str] = None):
     """Get all coding sessions"""
     try:
+        logger.debug(f"GET /api/sessions - status filter: {status}")
         db = await get_db()
         sessions = await db.get_sessions(status=status)
+        logger.info(f"Retrieved {len(sessions)} sessions (status={status})")
         return {
             "sessions": sessions,
             "total": len(sessions),
             "timestamp": datetime.utcnow().isoformat()
         }
     except Exception as e:
+        logger.error(f"Error retrieving sessions: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -138,6 +145,7 @@ async def get_sessions(status: Optional[str] = None):
 async def create_session(request: CreateSessionRequest):
     """Create a new coding session"""
     try:
+        logger.info(f"POST /api/sessions - Creating new session with spec_file={request.spec_file}")
         db = await get_db()
         session_id = f"session-{int(datetime.utcnow().timestamp() * 1000)}"
         await db.create_session({
@@ -149,12 +157,14 @@ async def create_session(request: CreateSessionRequest):
             'work_item_id': request.work_item_id,
             'git_branch': request.git_branch
         })
+        logger.info(f"Successfully created session: {session_id}")
         return {
             "id": session_id,
             "status": "created",
             "timestamp": datetime.utcnow().isoformat()
         }
     except Exception as e:
+        logger.error(f"Error creating session: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -162,14 +172,18 @@ async def create_session(request: CreateSessionRequest):
 async def get_session(session_id: str):
     """Get specific session details"""
     try:
+        logger.debug(f"GET /api/sessions/{session_id}")
         db = await get_db()
         session = await db.get_session(session_id)
         if not session:
+            logger.warning(f"Session not found: {session_id}")
             raise HTTPException(status_code=404, detail="Session not found")
+        logger.info(f"Retrieved session: {session_id}")
         return session
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"Error retrieving session {session_id}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -177,11 +191,13 @@ async def get_session(session_id: str):
 async def update_session(session_id: str, request: Request):
     """Update session progress or status"""
     try:
+        logger.debug(f"PATCH /api/sessions/{session_id}")
         db = await get_db()
 
         # Verify session exists
         session = await db.get_session(session_id)
         if not session:
+            logger.warning(f"Session not found for update: {session_id}")
             raise HTTPException(status_code=404, detail="Session not found")
 
         # Parse request body
@@ -192,10 +208,12 @@ async def update_session(session_id: str, request: Request):
         updates = {k: v for k, v in body.items() if k in allowed_fields}
 
         if not updates:
+            logger.warning(f"No valid fields to update for session: {session_id}")
             raise HTTPException(status_code=400, detail="No valid fields to update")
 
         # Update session
         await db.update_session(session_id, updates)
+        logger.info(f"Updated session {session_id}: {updates}")
 
         # Get updated session
         updated_session = await db.get_session(session_id)
@@ -208,6 +226,7 @@ async def update_session(session_id: str, request: Request):
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"Error updating session {session_id}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -667,8 +686,11 @@ async def get_config():
 async def connect_azure_devops(request: AzureDevOpsConnectRequest):
     """Test Azure DevOps connection with provided credentials"""
     try:
+        logger.info(f"POST /api/azure-devops/connect - organization={request.organization}, project={request.project}, pat=***REDACTED***")
+
         # Validate inputs
         if not request.organization or not request.project or not request.pat:
+            logger.warning("Azure DevOps connection attempt with missing credentials")
             raise HTTPException(status_code=400, detail="Organization, project, and PAT are required")
 
         # Validate organization URL format
@@ -690,6 +712,8 @@ async def connect_azure_devops(request: AzureDevOpsConnectRequest):
         # Simulate API call delay
         await asyncio.sleep(0.5)
 
+        logger.info(f"Successfully connected to Azure DevOps: {org_url}/{request.project}")
+
         # For demonstration purposes, accept any credentials
         # In production, use: from azure.devops.connection import Connection
         # conn = Connection(base_url=org_url, creds=BasicAuthentication('', pat))
@@ -706,6 +730,7 @@ async def connect_azure_devops(request: AzureDevOpsConnectRequest):
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"Azure DevOps connection failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Connection failed: {str(e)}")
 
 
