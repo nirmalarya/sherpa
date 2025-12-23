@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHERPA Verification Tests - Session 9</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .test-section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            border-left: 4px solid #ccc;
+        }
+        .test-section.running {
+            border-left-color: #ffc107;
+        }
+        .test-section.success {
+            border-left-color: #28a745;
+        }
+        .test-section.error {
+            border-left-color: #dc3545;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status.pending {
+            background: #e0e0e0;
+            color: #666;
+        }
+        .status.running {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .summary {
+            background: #e7f3ff;
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 30px;
+            border: 1px solid #b3d9ff;
+        }
+        .summary h3 {
+            margin-top: 0;
+            color: #0056b3;
+        }
+        .test-name {
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        .test-steps {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #555;
+        }
+        .step {
+            margin: 5px 0;
+            padding-left: 20px;
+        }
+        .step.completed {
+            color: #28a745;
+        }
+        .step.failed {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏔️ SHERPA V1 - Verification Tests</h1>
+        <p class="subtitle">Session 9 - Verifying all previously passing features before implementing new features</p>
+
+        <div class="summary">
+            <h3>Verification Summary</h3>
+            <div id="summary">Waiting to run tests...</div>
+        </div>
+
+        <button id="runBtn" onclick="runAllTests()">▶️ Run Verification Tests</button>
+
+        <div id="tests">
+            <div class="test-section" id="test-health">
+                <div class="test-name">
+                    Test 1: Health Check Endpoint
+                    <span class="status pending" id="status-health">PENDING</span>
+                </div>
+                <div class="test-steps">
+                    <div class="step" id="step-health-1">1. GET /health</div>
+                    <div class="step" id="step-health-2">2. Verify 200 status</div>
+                    <div class="step" id="step-health-3">3. Verify response structure</div>
+                </div>
+                <pre id="result-health" style="display:none;"></pre>
+            </div>
+
+            <div class="test-section" id="test-sessions-list">
+                <div class="test-name">
+                    Test 2: GET /api/sessions - List All Sessions
+                    <span class="status pending" id="status-sessions-list">PENDING</span>
+                </div>
+                <div class="test-steps">
+                    <div class="step" id="step-sessions-list-1">1. GET /api/sessions</div>
+                    <div class="step" id="step-sessions-list-2">2. Verify 200 status</div>
+                    <div class="step" id="step-sessions-list-3">3. Verify response has sessions array</div>
+                    <div class="step" id="step-sessions-list-4">4. Verify sessions count > 0</div>
+                </div>
+                <pre id="result-sessions-list" style="display:none;"></pre>
+            </div>
+
+            <div class="test-section" id="test-sessions-create">
+                <div class="test-name">
+                    Test 3: POST /api/sessions - Create Session
+                    <span class="status pending" id="status-sessions-create">PENDING</span>
+                </div>
+                <div class="test-steps">
+                    <div class="step" id="step-sessions-create-1">1. POST /api/sessions with test data</div>
+                    <div class="step" id="step-sessions-create-2">2. Verify 201 status</div>
+                    <div class="step" id="step-sessions-create-3">3. Verify session ID returned</div>
+                    <div class="step" id="step-sessions-create-4">4. Verify status is 'created'</div>
+                </div>
+                <pre id="result-sessions-create" style="display:none;"></pre>
+            </div>
+
+            <div class="test-section" id="test-session-detail">
+                <div class="test-name">
+                    Test 4: GET /api/sessions/:id - Get Session Details
+                    <span class="status pending" id="status-session-detail">PENDING</span>
+                </div>
+                <div class="test-steps">
+                    <div class="step" id="step-session-detail-1">1. GET /api/sessions/:id with existing ID</div>
+                    <div class="step" id="step-session-detail-2">2. Verify 200 status</div>
+                    <div class="step" id="step-session-detail-3">3. Verify all required fields present</div>
+                    <div class="step" id="step-session-detail-4">4. Verify 404 for non-existent session</div>
+                </div>
+                <pre id="result-session-detail" style="display:none;"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8001';
+        let testResults = {
+            total: 4,
+            passed: 0,
+            failed: 0
+        };
+        let createdSessionId = null;
+
+        async function runAllTests() {
+            document.getElementById('runBtn').disabled = true;
+            testResults = { total: 4, passed: 0, failed: 0 };
+
+            await testHealthCheck();
+            await testSessionsList();
+            await testSessionsCreate();
+            await testSessionDetail();
+
+            updateSummary();
+            document.getElementById('runBtn').disabled = false;
+        }
+
+        async function testHealthCheck() {
+            const testId = 'health';
+            setStatus(testId, 'running');
+
+            try {
+                // Step 1
+                setStepStatus(`step-${testId}-1`, 'running');
+                const response = await fetch(`${API_URL}/health`);
+                setStepStatus(`step-${testId}-1`, 'completed');
+
+                // Step 2
+                setStepStatus(`step-${testId}-2`, 'running');
+                if (response.status !== 200) {
+                    throw new Error(`Expected 200, got ${response.status}`);
+                }
+                setStepStatus(`step-${testId}-2`, 'completed');
+
+                // Step 3
+                setStepStatus(`step-${testId}-3`, 'running');
+                const data = await response.json();
+                if (!data.status || !data.service || !data.timestamp) {
+                    throw new Error('Missing required fields in response');
+                }
+                setStepStatus(`step-${testId}-3`, 'completed');
+
+                showResult(testId, JSON.stringify(data, null, 2));
+                setStatus(testId, 'success');
+                testResults.passed++;
+            } catch (error) {
+                showResult(testId, `ERROR: ${error.message}`);
+                setStatus(testId, 'error');
+                testResults.failed++;
+            }
+        }
+
+        async function testSessionsList() {
+            const testId = 'sessions-list';
+            setStatus(testId, 'running');
+
+            try {
+                // Step 1
+                setStepStatus(`step-${testId}-1`, 'running');
+                const response = await fetch(`${API_URL}/api/sessions`);
+                setStepStatus(`step-${testId}-1`, 'completed');
+
+                // Step 2
+                setStepStatus(`step-${testId}-2`, 'running');
+                if (response.status !== 200) {
+                    throw new Error(`Expected 200, got ${response.status}`);
+                }
+                setStepStatus(`step-${testId}-2`, 'completed');
+
+                // Step 3
+                setStepStatus(`step-${testId}-3`, 'running');
+                const data = await response.json();
+                if (!data.sessions || !Array.isArray(data.sessions)) {
+                    throw new Error('Response missing sessions array');
+                }
+                setStepStatus(`step-${testId}-3`, 'completed');
+
+                // Step 4
+                setStepStatus(`step-${testId}-4`, 'running');
+                if (data.sessions.length === 0) {
+                    throw new Error('No sessions found (expected at least 1)');
+                }
+                setStepStatus(`step-${testId}-4`, 'completed');
+
+                showResult(testId, `Found ${data.sessions.length} sessions\n\n` + JSON.stringify(data, null, 2));
+                setStatus(testId, 'success');
+                testResults.passed++;
+            } catch (error) {
+                showResult(testId, `ERROR: ${error.message}`);
+                setStatus(testId, 'error');
+                testResults.failed++;
+            }
+        }
+
+        async function testSessionsCreate() {
+            const testId = 'sessions-create';
+            setStatus(testId, 'running');
+
+            try {
+                // Step 1
+                setStepStatus(`step-${testId}-1`, 'running');
+                const response = await fetch(`${API_URL}/api/sessions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        spec_file: 'verification_test_spec.txt',
+                        total_features: 100
+                    })
+                });
+                setStepStatus(`step-${testId}-1`, 'completed');
+
+                // Step 2
+                setStepStatus(`step-${testId}-2`, 'running');
+                if (response.status !== 201) {
+                    throw new Error(`Expected 201, got ${response.status}`);
+                }
+                setStepStatus(`step-${testId}-2`, 'completed');
+
+                // Step 3
+                setStepStatus(`step-${testId}-3`, 'running');
+                const data = await response.json();
+                if (!data.id) {
+                    throw new Error('No session ID in response');
+                }
+                createdSessionId = data.id; // Save for next test
+                setStepStatus(`step-${testId}-3`, 'completed');
+
+                // Step 4
+                setStepStatus(`step-${testId}-4`, 'running');
+                if (data.status !== 'created') {
+                    throw new Error(`Expected status 'created', got '${data.status}'`);
+                }
+                setStepStatus(`step-${testId}-4`, 'completed');
+
+                showResult(testId, JSON.stringify(data, null, 2));
+                setStatus(testId, 'success');
+                testResults.passed++;
+            } catch (error) {
+                showResult(testId, `ERROR: ${error.message}`);
+                setStatus(testId, 'error');
+                testResults.failed++;
+            }
+        }
+
+        async function testSessionDetail() {
+            const testId = 'session-detail';
+            setStatus(testId, 'running');
+
+            try {
+                if (!createdSessionId) {
+                    throw new Error('No session ID from previous test');
+                }
+
+                // Step 1 & 2
+                setStepStatus(`step-${testId}-1`, 'running');
+                const response = await fetch(`${API_URL}/api/sessions/${createdSessionId}`);
+                setStepStatus(`step-${testId}-1`, 'completed');
+
+                setStepStatus(`step-${testId}-2`, 'running');
+                if (response.status !== 200) {
+                    throw new Error(`Expected 200, got ${response.status}`);
+                }
+                setStepStatus(`step-${testId}-2`, 'completed');
+
+                // Step 3
+                setStepStatus(`step-${testId}-3`, 'running');
+                const data = await response.json();
+                const requiredFields = ['id', 'status', 'started_at', 'spec_file', 'total_features', 'completed_features'];
+                for (const field of requiredFields) {
+                    if (!(field in data)) {
+                        throw new Error(`Missing required field: ${field}`);
+                    }
+                }
+                setStepStatus(`step-${testId}-3`, 'completed');
+
+                // Step 4 - Test 404
+                setStepStatus(`step-${testId}-4`, 'running');
+                const notFoundResponse = await fetch(`${API_URL}/api/sessions/session-nonexistent-999`);
+                if (notFoundResponse.status !== 404) {
+                    throw new Error(`Expected 404 for non-existent session, got ${notFoundResponse.status}`);
+                }
+                setStepStatus(`step-${testId}-4`, 'completed');
+
+                showResult(testId, JSON.stringify(data, null, 2));
+                setStatus(testId, 'success');
+                testResults.passed++;
+            } catch (error) {
+                showResult(testId, `ERROR: ${error.message}`);
+                setStatus(testId, 'error');
+                testResults.failed++;
+            }
+        }
+
+        function setStatus(testId, status) {
+            const statusEl = document.getElementById(`status-${testId}`);
+            const sectionEl = document.getElementById(`test-${testId}`);
+
+            statusEl.className = `status ${status}`;
+            statusEl.textContent = status.toUpperCase();
+
+            sectionEl.className = `test-section ${status}`;
+        }
+
+        function setStepStatus(stepId, status) {
+            const stepEl = document.getElementById(stepId);
+            if (status === 'running') {
+                stepEl.style.fontWeight = 'bold';
+                stepEl.style.color = '#856404';
+            } else if (status === 'completed') {
+                stepEl.classList.add('completed');
+                stepEl.style.fontWeight = 'normal';
+            } else if (status === 'failed') {
+                stepEl.classList.add('failed');
+                stepEl.style.fontWeight = 'normal';
+            }
+        }
+
+        function showResult(testId, text) {
+            const resultEl = document.getElementById(`result-${testId}`);
+            resultEl.textContent = text;
+            resultEl.style.display = 'block';
+        }
+
+        function updateSummary() {
+            const summaryEl = document.getElementById('summary');
+            const allPassed = testResults.failed === 0;
+
+            summaryEl.innerHTML = `
+                <strong>Total Tests:</strong> ${testResults.total}<br>
+                <strong style="color: #28a745;">Passed:</strong> ${testResults.passed}<br>
+                <strong style="color: #dc3545;">Failed:</strong> ${testResults.failed}<br>
+                <br>
+                <strong style="font-size: 16px; color: ${allPassed ? '#28a745' : '#dc3545'};">
+                    ${allPassed ? '✅ ALL TESTS PASSED - No Regressions!' : '❌ SOME TESTS FAILED - Regressions Detected!'}
+                </strong>
+            `;
+        }
+
+        // Auto-run tests on page load
+        window.addEventListener('load', () => {
+            setTimeout(runAllTests, 500);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test SSE Progress Endpoint</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .test-section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            border-left: 4px solid #ccc;
+        }
+        .test-section.running {
+            border-left-color: #ffc107;
+        }
+        .test-section.success {
+            border-left-color: #28a745;
+        }
+        .test-section.error {
+            border-left-color: #dc3545;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status.pending {
+            background: #e0e0e0;
+            color: #666;
+        }
+        .status.running {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            margin-bottom: 20px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        button.danger {
+            background: #dc3545;
+        }
+        button.danger:hover {
+            background: #c82333;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .summary {
+            background: #e7f3ff;
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 30px;
+            border: 1px solid #b3d9ff;
+        }
+        .summary h3 {
+            margin-top: 0;
+            color: #0056b3;
+        }
+        .test-name {
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        .test-steps {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #555;
+        }
+        .step {
+            margin: 5px 0;
+            padding-left: 20px;
+        }
+        .step.completed {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .step.failed {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .events-log {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 500px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+        .event {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #555;
+            padding-left: 10px;
+        }
+        .event.connected {
+            border-left-color: #4caf50;
+            color: #4caf50;
+        }
+        .event.progress {
+            border-left-color: #2196f3;
+            color: #2196f3;
+        }
+        .event.complete {
+            border-left-color: #4caf50;
+            color: #4caf50;
+        }
+        .event.error {
+            border-left-color: #f44336;
+            color: #f44336;
+        }
+        .event-time {
+            color: #888;
+            font-size: 11px;
+        }
+        .connection-info {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border: 1px solid #ffc107;
+        }
+        .connection-info.connected {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+        .connection-info.disconnected {
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏔️ SHERPA - SSE Progress Endpoint Test</h1>
+        <p class="subtitle">Testing GET /api/sessions/:id/progress - Server-Sent Events for real-time progress updates</p>
+
+        <div class="connection-info" id="connectionInfo">
+            <strong>Connection Status:</strong> <span id="connectionStatus">Not connected</span><br>
+            <strong>Session ID:</strong> <span id="currentSessionId">-</span><br>
+            <strong>Events Received:</strong> <span id="eventsCount">0</span>
+        </div>
+
+        <div>
+            <button id="startBtn" onclick="startTest()">▶️ Start SSE Test</button>
+            <button id="stopBtn" onclick="stopConnection()" class="danger" disabled>⏹️ Stop Connection</button>
+        </div>
+
+        <div class="summary">
+            <h3>Test Summary</h3>
+            <div id="summary">Waiting to run tests...</div>
+        </div>
+
+        <div id="tests">
+            <div class="test-section" id="test-create-session">
+                <div class="test-name">
+                    Step 1: Create Test Session
+                    <span class="status pending" id="status-create">PENDING</span>
+                </div>
+                <pre id="result-create" style="display:none;"></pre>
+            </div>
+
+            <div class="test-section" id="test-connect-sse">
+                <div class="test-name">
+                    Step 2: Connect SSE to /api/sessions/:id/progress
+                    <span class="status pending" id="status-connect">PENDING</span>
+                </div>
+                <pre id="result-connect" style="display:none;"></pre>
+            </div>
+
+            <div class="test-section" id="test-connection-established">
+                <div class="test-name">
+                    Step 3: Verify Connection Established
+                    <span class="status pending" id="status-established">PENDING</span>
+                </div>
+                <pre id="result-established" style="display:none;"></pre>
+            </div>
+
+            <div class="test-section" id="test-progress-events">
+                <div class="test-name">
+                    Step 4: Verify Progress Events Streamed
+                    <span class="status pending" id="status-events">PENDING</span>
+                </div>
+                <pre id="result-events" style="display:none;"></pre>
+            </div>
+
+            <div class="test-section" id="test-event-format">
+                <div class="test-name">
+                    Step 5: Verify Events Have Proper Format
+                    <span class="status pending" id="status-format">PENDING</span>
+                </div>
+                <pre id="result-format" style="display:none;"></pre>
+            </div>
+
+            <div class="test-section" id="test-close-gracefully">
+                <div class="test-name">
+                    Step 6: Verify Connection Closes Gracefully
+                    <span class="status pending" id="status-close">PENDING</span>
+                </div>
+                <pre id="result-close" style="display:none;"></pre>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-name">Live Events Log</div>
+            <div class="events-log" id="eventsLog">
+                <div style="color: #888;">Waiting for connection...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8001';
+        let eventSource = null;
+        let sessionId = null;
+        let eventsReceived = 0;
+        let connectedEventReceived = false;
+        let progressEventsReceived = [];
+        let completeEventReceived = false;
+        let testResults = {
+            total: 6,
+            passed: 0,
+            failed: 0
+        };
+
+        async function startTest() {
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+            testResults = { total: 6, passed: 0, failed: 0 };
+            eventsReceived = 0;
+            connectedEventReceived = false;
+            progressEventsReceived = [];
+            completeEventReceived = false;
+
+            await testCreateSession();
+            await testConnectSSE();
+        }
+
+        async function testCreateSession() {
+            const testId = 'create';
+            setStatus(testId, 'running');
+
+            try {
+                const response = await fetch(`${API_URL}/api/sessions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        spec_file: 'sse_test_spec.txt',
+                        total_features: 100
+                    })
+                });
+
+                if (response.status !== 201) {
+                    throw new Error(`Expected 201, got ${response.status}`);
+                }
+
+                const data = await response.json();
+                if (!data.id) {
+                    throw new Error('No session ID in response');
+                }
+
+                sessionId = data.id;
+                document.getElementById('currentSessionId').textContent = sessionId;
+
+                showResult(testId, JSON.stringify(data, null, 2));
+                setStatus(testId, 'success');
+                testResults.passed++;
+            } catch (error) {
+                showResult(testId, `ERROR: ${error.message}`);
+                setStatus(testId, 'error');
+                testResults.failed++;
+            }
+        }
+
+        async function testConnectSSE() {
+            if (!sessionId) {
+                setStatus('connect', 'error');
+                showResult('connect', 'ERROR: No session ID available');
+                testResults.failed++;
+                return;
+            }
+
+            const testId = 'connect';
+            setStatus(testId, 'running');
+
+            try {
+                const url = `${API_URL}/api/sessions/${sessionId}/progress`;
+                eventSource = new EventSource(url);
+
+                // Set up event listeners
+                eventSource.addEventListener('connected', handleConnectedEvent);
+                eventSource.addEventListener('progress', handleProgressEvent);
+                eventSource.addEventListener('complete', handleCompleteEvent);
+                eventSource.addEventListener('error', handleErrorEvent);
+
+                eventSource.onerror = function(event) {
+                    if (eventSource.readyState === EventSource.CLOSED) {
+                        logEvent('Connection closed by server', 'complete');
+                    } else {
+                        logEvent('Connection error occurred', 'error');
+                    }
+                };
+
+                // Wait a bit for connection to establish
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                showResult(testId, `Connected to: ${url}\nReady State: ${eventSource.readyState}\n(0=CONNECTING, 1=OPEN, 2=CLOSED)`);
+                setStatus(testId, 'success');
+                testResults.passed++;
+
+                updateConnectionInfo('connected');
+
+            } catch (error) {
+                showResult(testId, `ERROR: ${error.message}`);
+                setStatus(testId, 'error');
+                testResults.failed++;
+                updateConnectionInfo('disconnected');
+            }
+        }
+
+        function handleConnectedEvent(event) {
+            eventsReceived++;
+            connectedEventReceived = true;
+            updateEventsCount();
+
+            const data = JSON.parse(event.data);
+            logEvent(`CONNECTED: ${JSON.stringify(data)}`, 'connected');
+
+            // Step 3: Verify connection established
+            setStatus('established', 'running');
+            if (data.session_id === sessionId) {
+                showResult('established', JSON.stringify(data, null, 2));
+                setStatus('established', 'success');
+                testResults.passed++;
+            } else {
+                showResult('established', `ERROR: Session ID mismatch. Expected ${sessionId}, got ${data.session_id}`);
+                setStatus('established', 'error');
+                testResults.failed++;
+            }
+        }
+
+        function handleProgressEvent(event) {
+            eventsReceived++;
+            updateEventsCount();
+
+            const data = JSON.parse(event.data);
+            progressEventsReceived.push(data);
+            logEvent(`PROGRESS #${data.update_number}: ${data.completed_features}/${data.total_features} (${data.progress_percent}%)`, 'progress');
+
+            // Step 4: Verify progress events streamed (need at least 3 events)
+            if (progressEventsReceived.length === 1) {
+                setStatus('events', 'running');
+            } else if (progressEventsReceived.length >= 3) {
+                showResult('events', `Received ${progressEventsReceived.length} progress events\n\n` + JSON.stringify(progressEventsReceived.slice(0, 3), null, 2));
+                setStatus('events', 'success');
+                if (testResults.passed < 4) {
+                    testResults.passed++;
+                }
+            }
+
+            // Step 5: Verify event format
+            if (progressEventsReceived.length === 1) {
+                setStatus('format', 'running');
+                const requiredFields = ['session_id', 'status', 'total_features', 'completed_features', 'progress_percent', 'timestamp'];
+                const missingFields = requiredFields.filter(field => !(field in data));
+
+                if (missingFields.length === 0) {
+                    showResult('format', `All required fields present:\n${requiredFields.join(', ')}\n\nSample event:\n` + JSON.stringify(data, null, 2));
+                    setStatus('format', 'success');
+                    if (testResults.passed < 5) {
+                        testResults.passed++;
+                    }
+                } else {
+                    showResult('format', `ERROR: Missing fields: ${missingFields.join(', ')}`);
+                    setStatus('format', 'error');
+                    testResults.failed++;
+                }
+            }
+        }
+
+        function handleCompleteEvent(event) {
+            eventsReceived++;
+            completeEventReceived = true;
+            updateEventsCount();
+
+            const data = JSON.parse(event.data);
+            logEvent(`COMPLETE: ${JSON.stringify(data)}`, 'complete');
+
+            // Step 6: Verify connection closes gracefully
+            setStatus('close', 'running');
+            setTimeout(() => {
+                if (completeEventReceived) {
+                    showResult('close', `Graceful completion:\n${JSON.stringify(data, null, 2)}\n\nTotal events received: ${eventsReceived}`);
+                    setStatus('close', 'success');
+                    testResults.passed++;
+                    updateSummary();
+                    updateConnectionInfo('disconnected');
+                    stopConnection();
+                }
+            }, 500);
+        }
+
+        function handleErrorEvent(event) {
+            eventsReceived++;
+            updateEventsCount();
+
+            const data = JSON.parse(event.data);
+            logEvent(`ERROR: ${JSON.stringify(data)}`, 'error');
+        }
+
+        function stopConnection() {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+                updateConnectionInfo('disconnected');
+                document.getElementById('stopBtn').disabled = true;
+            }
+        }
+
+        function setStatus(testId, status) {
+            const statusEl = document.getElementById(`status-${testId}`);
+            const sectionEl = document.getElementById(`test-${testId}`);
+
+            statusEl.className = `status ${status}`;
+            statusEl.textContent = status.toUpperCase();
+
+            sectionEl.className = `test-section ${status}`;
+        }
+
+        function showResult(testId, text) {
+            const resultEl = document.getElementById(`result-${testId}`);
+            resultEl.textContent = text;
+            resultEl.style.display = 'block';
+        }
+
+        function logEvent(message, type = 'info') {
+            const logEl = document.getElementById('eventsLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const eventDiv = document.createElement('div');
+            eventDiv.className = `event ${type}`;
+            eventDiv.innerHTML = `<span class="event-time">[${timestamp}]</span> ${message}`;
+            logEl.appendChild(eventDiv);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        function updateEventsCount() {
+            document.getElementById('eventsCount').textContent = eventsReceived;
+        }
+
+        function updateConnectionInfo(status) {
+            const infoEl = document.getElementById('connectionInfo');
+            const statusEl = document.getElementById('connectionStatus');
+
+            if (status === 'connected') {
+                infoEl.className = 'connection-info connected';
+                statusEl.textContent = '✅ Connected';
+            } else if (status === 'disconnected') {
+                infoEl.className = 'connection-info disconnected';
+                statusEl.textContent = '❌ Disconnected';
+            }
+        }
+
+        function updateSummary() {
+            const summaryEl = document.getElementById('summary');
+            const allPassed = testResults.failed === 0 && testResults.passed === testResults.total;
+
+            summaryEl.innerHTML = `
+                <strong>Total Tests:</strong> ${testResults.total}<br>
+                <strong style="color: #28a745;">Passed:</strong> ${testResults.passed}<br>
+                <strong style="color: #dc3545;">Failed:</strong> ${testResults.failed}<br>
+                <strong>Events Received:</strong> ${eventsReceived}<br>
+                <strong>Progress Events:</strong> ${progressEventsReceived.length}<br>
+                <br>
+                <strong style="font-size: 16px; color: ${allPassed ? '#28a745' : '#dc3545'};">
+                    ${allPassed ? '✅ ALL TESTS PASSED!' : testResults.failed > 0 ? '❌ SOME TESTS FAILED' : '⏳ TESTS IN PROGRESS...'}
+                </strong>
+            `;
+        }
+
+        // Auto-start test on page load
+        window.addEventListener('load', () => {
+            setTimeout(startTest, 500);
+        });
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            stopConnection();
+        });
+    </script>
+</body>
+</html>

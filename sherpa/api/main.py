@@ -5,12 +5,14 @@ Backend API server for the autonomous coding orchestrator
 
 from fastapi import FastAPI, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import asyncio
 from datetime import datetime
 from typing import Optional
 import sys
 from pathlib import Path
+import json
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -147,6 +149,73 @@ async def get_session(session_id: str):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/sessions/{session_id}/progress")
+async def get_session_progress(session_id: str):
+    """Server-Sent Events endpoint for real-time session progress updates"""
+    async def event_generator():
+        """Generate SSE events for session progress"""
+        try:
+            db = await get_db()
+
+            # Verify session exists
+            session = await db.get_session(session_id)
+            if not session:
+                # Send error event and close
+                yield f"event: error\ndata: {json.dumps({'error': 'Session not found'})}\n\n"
+                return
+
+            # Send initial connection event
+            yield f"event: connected\ndata: {json.dumps({'session_id': session_id, 'timestamp': datetime.utcnow().isoformat()})}\n\n"
+
+            # Simulate progress updates (in a real implementation, this would track actual progress)
+            # For now, send periodic updates with current session state
+            for i in range(10):  # Send 10 progress updates
+                await asyncio.sleep(1)  # Wait 1 second between updates
+
+                # Get latest session state
+                session = await db.get_session(session_id)
+                if not session:
+                    break
+
+                # Calculate progress percentage
+                total = session.get('total_features', 0)
+                completed = session.get('completed_features', 0)
+                progress_percent = (completed / total * 100) if total > 0 else 0
+
+                # Send progress event
+                progress_data = {
+                    'session_id': session_id,
+                    'status': session.get('status', 'unknown'),
+                    'total_features': total,
+                    'completed_features': completed,
+                    'progress_percent': round(progress_percent, 2),
+                    'timestamp': datetime.utcnow().isoformat(),
+                    'update_number': i + 1
+                }
+                yield f"event: progress\ndata: {json.dumps(progress_data)}\n\n"
+
+                # Stop if session is no longer active
+                if session.get('status') not in ['active', 'running']:
+                    break
+
+            # Send completion event
+            yield f"event: complete\ndata: {json.dumps({'session_id': session_id, 'timestamp': datetime.utcnow().isoformat()})}\n\n"
+
+        except Exception as e:
+            # Send error event
+            yield f"event: error\ndata: {json.dumps({'error': str(e), 'timestamp': datetime.utcnow().isoformat()})}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"  # Disable buffering in nginx
+        }
+    )
 
 
 @app.get("/api/snippets")
