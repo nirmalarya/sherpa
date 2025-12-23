@@ -3,10 +3,12 @@ SHERPA V1 - Main FastAPI Application
 Backend API server for the autonomous coding orchestrator
 """
 
-from fastapi import FastAPI, HTTPException, Body, Request
+from fastapi import FastAPI, HTTPException, Body, Request, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
 import asyncio
 from datetime import datetime
 from typing import Optional
@@ -79,6 +81,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# API Versioning Middleware - Add API-Version header to all responses
+class APIVersionMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        # Add API-Version header to all responses
+        response.headers["API-Version"] = "1.0.0"
+        return response
+
+
+app.add_middleware(APIVersionMiddleware)
 
 
 @app.on_event("startup")
@@ -1220,6 +1234,61 @@ async def rollback_db_migrations(request: Request):
     except Exception as e:
         logger.error(f"Error rolling back migrations: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Rollback failed: {str(e)}")
+
+
+# ============================================================================
+# API VERSIONING - V1 ROUTER
+# ============================================================================
+# Create a v1 router that includes all API endpoints
+# This allows accessing endpoints via both /api/... and /api/v1/...
+# For backward compatibility, we keep both routes active
+
+# Create v1 router
+v1_router = APIRouter(prefix="/v1")
+
+# Sessions endpoints
+v1_router.add_api_route("/sessions", get_sessions, methods=["GET"])
+v1_router.add_api_route("/sessions", create_session, methods=["POST"], status_code=201)
+v1_router.add_api_route("/sessions/{session_id}", get_session, methods=["GET"])
+v1_router.add_api_route("/sessions/{session_id}", update_session, methods=["PATCH"])
+v1_router.add_api_route("/sessions/{session_id}/progress", get_session_progress, methods=["GET"])
+v1_router.add_api_route("/sessions/{session_id}/stop", stop_session, methods=["POST"])
+v1_router.add_api_route("/sessions/{session_id}/pause", pause_session, methods=["POST"])
+v1_router.add_api_route("/sessions/{session_id}/resume", resume_session, methods=["POST"])
+v1_router.add_api_route("/sessions/{session_id}/logs", get_session_logs, methods=["GET"])
+v1_router.add_api_route("/sessions/{session_id}/commits", get_session_commits, methods=["GET"])
+v1_router.add_api_route("/sessions/{session_id}/test-data", add_test_data, methods=["POST"])
+
+# Snippets endpoints
+v1_router.add_api_route("/snippets", get_snippets, methods=["GET"])
+v1_router.add_api_route("/snippets/{snippet_id}", get_snippet, methods=["GET"])
+v1_router.add_api_route("/snippets", create_snippet, methods=["POST"], status_code=201)
+v1_router.add_api_route("/snippets/load-builtin", load_builtin_snippets, methods=["POST"])
+
+# Config endpoints
+v1_router.add_api_route("/config", get_config, methods=["GET"])
+
+# Azure DevOps endpoints
+v1_router.add_api_route("/azure-devops/connect", connect_azure_devops, methods=["POST"])
+v1_router.add_api_route("/azure-devops/save-config", save_azure_devops_config, methods=["POST"])
+v1_router.add_api_route("/azure-devops/status", get_azure_devops_status, methods=["GET"])
+v1_router.add_api_route("/azure-devops/sync", sync_azure_devops, methods=["POST"])
+
+# Activity endpoints
+v1_router.add_api_route("/activity", get_recent_activity, methods=["GET"])
+
+# File sources endpoints
+v1_router.add_api_route("/file-sources", get_file_sources, methods=["GET"])
+v1_router.add_api_route("/file-sources", add_file_source, methods=["POST"])
+v1_router.add_api_route("/file-sources", remove_file_source, methods=["DELETE"])
+
+# Migrations endpoints
+v1_router.add_api_route("/migrations/status", get_migrations_status, methods=["GET"])
+v1_router.add_api_route("/migrations/run", run_db_migrations, methods=["POST"])
+v1_router.add_api_route("/migrations/rollback", rollback_db_migrations, methods=["POST"])
+
+# Include v1 router under /api/v1 prefix
+app.include_router(v1_router, prefix="/api")
 
 
 if __name__ == "__main__":

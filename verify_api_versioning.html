@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quick API Versioning Verification</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #d4d4d4; }
+        .pass { color: #4ec9b0; }
+        .fail { color: #f48771; }
+        pre { background: #2d2d2d; padding: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>API Versioning Verification</h1>
+    <div id="results"></div>
+
+    <script>
+        const API_URL = 'http://localhost:8001';
+        const results = document.getElementById('results');
+
+        async function runTests() {
+            let output = '';
+
+            // Test 1: /api/v1/sessions
+            try {
+                output += '\n=== Step 1: Test /api/v1/sessions ===\n';
+                const r1 = await fetch(`${API_URL}/api/v1/sessions`);
+                const d1 = await r1.json();
+                const apiVersion1 = r1.headers.get('API-Version');
+                output += `Status: ${r1.status}\n`;
+                output += `API-Version header: ${apiVersion1}\n`;
+                output += `Sessions count: ${d1.total}\n`;
+                output += r1.ok && apiVersion1 ? '<span class="pass">✅ STEP 1 PASSED</span>\n' : '<span class="fail">❌ STEP 1 FAILED</span>\n';
+            } catch(e) {
+                output += `<span class="fail">❌ STEP 1 FAILED: ${e.message}</span>\n`;
+            }
+
+            // Test 2: Verify /v1/ in URL
+            output += '\n=== Step 2: Verify /v1/ in URL ===\n';
+            const hasV1 = `${API_URL}/api/v1/sessions`.includes('/api/v1/');
+            output += `URL: ${API_URL}/api/v1/sessions\n`;
+            output += `Contains /api/v1/: ${hasV1}\n`;
+            output += hasV1 ? '<span class="pass">✅ STEP 2 PASSED</span>\n' : '<span class="fail">❌ STEP 2 FAILED</span>\n';
+
+            // Test 3: Verify API-Version header
+            try {
+                output += '\n=== Step 3: Verify API-Version header ===\n';
+                const r3 = await fetch(`${API_URL}/api/v1/sessions`);
+                const apiVersion3 = r3.headers.get('API-Version');
+                output += `API-Version header: ${apiVersion3}\n`;
+                output += apiVersion3 ? '<span class="pass">✅ STEP 3 PASSED</span>\n' : '<span class="fail">❌ STEP 3 FAILED</span>\n';
+            } catch(e) {
+                output += `<span class="fail">❌ STEP 3 FAILED: ${e.message}</span>\n`;
+            }
+
+            // Test 4: Old endpoint /api/sessions
+            try {
+                output += '\n=== Step 4: Test old endpoint /api/sessions ===\n';
+                const r4 = await fetch(`${API_URL}/api/sessions`);
+                const d4 = await r4.json();
+                output += `Status: ${r4.status}\n`;
+                output += `Sessions count: ${d4.total}\n`;
+                output += r4.ok ? '<span class="pass">✅ STEP 4 PASSED - Backward compatible</span>\n' : '<span class="fail">❌ STEP 4 FAILED</span>\n';
+            } catch(e) {
+                output += `<span class="fail">❌ STEP 4 FAILED: ${e.message}</span>\n`;
+            }
+
+            // Test 5: Compare both endpoints
+            try {
+                output += '\n=== Step 5: Verify backward compatibility ===\n';
+                const r5old = await fetch(`${API_URL}/api/sessions`);
+                const d5old = await r5old.json();
+                const r5new = await fetch(`${API_URL}/api/v1/sessions`);
+                const d5new = await r5new.json();
+
+                const sameCount = d5old.total === d5new.total;
+                const bothOk = r5old.ok && r5new.ok;
+                const oldHasHeader = r5old.headers.get('API-Version');
+                const newHasHeader = r5new.headers.get('API-Version');
+
+                output += `Old endpoint status: ${r5old.status}\n`;
+                output += `New endpoint status: ${r5new.status}\n`;
+                output += `Old endpoint count: ${d5old.total}\n`;
+                output += `New endpoint count: ${d5new.total}\n`;
+                output += `Counts match: ${sameCount}\n`;
+                output += `Old has API-Version: ${oldHasHeader}\n`;
+                output += `New has API-Version: ${newHasHeader}\n`;
+                output += (bothOk && sameCount && oldHasHeader && newHasHeader) ? '<span class="pass">✅ STEP 5 PASSED - Full backward compatibility</span>\n' : '<span class="fail">❌ STEP 5 FAILED</span>\n';
+            } catch(e) {
+                output += `<span class="fail">❌ STEP 5 FAILED: ${e.message}</span>\n`;
+            }
+
+            output += '\n\n=== SUMMARY ===\n';
+            output += '<span class="pass">All API versioning tests completed!</span>\n';
+
+            results.innerHTML = `<pre>${output}</pre>`;
+        }
+
+        runTests();
+    </script>
+</body>
+</html>

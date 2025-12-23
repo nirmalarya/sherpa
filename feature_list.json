@@ -1577,7 +1577,7 @@
       "Step 4: Make call with old version",
       "Step 5: Verify backward compatibility or clear error"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

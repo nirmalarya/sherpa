@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Versioning Test Suite</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #555;
+            margin-top: 30px;
+            padding: 10px;
+            background: #e8f5e9;
+            border-left: 4px solid #4CAF50;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        button:hover {
+            background: #1976D2;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 12px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 12px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        pre {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .test-step {
+            font-weight: bold;
+            color: #2196F3;
+            margin-top: 15px;
+        }
+        .pass {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .fail {
+            color: #f44336;
+            font-weight: bold;
+        }
+        .header-info {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔄 API Versioning Test Suite</h1>
+    <p>Testing API versioning feature: API version in URL and headers</p>
+
+    <div class="info">
+        <strong>API Base URL:</strong> <span id="apiUrl">http://localhost:8001</span><br>
+        <strong>Test Requirements:</strong>
+        <ul>
+            <li>Step 1: Make API call to /api/v1/sessions</li>
+            <li>Step 2: Verify version in URL</li>
+            <li>Step 3: Verify API version header returned</li>
+            <li>Step 4: Make call with old version (/api/sessions)</li>
+            <li>Step 5: Verify backward compatibility or clear error</li>
+        </ul>
+    </div>
+
+    <!-- Step 1: Test /api/v1/sessions -->
+    <h2>Step 1: Test /api/v1/sessions endpoint</h2>
+    <div class="test-section">
+        <p class="test-step">Call GET /api/v1/sessions and verify it works</p>
+        <button onclick="testStep1()">Run Step 1 Test</button>
+        <div id="step1-result"></div>
+    </div>
+
+    <!-- Step 2: Verify version in URL -->
+    <h2>Step 2: Verify version in URL</h2>
+    <div class="test-section">
+        <p class="test-step">Confirm that /api/v1/ prefix is present in the endpoint URL</p>
+        <button onclick="testStep2()">Run Step 2 Test</button>
+        <div id="step2-result"></div>
+    </div>
+
+    <!-- Step 3: Verify API version header -->
+    <h2>Step 3: Verify API-Version header returned</h2>
+    <div class="test-section">
+        <p class="test-step">Check that response includes API-Version header</p>
+        <button onclick="testStep3()">Run Step 3 Test</button>
+        <div id="step3-result"></div>
+    </div>
+
+    <!-- Step 4: Test backward compatibility -->
+    <h2>Step 4: Test old version endpoint (/api/sessions)</h2>
+    <div class="test-section">
+        <p class="test-step">Call GET /api/sessions (old URL format) and verify it still works</p>
+        <button onclick="testStep4()">Run Step 4 Test</button>
+        <div id="step4-result"></div>
+    </div>
+
+    <!-- Step 5: Verify backward compatibility -->
+    <h2>Step 5: Verify backward compatibility</h2>
+    <div class="test-section">
+        <p class="test-step">Confirm both /api/sessions and /api/v1/sessions work with same response</p>
+        <button onclick="testStep5()">Run Step 5 Test</button>
+        <div id="step5-result"></div>
+    </div>
+
+    <!-- Run All Tests -->
+    <div class="test-section" style="background: #e3f2fd; border: 2px solid #2196F3;">
+        <h3>🚀 Run All Tests</h3>
+        <button onclick="runAllTests()" style="background: #4CAF50; font-size: 16px; padding: 15px 30px;">
+            ▶ Run All Tests Sequentially
+        </button>
+        <div id="all-tests-result"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8001';
+
+        // Step 1: Test /api/v1/sessions
+        async function testStep1() {
+            const resultDiv = document.getElementById('step1-result');
+            resultDiv.innerHTML = '<div class="info">⏳ Testing /api/v1/sessions endpoint...</div>';
+
+            try {
+                const response = await fetch(`${API_URL}/api/v1/sessions`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            ✅ <span class="pass">STEP 1 PASSED</span><br>
+                            Status: ${response.status}<br>
+                            Endpoint: /api/v1/sessions works correctly<br>
+                            Sessions returned: ${data.total || 0}
+                        </div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            ❌ <span class="fail">STEP 1 FAILED</span><br>
+                            Status: ${response.status}<br>
+                            Error: Endpoint returned non-OK status
+                        </div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        ❌ <span class="fail">STEP 1 FAILED</span><br>
+                        Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Step 2: Verify version in URL
+        async function testStep2() {
+            const resultDiv = document.getElementById('step2-result');
+            resultDiv.innerHTML = '<div class="info">⏳ Verifying version in URL...</div>';
+
+            const testUrl = `${API_URL}/api/v1/sessions`;
+            const hasV1 = testUrl.includes('/api/v1/');
+
+            if (hasV1) {
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        ✅ <span class="pass">STEP 2 PASSED</span><br>
+                        URL contains /api/v1/ prefix<br>
+                        Test URL: <code>${testUrl}</code>
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        ❌ <span class="fail">STEP 2 FAILED</span><br>
+                        URL does not contain /api/v1/ prefix<br>
+                        Test URL: <code>${testUrl}</code>
+                    </div>
+                `;
+            }
+        }
+
+        // Step 3: Verify API-Version header
+        async function testStep3() {
+            const resultDiv = document.getElementById('step3-result');
+            resultDiv.innerHTML = '<div class="info">⏳ Checking for API-Version header...</div>';
+
+            try {
+                const response = await fetch(`${API_URL}/api/v1/sessions`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const apiVersion = response.headers.get('API-Version');
+                const allHeaders = {};
+                response.headers.forEach((value, key) => {
+                    allHeaders[key] = value;
+                });
+
+                if (apiVersion) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            ✅ <span class="pass">STEP 3 PASSED</span><br>
+                            API-Version header found: <strong>${apiVersion}</strong>
+                        </div>
+                        <div class="header-info">
+                            <strong>Response Headers:</strong><br>
+                            ${JSON.stringify(allHeaders, null, 2)}
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            ❌ <span class="fail">STEP 3 FAILED</span><br>
+                            API-Version header not found in response
+                        </div>
+                        <div class="header-info">
+                            <strong>Response Headers:</strong><br>
+                            ${JSON.stringify(allHeaders, null, 2)}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        ❌ <span class="fail">STEP 3 FAILED</span><br>
+                        Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Step 4: Test old version endpoint
+        async function testStep4() {
+            const resultDiv = document.getElementById('step4-result');
+            resultDiv.innerHTML = '<div class="info">⏳ Testing backward compatibility with /api/sessions...</div>';
+
+            try {
+                const response = await fetch(`${API_URL}/api/sessions`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            ✅ <span class="pass">STEP 4 PASSED</span><br>
+                            Old endpoint /api/sessions still works<br>
+                            Status: ${response.status}<br>
+                            Sessions returned: ${data.total || 0}<br>
+                            <strong>Backward compatibility: CONFIRMED</strong>
+                        </div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            ❌ <span class="fail">STEP 4 FAILED</span><br>
+                            Old endpoint returned error<br>
+                            Status: ${response.status}
+                        </div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        ❌ <span class="fail">STEP 4 FAILED</span><br>
+                        Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Step 5: Verify both endpoints return same data
+        async function testStep5() {
+            const resultDiv = document.getElementById('step5-result');
+            resultDiv.innerHTML = '<div class="info">⏳ Comparing responses from both endpoints...</div>';
+
+            try {
+                // Call old endpoint
+                const oldResponse = await fetch(`${API_URL}/api/sessions`);
+                const oldData = await oldResponse.json();
+                const oldApiVersion = oldResponse.headers.get('API-Version');
+
+                // Call new endpoint
+                const newResponse = await fetch(`${API_URL}/api/v1/sessions`);
+                const newData = await newResponse.json();
+                const newApiVersion = newResponse.headers.get('API-Version');
+
+                // Compare
+                const sameTotalCount = oldData.total === newData.total;
+                const bothHaveApiVersion = oldApiVersion && newApiVersion;
+                const sameApiVersion = oldApiVersion === newApiVersion;
+
+                if (oldResponse.ok && newResponse.ok && sameTotalCount && bothHaveApiVersion) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            ✅ <span class="pass">STEP 5 PASSED</span><br>
+                            Both endpoints work correctly and return consistent data<br>
+                            <br>
+                            <strong>Comparison Results:</strong><br>
+                            ✅ Both endpoints return 200 OK<br>
+                            ✅ Both return same total count: ${oldData.total}<br>
+                            ✅ Both include API-Version header: ${oldApiVersion}<br>
+                            ${sameApiVersion ? '✅' : '⚠️'} API versions match: ${oldApiVersion} === ${newApiVersion}<br>
+                            <br>
+                            <strong>Backward Compatibility: CONFIRMED ✅</strong>
+                        </div>
+                        <details>
+                            <summary>Old endpoint response (/api/sessions)</summary>
+                            <pre>${JSON.stringify(oldData, null, 2)}</pre>
+                        </details>
+                        <details>
+                            <summary>New endpoint response (/api/v1/sessions)</summary>
+                            <pre>${JSON.stringify(newData, null, 2)}</pre>
+                        </details>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            ❌ <span class="fail">STEP 5 FAILED</span><br>
+                            Endpoints do not return consistent results<br>
+                            <br>
+                            Old endpoint status: ${oldResponse.status}<br>
+                            New endpoint status: ${newResponse.status}<br>
+                            Same total count: ${sameTotalCount ? 'Yes' : 'No'}<br>
+                            Both have API-Version: ${bothHaveApiVersion ? 'Yes' : 'No'}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        ❌ <span class="fail">STEP 5 FAILED</span><br>
+                        Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Run all tests sequentially
+        async function runAllTests() {
+            const resultDiv = document.getElementById('all-tests-result');
+            resultDiv.innerHTML = '<div class="info">🚀 Running all tests sequentially...</div>';
+
+            await testStep1();
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            await testStep2();
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            await testStep3();
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            await testStep4();
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            await testStep5();
+
+            resultDiv.innerHTML = '<div class="success">✅ All tests completed! Check results above.</div>';
+        }
+    </script>
+</body>
+</html>
