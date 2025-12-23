@@ -1590,7 +1590,7 @@
       "Step 5: Wait and retry",
       "Step 6: Verify access restored"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

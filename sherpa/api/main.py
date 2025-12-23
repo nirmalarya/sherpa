@@ -5,13 +5,15 @@ Backend API server for the autonomous coding orchestrator
 
 from fastapi import FastAPI, HTTPException, Body, Request, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import BaseModel
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 import asyncio
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict
+from collections import defaultdict
+import time
 import sys
 from pathlib import Path
 import json
@@ -92,7 +94,75 @@ class APIVersionMiddleware(BaseHTTPMiddleware):
         return response
 
 
+# Rate Limiting Middleware - Prevent API abuse
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    def __init__(self, app, max_requests: int = 100, window_seconds: int = 60):
+        super().__init__(app)
+        self.max_requests = max_requests
+        self.window_seconds = window_seconds
+        # Store request timestamps per client IP
+        self.request_history: Dict[str, list] = defaultdict(list)
+
+    async def dispatch(self, request: Request, call_next):
+        # Get client IP
+        client_ip = request.client.host if request.client else "unknown"
+
+        # Get current timestamp
+        current_time = time.time()
+
+        # Clean up old requests outside the time window
+        cutoff_time = current_time - self.window_seconds
+        self.request_history[client_ip] = [
+            timestamp for timestamp in self.request_history[client_ip]
+            if timestamp > cutoff_time
+        ]
+
+        # Count requests in current window
+        request_count = len(self.request_history[client_ip])
+
+        # Calculate remaining requests and reset time
+        # Reset time is when the oldest request in the window expires
+        remaining = max(0, self.max_requests - request_count - 1)
+        if self.request_history[client_ip]:
+            oldest_request = self.request_history[client_ip][0]
+            reset_time = int(oldest_request + self.window_seconds)
+        else:
+            reset_time = int(current_time + self.window_seconds)
+
+        # Check if rate limit exceeded
+        if request_count >= self.max_requests:
+            retry_after = int(reset_time - current_time)
+            return JSONResponse(
+                status_code=429,
+                content={
+                    "error": "Rate limit exceeded",
+                    "message": f"Too many requests. Maximum {self.max_requests} requests per {self.window_seconds} seconds.",
+                    "retry_after": retry_after
+                },
+                headers={
+                    "X-RateLimit-Limit": str(self.max_requests),
+                    "X-RateLimit-Remaining": "0",
+                    "X-RateLimit-Reset": str(reset_time),
+                    "Retry-After": str(retry_after)
+                }
+            )
+
+        # Add current request to history
+        self.request_history[client_ip].append(current_time)
+
+        # Process request
+        response = await call_next(request)
+
+        # Add rate limit headers to response
+        response.headers["X-RateLimit-Limit"] = str(self.max_requests)
+        response.headers["X-RateLimit-Remaining"] = str(remaining)
+        response.headers["X-RateLimit-Reset"] = str(reset_time)
+
+        return response
+
+
 app.add_middleware(APIVersionMiddleware)
+app.add_middleware(RateLimitMiddleware, max_requests=100, window_seconds=60)
 
 
 @app.on_event("startup")

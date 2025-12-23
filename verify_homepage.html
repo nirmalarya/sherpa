@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify HomePage - Session 78</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success { color: #22c55e; font-weight: bold; }
+        .error { color: #ef4444; font-weight: bold; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover { background: #2563eb; }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 4px;
+            border-left: 4px solid #3b82f6;
+        }
+        h1 { color: #1f2937; }
+        h2 { color: #374151; font-size: 18px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Verification Test - Session 78</h1>
+    <p>Testing that previous features still work before implementing new features.</p>
+
+    <div class="test-section">
+        <h2>Test 1: Backend Health Check</h2>
+        <button onclick="testBackendHealth()">Run Test</button>
+        <div id="health-result" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Frontend Accessibility</h2>
+        <button onclick="testFrontend()">Run Test</button>
+        <div id="frontend-result" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Sessions API</h2>
+        <button onclick="testSessionsAPI()">Run Test</button>
+        <div id="sessions-result" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: API Versioning (Previous Feature)</h2>
+        <button onclick="testAPIVersioning()">Run Test</button>
+        <div id="versioning-result" class="result" style="display:none;"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8001';
+        const FRONTEND_URL = 'http://localhost:3003';
+
+        async function testBackendHealth() {
+            const resultDiv = document.getElementById('health-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = 'Testing...';
+
+            try {
+                const response = await fetch(`${API_URL}/api/health`);
+                const data = await response.json();
+
+                if (response.ok && data.status === 'healthy') {
+                    resultDiv.innerHTML = `
+                        <span class="success">✅ PASS</span><br>
+                        Status: ${response.status}<br>
+                        Health: ${data.status}<br>
+                        Backend is running correctly!
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ FAIL</span><br>Unexpected response: ${JSON.stringify(data)}`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ FAIL</span><br>Error: ${error.message}`;
+            }
+        }
+
+        async function testFrontend() {
+            const resultDiv = document.getElementById('frontend-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = 'Testing...';
+
+            try {
+                const response = await fetch(FRONTEND_URL);
+                const html = await response.text();
+
+                if (response.ok && html.includes('root')) {
+                    resultDiv.innerHTML = `
+                        <span class="success">✅ PASS</span><br>
+                        Status: ${response.status}<br>
+                        Frontend is accessible and contains root div!
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ FAIL</span><br>Unexpected response`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ FAIL</span><br>Error: ${error.message}`;
+            }
+        }
+
+        async function testSessionsAPI() {
+            const resultDiv = document.getElementById('sessions-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = 'Testing...';
+
+            try {
+                const response = await fetch(`${API_URL}/api/sessions`);
+                const data = await response.json();
+
+                if (response.ok && Array.isArray(data)) {
+                    resultDiv.innerHTML = `
+                        <span class="success">✅ PASS</span><br>
+                        Status: ${response.status}<br>
+                        Sessions count: ${data.length}<br>
+                        Sessions API working correctly!
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ FAIL</span><br>Unexpected response`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ FAIL</span><br>Error: ${error.message}`;
+            }
+        }
+
+        async function testAPIVersioning() {
+            const resultDiv = document.getElementById('versioning-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = 'Testing...';
+
+            try {
+                // Test versioned endpoint
+                const v1Response = await fetch(`${API_URL}/api/v1/sessions`);
+                const v1Data = await v1Response.json();
+                const apiVersion = v1Response.headers.get('API-Version');
+
+                // Test old endpoint
+                const oldResponse = await fetch(`${API_URL}/api/sessions`);
+                const oldData = await oldResponse.json();
+
+                if (v1Response.ok && oldResponse.ok && apiVersion === '1.0.0') {
+                    resultDiv.innerHTML = `
+                        <span class="success">✅ PASS</span><br>
+                        V1 endpoint: ${v1Response.status} (${v1Data.length} sessions)<br>
+                        Old endpoint: ${oldResponse.status} (${oldData.length} sessions)<br>
+                        API-Version header: ${apiVersion}<br>
+                        API versioning working correctly!
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ FAIL</span><br>API versioning not working as expected`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ FAIL</span><br>Error: ${error.message}`;
+            }
+        }
+
+        // Run all tests automatically on load
+        window.addEventListener('load', async () => {
+            await testBackendHealth();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await testFrontend();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await testSessionsAPI();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await testAPIVersioning();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Rate Limiting Verification</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success { color: #22c55e; font-weight: bold; }
+        .error { color: #ef4444; font-weight: bold; }
+        .warning { color: #f59e0b; font-weight: bold; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover { background: #2563eb; }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 4px;
+            border-left: 4px solid #3b82f6;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+        }
+        h1 { color: #1f2937; }
+    </style>
+</head>
+<body>
+    <h1>🛡️ Quick Rate Limiting Verification</h1>
+    <p>Simple test to verify rate limiting middleware is working</p>
+
+    <div class="test-section">
+        <h2>Test: Rate Limiting Headers</h2>
+        <button onclick="testHeaders()">Check Rate Limit Headers</button>
+        <div id="result" class="result" style="display:none;"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8001';
+
+        async function testHeaders() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<span class="warning">⏳ Testing...</span>\n';
+
+            try {
+                const response = await fetch(`${API_URL}/api/health`);
+                const data = await response.json();
+
+                const limit = response.headers.get('X-RateLimit-Limit');
+                const remaining = response.headers.get('X-RateLimit-Remaining');
+                const reset = response.headers.get('X-RateLimit-Reset');
+
+                resultDiv.innerHTML = '';
+                resultDiv.innerHTML += `<strong>Status:</strong> ${response.status}\n`;
+                resultDiv.innerHTML += `<strong>Response:</strong> ${JSON.stringify(data)}\n\n`;
+
+                if (limit && remaining !== null && reset) {
+                    resultDiv.innerHTML += `<span class="success">✅ Rate limiting middleware is active!</span>\n\n`;
+                    resultDiv.innerHTML += `<strong>Rate Limit Headers:</strong>\n`;
+                    resultDiv.innerHTML += `  X-RateLimit-Limit: ${limit} requests\n`;
+                    resultDiv.innerHTML += `  X-RateLimit-Remaining: ${remaining} requests\n`;
+                    resultDiv.innerHTML += `  X-RateLimit-Reset: ${reset} (timestamp)\n`;
+
+                    const resetDate = new Date(parseInt(reset) * 1000);
+                    resultDiv.innerHTML += `  Reset time: ${resetDate.toLocaleTimeString()}\n`;
+                } else {
+                    resultDiv.innerHTML += `<span class="error">❌ Rate limiting headers missing!</span>\n\n`;
+                    resultDiv.innerHTML += `Headers found:\n`;
+                    resultDiv.innerHTML += `  Limit: ${limit}\n`;
+                    resultDiv.innerHTML += `  Remaining: ${remaining}\n`;
+                    resultDiv.innerHTML += `  Reset: ${reset}\n`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Error:</span> ${error.message}`;
+            }
+        }
+
+        // Auto-run on load
+        window.addEventListener('load', testHeaders);
+    </script>
+</body>
+</html>
