@@ -1160,7 +1160,7 @@
       "Step 6: Verify session stopped",
       "Step 7: Verify status updated to 'stopped'"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1173,7 +1173,7 @@
       "Step 5: Verify status updated to 'paused'",
       "Step 6: Verify resume button shown"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1186,7 +1186,7 @@
       "Step 5: Verify status updated to 'active'",
       "Step 6: Verify progress continues"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
