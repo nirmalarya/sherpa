@@ -1041,7 +1041,7 @@
       "Step 5: Verify loading state cleared",
       "Step 6: Verify error state shown on failure"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1067,7 +1067,7 @@
       "Step 5: Verify navigation responsive on mobile",
       "Step 6: Verify logo/branding present"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
