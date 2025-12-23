@@ -345,6 +345,32 @@ async def get_session_logs(session_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/sessions/{session_id}/commits")
+async def get_session_commits(session_id: str):
+    """Get git commits for session"""
+    try:
+        db = await get_db()
+
+        # Verify session exists
+        session = await db.get_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        # Get commits for this session
+        commits = await db.get_commits(session_id)
+
+        return {
+            "session_id": session_id,
+            "commits": commits,
+            "total": len(commits),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/snippets")
 async def get_snippets(category: Optional[str] = None):
     """Get all code snippets"""

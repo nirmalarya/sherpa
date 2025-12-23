@@ -658,7 +658,7 @@
       "Step 4: Verify commits array returned",
       "Step 5: Verify commit details include hash, message, timestamp"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

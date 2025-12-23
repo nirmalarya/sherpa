@@ -273,6 +273,28 @@ class Database:
         rows = await cursor.fetchall()
         return [dict(row) for row in rows]
 
+    # Git commit operations
+    async def add_commit(self, session_id: str, commit_hash: str, message: str, author: Optional[str] = None, files_changed: Optional[int] = None, work_item_id: Optional[str] = None):
+        """Add git commit to session"""
+        conn = await self.connect()
+
+        await conn.execute("""
+            INSERT INTO git_commits (session_id, commit_hash, message, author, timestamp, files_changed, work_item_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (session_id, commit_hash, message, author, datetime.utcnow().isoformat(), files_changed, work_item_id))
+
+        await conn.commit()
+
+    async def get_commits(self, session_id: str) -> List[Dict[str, Any]]:
+        """Get git commits for session"""
+        conn = await self.connect()
+        cursor = await conn.execute("""
+            SELECT * FROM git_commits WHERE session_id = ? ORDER BY timestamp DESC
+        """, (session_id,))
+
+        rows = await cursor.fetchall()
+        return [dict(row) for row in rows]
+
 
 # Global database instance
 _db: Optional[Database] = None
