@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test POST /api/sessions/:id/resume</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .step {
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #ddd;
+            background: #fafafa;
+        }
+        .step.success {
+            border-left-color: #28a745;
+            background: #f0fff4;
+        }
+        .step.error {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+        .step.running {
+            border-left-color: #ffc107;
+            background: #fffbf0;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border: 1px solid #ddd;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 0 5px;
+        }
+        .badge.active { background: #28a745; color: white; }
+        .badge.paused { background: #ffc107; color: #333; }
+        .badge.stopped { background: #dc3545; color: white; }
+        .badge.running { background: #17a2b8; color: white; }
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        .session-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border: 1px solid #dee2e6;
+        }
+        .session-info h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #6c757d;
+        }
+        .info-value {
+            color: #212529;
+        }
+        .test-summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .test-summary h2 {
+            margin-top: 0;
+        }
+        .progress-bar {
+            background: rgba(255,255,255,0.3);
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            background: #28a745;
+            height: 100%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔄 Test POST /api/sessions/:id/resume</h1>
+
+    <div class="test-summary">
+        <h2>Test Summary</h2>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressBar" style="width: 0%">0%</div>
+        </div>
+        <p>
+            <strong>Passed:</strong> <span id="passedCount">0</span> /
+            <strong>Failed:</strong> <span id="failedCount">0</span> /
+            <strong>Total:</strong> 6
+        </p>
+    </div>
+
+    <div class="section">
+        <h2>Step 1: Load Available Sessions</h2>
+        <div id="step1" class="step">
+            <button onclick="loadSessions()">Load Sessions</button>
+            <div id="sessionsResult"></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Step 2: Select Paused Session to Resume</h2>
+        <div id="step2" class="step">
+            <select id="sessionSelect" onchange="displaySessionInfo()">
+                <option value="">-- Select a session --</option>
+            </select>
+            <div id="sessionInfo"></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Step 3: Resume Session</h2>
+        <div id="step3" class="step">
+            <button id="resumeBtn" onclick="resumeSession()" disabled>Resume Session</button>
+            <div id="resumeResult"></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Step 4: Verify Session Status Updated</h2>
+        <div id="step4" class="step">
+            <button id="verifyBtn" onclick="verifySessionStatus()" disabled>Verify Status</button>
+            <div id="verifyResult"></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Step 5: Test Already Active Error</h2>
+        <div id="step5" class="step">
+            <button id="errorBtn" onclick="testAlreadyActive()" disabled>Test Already Active</button>
+            <div id="errorResult"></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Step 6: Test 404 Error Handling</h2>
+        <div id="step6" class="step">
+            <button onclick="test404Error()">Test 404 Error</button>
+            <div id="error404Result"></div>
+        </div>
+    </div>
+
+    <script>
+        let sessions = [];
+        let selectedSession = null;
+        let testsPassed = 0;
+        let testsFailed = 0;
+
+        function updateProgress() {
+            const total = 6;
+            const progress = ((testsPassed + testsFailed) / total) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('progressBar').textContent = Math.round(progress) + '%';
+            document.getElementById('passedCount').textContent = testsPassed;
+            document.getElementById('failedCount').textContent = testsFailed;
+        }
+
+        function markStepSuccess(stepId) {
+            document.getElementById(stepId).classList.add('success');
+            document.getElementById(stepId).classList.remove('running', 'error');
+            testsPassed++;
+            updateProgress();
+        }
+
+        function markStepError(stepId) {
+            document.getElementById(stepId).classList.add('error');
+            document.getElementById(stepId).classList.remove('running', 'success');
+            testsFailed++;
+            updateProgress();
+        }
+
+        function markStepRunning(stepId) {
+            document.getElementById(stepId).classList.add('running');
+            document.getElementById(stepId).classList.remove('success', 'error');
+        }
+
+        async function loadSessions() {
+            markStepRunning('step1');
+            try {
+                const response = await fetch('http://localhost:8001/api/sessions');
+                const data = await response.json();
+                sessions = data.sessions;
+
+                const select = document.getElementById('sessionSelect');
+                select.innerHTML = '<option value="">-- Select a session --</option>';
+
+                sessions.forEach((session, index) => {
+                    const option = document.createElement('option');
+                    option.value = index;
+                    option.textContent = `${session.id} (${session.status})`;
+                    select.appendChild(option);
+                });
+
+                document.getElementById('sessionsResult').innerHTML = `
+                    <p style="color: green; margin-top: 10px;">
+                        ✅ Successfully loaded ${sessions.length} sessions
+                    </p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+
+                markStepSuccess('step1');
+            } catch (error) {
+                document.getElementById('sessionsResult').innerHTML = `
+                    <p style="color: red;">❌ Error: ${error.message}</p>
+                `;
+                markStepError('step1');
+            }
+        }
+
+        function displaySessionInfo() {
+            const select = document.getElementById('sessionSelect');
+            const index = select.value;
+
+            if (index === '') {
+                document.getElementById('sessionInfo').innerHTML = '';
+                document.getElementById('resumeBtn').disabled = true;
+                selectedSession = null;
+                return;
+            }
+
+            selectedSession = sessions[index];
+            const isPaused = selectedSession.status === 'paused';
+
+            const statusBadge = `<span class="badge ${selectedSession.status}">${selectedSession.status.toUpperCase()}</span>`;
+
+            document.getElementById('sessionInfo').innerHTML = `
+                <div class="session-info">
+                    <h3>Selected Session Details</h3>
+                    <div class="info-row">
+                        <span class="info-label">ID:</span>
+                        <span class="info-value">${selectedSession.id}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Status:</span>
+                        <span class="info-value">${statusBadge}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Spec File:</span>
+                        <span class="info-value">${selectedSession.spec_file || 'N/A'}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Total Features:</span>
+                        <span class="info-value">${selectedSession.total_features || 0}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Completed Features:</span>
+                        <span class="info-value">${selectedSession.completed_features || 0}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Started At:</span>
+                        <span class="info-value">${new Date(selectedSession.started_at).toLocaleString()}</span>
+                    </div>
+                </div>
+                ${isPaused ?
+                    '<p style="color: green; margin-top: 10px;">✅ This session is paused and can be resumed.</p>' :
+                    '<p style="color: orange; margin-top: 10px;">⚠️ This session is not paused. Resume will fail.</p>'
+                }
+            `;
+
+            document.getElementById('resumeBtn').disabled = false;
+            markStepSuccess('step2');
+        }
+
+        async function resumeSession() {
+            if (!selectedSession) {
+                alert('Please select a session first');
+                return;
+            }
+
+            markStepRunning('step3');
+            try {
+                const response = await fetch(`http://localhost:8001/api/sessions/${selectedSession.id}/resume`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('resumeResult').innerHTML = `
+                        <p style="color: green; margin-top: 10px;">
+                            ✅ Session resumed successfully! Status: ${response.status}
+                        </p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                    markStepSuccess('step3');
+                    document.getElementById('verifyBtn').disabled = false;
+                    document.getElementById('errorBtn').disabled = false;
+                } else {
+                    document.getElementById('resumeResult').innerHTML = `
+                        <p style="color: orange; margin-top: 10px;">
+                            ⚠️ Resume failed (expected if session wasn't paused): ${data.detail}
+                        </p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                    markStepError('step3');
+                }
+            } catch (error) {
+                document.getElementById('resumeResult').innerHTML = `
+                    <p style="color: red;">❌ Error: ${error.message}</p>
+                `;
+                markStepError('step3');
+            }
+        }
+
+        async function verifySessionStatus() {
+            if (!selectedSession) {
+                alert('Please select a session first');
+                return;
+            }
+
+            markStepRunning('step4');
+            try {
+                const response = await fetch(`http://localhost:8001/api/sessions/${selectedSession.id}`);
+                const data = await response.json();
+
+                const isActive = data.status === 'active';
+
+                document.getElementById('verifyResult').innerHTML = `
+                    <p style="color: ${isActive ? 'green' : 'orange'}; margin-top: 10px;">
+                        ${isActive ? '✅' : '⚠️'} Session status: <strong>${data.status}</strong>
+                        ${isActive ? '(Successfully updated to active!)' : '(Not active - might already have been active)'}
+                    </p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+
+                if (isActive) {
+                    markStepSuccess('step4');
+                } else {
+                    markStepError('step4');
+                }
+            } catch (error) {
+                document.getElementById('verifyResult').innerHTML = `
+                    <p style="color: red;">❌ Error: ${error.message}</p>
+                `;
+                markStepError('step4');
+            }
+        }
+
+        async function testAlreadyActive() {
+            if (!selectedSession) {
+                alert('Please select a session first');
+                return;
+            }
+
+            markStepRunning('step5');
+            try {
+                const response = await fetch(`http://localhost:8001/api/sessions/${selectedSession.id}/resume`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (response.status === 400) {
+                    document.getElementById('errorResult').innerHTML = `
+                        <p style="color: green; margin-top: 10px;">
+                            ✅ Correctly returned 400 error for already active session!
+                        </p>
+                        <p>Error message: <strong>${data.detail}</strong></p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                    markStepSuccess('step5');
+                } else {
+                    document.getElementById('errorResult').innerHTML = `
+                        <p style="color: orange; margin-top: 10px;">
+                            ⚠️ Expected 400 status code, got ${response.status}
+                        </p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                    markStepError('step5');
+                }
+            } catch (error) {
+                document.getElementById('errorResult').innerHTML = `
+                    <p style="color: red;">❌ Error: ${error.message}</p>
+                `;
+                markStepError('step5');
+            }
+        }
+
+        async function test404Error() {
+            markStepRunning('step6');
+            try {
+                const response = await fetch('http://localhost:8001/api/sessions/session-nonexistent-99999/resume', {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (response.status === 404) {
+                    document.getElementById('error404Result').innerHTML = `
+                        <p style="color: green; margin-top: 10px;">
+                            ✅ Correctly returned 404 error for non-existent session!
+                        </p>
+                        <p>Error message: <strong>${data.detail}</strong></p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                    markStepSuccess('step6');
+                } else {
+                    document.getElementById('error404Result').innerHTML = `
+                        <p style="color: orange; margin-top: 10px;">
+                            ⚠️ Expected 404 status code, got ${response.status}
+                        </p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                    markStepError('step6');
+                }
+            } catch (error) {
+                document.getElementById('error404Result').innerHTML = `
+                    <p style="color: red;">❌ Error: ${error.message}</p>
+                `;
+                markStepError('step6');
+            }
+        }
+
+        // Auto-load sessions on page load
+        window.addEventListener('load', loadSessions);
+    </script>
+</body>
+</html>
