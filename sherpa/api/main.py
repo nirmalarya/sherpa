@@ -1238,6 +1238,34 @@ async def get_config():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/config")
+async def set_config_value(request: Request):
+    """Set a configuration value"""
+    try:
+        body = await request.json()
+        key = body.get('key')
+        value = body.get('value')
+
+        if not key:
+            raise HTTPException(status_code=400, detail="key is required")
+
+        if value is None:
+            raise HTTPException(status_code=400, detail="value is required")
+
+        db = await get_db()
+        await db.set_config(key, value)
+
+        return success_response(
+            data={"key": key, "value": value},
+            message=f"Configuration value set for key: {key}"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error setting config: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/environment")
 async def get_environment():
     """
@@ -2391,6 +2419,7 @@ v1_router.add_api_route("/snippets/load-builtin", load_builtin_snippets, methods
 
 # Config endpoints
 v1_router.add_api_route("/config", get_config, methods=["GET"])
+v1_router.add_api_route("/config", set_config_value, methods=["POST"])
 
 # Environment endpoints
 v1_router.add_api_route("/environment", get_environment, methods=["GET"])

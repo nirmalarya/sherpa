@@ -113,7 +113,7 @@
       "Step 5: Verify autonomous harness starts with converted spec",
       "Step 6: Verify session linked to Azure DevOps work item"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
