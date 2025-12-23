@@ -432,7 +432,7 @@
       "Step 5: Verify quick actions: New session, Generate files",
       "Step 6: Verify recent activity feed displayed"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

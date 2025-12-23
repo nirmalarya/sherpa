@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
 import { Mountain } from 'lucide-react'
 
 // Pages
-import HomePage from './pages/HomePage-simple'
+import HomePage from './pages/HomePage'
 // TODO: These pages have API dependencies that need debugging
 // import SessionsPage from './pages/SessionsPage'
 // import SessionDetailPage from './pages/SessionDetailPage'

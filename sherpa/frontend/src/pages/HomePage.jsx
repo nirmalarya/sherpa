@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Plus, FileText, Activity } from 'lucide-react'
-import api from '../lib/api'
 
 function HomePage() {
   const [sessions, setSessions] = useState([])
@@ -13,8 +12,9 @@ function HomePage() {
 
   const fetchActiveSessions = async () => {
     try {
-      const response = await api.get('/api/sessions?status=active')
-      setSessions(response.data)
+      const response = await fetch('http://localhost:8001/api/sessions?status=active')
+      const data = await response.json()
+      setSessions(data.sessions || [])
     } catch (error) {
       console.error('Error fetching sessions:', error)
     } finally {
@@ -64,26 +64,33 @@ function HomePage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sessions.map((session) => (
-              <Link key={session.id} to={`/sessions/${session.id}`} className="card hover:shadow-md transition-shadow">
-                <h3 className="font-semibold text-lg mb-2">{session.name}</h3>
-                <div className="mb-3">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600">Progress</span>
-                    <span className="font-medium">{session.progress}%</span>
+            {sessions.map((session) => {
+              const progress = session.total_features > 0
+                ? Math.round((session.completed_features / session.total_features) * 100)
+                : 0
+              const sessionName = session.spec_file || session.id
+
+              return (
+                <Link key={session.id} to={`/sessions/${session.id}`} className="card hover:shadow-md transition-shadow">
+                  <h3 className="font-semibold text-lg mb-2">{sessionName}</h3>
+                  <div className="mb-3">
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-gray-600">Progress</span>
+                      <span className="font-medium">{progress}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-primary-600 h-2 rounded-full transition-all"
+                        style={{ width: `${progress}%` }}
+                      ></div>
+                    </div>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-primary-600 h-2 rounded-full transition-all"
-                      style={{ width: `${session.progress}%` }}
-                    ></div>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-600">
-                  {session.completed_features} / {session.total_features} features
-                </p>
-              </Link>
-            ))}
+                  <p className="text-sm text-gray-600">
+                    {session.completed_features} / {session.total_features} features
+                  </p>
+                </Link>
+              )
+            })}
           </div>
         )}
       </div>
