@@ -19,13 +19,16 @@ try:
     WATCHDOG_AVAILABLE = True
 except ImportError:
     WATCHDOG_AVAILABLE = False
+    Observer = None  # type: ignore
+    FileSystemEventHandler = object  # type: ignore
+    FileSystemEvent = None  # type: ignore
     logging.warning("Watchdog not installed. File watching disabled.")
 
 
 logger = logging.getLogger(__name__)
 
 
-class RepositoryEventHandler(FileSystemEventHandler):
+class RepositoryEventHandler(FileSystemEventHandler):  # type: ignore
     """
     Event handler for repository file system changes.
 
