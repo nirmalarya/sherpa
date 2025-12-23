@@ -473,7 +473,7 @@
       "Step 5: Verify add to project snippets button",
       "Step 6: Verify snippets fetched from API"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

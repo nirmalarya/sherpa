@@ -17,24 +17,18 @@ function KnowledgePage() {
     try {
       const params = category !== 'all' ? { category } : {}
       const response = await api.get('/api/snippets', { params })
-      setSnippets(response.data)
+      setSnippets(response.data.snippets || [])
     } catch (error) {
       console.error('Error fetching snippets:', error)
     }
   }
 
-  const handleSearch = async () => {
+  const handleSearch = () => {
+    // Search is handled by filteredSnippets - just trigger a re-fetch if search is empty
     if (!search) {
       fetchSnippets()
-      return
     }
-
-    try {
-      const response = await api.post('/api/snippets/query', { query: search })
-      setSnippets(response.data)
-    } catch (error) {
-      console.error('Error searching snippets:', error)
-    }
+    // Otherwise the filteredSnippets computed value handles the search
   }
 
   const handleCopy = (content) => {
@@ -45,16 +39,28 @@ function KnowledgePage() {
 
   const handleAddToProject = async (snippet) => {
     try {
-      await api.post('/api/snippets', snippet)
+      // Create snippet with project source
+      await api.post('/api/snippets', {
+        name: snippet.name || snippet.title,
+        category: snippet.category,
+        source: 'project',
+        content: snippet.content,
+        language: snippet.language,
+        tags: snippet.tags
+      })
       alert('Snippet added to project!')
     } catch (error) {
       console.error('Error adding snippet:', error)
+      alert('Failed to add snippet to project')
     }
   }
 
-  const filteredSnippets = snippets.filter(snippet =>
-    snippet.title?.toLowerCase().includes(search.toLowerCase())
-  )
+  const filteredSnippets = snippets.filter(snippet => {
+    const searchTerm = search.toLowerCase()
+    const title = (snippet.title || snippet.name || '').toLowerCase()
+    const description = (snippet.description || '').toLowerCase()
+    return title.includes(searchTerm) || description.includes(searchTerm)
+  })
 
   const categories = ['all', 'security', 'python', 'react', 'testing', 'api', 'git']
 
@@ -114,7 +120,7 @@ function KnowledgePage() {
             <div className="flex items-start justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Code className="h-5 w-5 text-primary-600" />
-                <h3 className="font-semibold">{snippet.title}</h3>
+                <h3 className="font-semibold">{snippet.title || snippet.name}</h3>
               </div>
               <span className="text-xs bg-gray-100 px-2 py-1 rounded">{snippet.category}</span>
             </div>
@@ -140,7 +146,7 @@ function KnowledgePage() {
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
             <div className="p-6 border-b border-gray-200 flex justify-between items-start">
               <div>
-                <h2 className="text-2xl font-bold">{selectedSnippet.title}</h2>
+                <h2 className="text-2xl font-bold">{selectedSnippet.title || selectedSnippet.name}</h2>
                 <p className="text-gray-600 mt-1">{selectedSnippet.description}</p>
               </div>
               <button

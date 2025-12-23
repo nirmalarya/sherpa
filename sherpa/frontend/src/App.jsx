@@ -5,13 +5,10 @@ import { Mountain } from 'lucide-react'
 import HomePage from './pages/HomePage'
 import SessionsPage from './pages/SessionsPage'
 import SessionDetailPage from './pages/SessionDetailPage'
-// import KnowledgePage from './pages/KnowledgePage'
+import KnowledgePage from './pages/KnowledgePage'
 // import SourcesPage from './pages/SourcesPage'
 
 // Placeholder pages
-function KnowledgePage() {
-  return <div className="p-8"><h1 className="text-3xl font-bold">Knowledge Page - Coming Soon</h1></div>
-}
 function SourcesPage() {
   return <div className="p-8"><h1 className="text-3xl font-bold">Sources Page - Coming Soon</h1></div>
 }
