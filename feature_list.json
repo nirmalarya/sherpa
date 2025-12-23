@@ -1002,7 +1002,7 @@
       "Step 5: Verify .env.example exists",
       "Step 6: Verify .env in .gitignore"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
