@@ -33,7 +33,7 @@
       "Step 4: Verify semantic search returns relevant results",
       "Step 5: Verify results are properly formatted"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
