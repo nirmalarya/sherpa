@@ -129,11 +129,18 @@ USAGE
 
 ### ❌ Not Yet Implemented (Roadmap)
 
-- **Brownfield Scanner:** Planned for v1.1
-- **Jira Integration:** Planned for v2.0
-- **GitHub Issues:** Planned for v2.0
-- **GEMINI.md Generator:** Planned for v2.0
-- **Linear Integration:** Planned for v2.0
+**v1.1 (Next Release - High Priority):**
+- **Brownfield Scanner:** Analyze existing repos for context extraction
+- **Enhancement Mode:** Improve existing projects (not just build new)
+- **AGENT.md Generator:** For agent-based development workflows
+
+**v2.0 (Future):**
+- **GitHub Issues Integration:** Personal project management
+- **Linear Integration:** Team collaboration and visibility
+- **GEMINI.md Generator:** Google Gemini Code Assist support
+
+**Dropped:**
+- ~~Jira Integration~~ (Not used at Bayer, deprioritized)
 
 ---
 

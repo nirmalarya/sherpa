@@ -131,13 +131,17 @@ Input Sources → Knowledge Layer → SHERPA Core → Output
 - Azure DevOps PR creation (git commits only)
 - Spec normalization (basic support)
 
-**📋 Roadmap (v1.1 & Beyond):**
-- 🔴 **v1.1:** Brownfield scanner (analyze existing repos)
-- 🔴 **v1.1:** Enhancement mode (improve existing projects)
-- 🟡 **v2.0:** Jira integration
-- 🟡 **v2.0:** GitHub Issues integration
-- 🟡 **v2.0:** Linear integration
-- 🟢 **v2.0:** GEMINI.md generator
+**📋 Roadmap:**
+
+**v1.1 (Next Release - High Priority):**
+- 🔴 **Brownfield scanner** (analyze existing repos for enhancement)
+- 🔴 **Enhancement mode** (improve existing projects)
+- 🔴 **AGENT.md generator** (for agent-based workflows)
+
+**v2.0 (Future):**
+- 🟡 **GitHub Issues integration** (personal projects)
+- 🟡 **Linear integration** (team visibility)
+- 🟢 **GEMINI.md generator** (Google Gemini support)
 
 ### Technology Stack
 
