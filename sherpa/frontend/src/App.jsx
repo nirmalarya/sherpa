@@ -1,5 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom'
 import { Mountain } from 'lucide-react'
 
 // Lazy load pages for code splitting
@@ -14,9 +14,13 @@ const ErrorTestPage = lazy(() => import('./pages/ErrorTestPage'))
 // Components - CommandPalette and DarkModeToggle are not lazy loaded as they're used globally
 import CommandPalette from './components/CommandPalette'
 import DarkModeToggle from './components/DarkModeToggle'
+import KeyboardShortcutsHelp from './components/KeyboardShortcutsHelp'
 
 // Context providers
 import { ToastProvider } from './context/ToastContext'
+
+// Hooks
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 
 // Loading component for Suspense fallback
 const PageLoader = () => (
@@ -28,8 +32,12 @@ const PageLoader = () => (
   </div>
 )
 
-function App() {
+// Inner component with access to router hooks
+function AppContent() {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
+  const [shortcutsHelpOpen, setShortcutsHelpOpen] = useState(false)
+  const navigate = useNavigate()
+  const location = useLocation()
 
   // Global keyboard shortcut: Ctrl+K or Cmd+K to open command palette
   useEffect(() => {
@@ -45,14 +53,36 @@ function App() {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [])
 
+  // Define global keyboard shortcuts
+  useKeyboardShortcuts({
+    '?': () => setShortcutsHelpOpen(true),
+    'Escape': () => {
+      setShortcutsHelpOpen(false)
+      setCommandPaletteOpen(false)
+      // Clear focus from search inputs if any
+      if (document.activeElement.tagName === 'INPUT') {
+        document.activeElement.blur()
+      }
+    },
+    'h': () => navigate('/'),
+    's': () => navigate('/sessions'),
+    'k': () => navigate('/knowledge'),
+    'o': () => navigate('/sources'),
+  })
+
   return (
-    <BrowserRouter>
-      <ToastProvider>
-        {/* Command Palette - Global keyboard shortcuts */}
-        <CommandPalette
-          isOpen={commandPaletteOpen}
-          onClose={() => setCommandPaletteOpen(false)}
-        />
+    <>
+      {/* Command Palette - Global keyboard shortcuts */}
+      <CommandPalette
+        isOpen={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+      />
+
+      {/* Keyboard Shortcuts Help Modal */}
+      <KeyboardShortcutsHelp
+        isOpen={shortcutsHelpOpen}
+        onClose={() => setShortcutsHelpOpen(false)}
+      />
 
         <div className="min-h-screen flex flex-col bg-white dark:bg-gray-900 transition-colors">
         {/* Skip to main content link for keyboard users */}
@@ -115,6 +145,16 @@ function App() {
           </div>
         </footer>
         </div>
+    </>
+  )
+}
+
+// Main App wrapper with BrowserRouter
+function App() {
+  return (
+    <BrowserRouter>
+      <ToastProvider>
+        <AppContent />
       </ToastProvider>
     </BrowserRouter>
   )

@@ -4,8 +4,10 @@ import { Plus, FileText, Activity, Clock, CheckCircle, XCircle, StopCircle, Paus
 import NewSessionModal from '../components/NewSessionModal'
 import GenerateFilesModal from '../components/GenerateFilesModal'
 import ErrorMessage from '../components/ErrorMessage'
+import KeyboardBadge from '../components/KeyboardBadge'
 import { formatRelativeTime, formatAbsoluteTime } from '../lib/timeUtils'
 import { useToast } from '../context/ToastContext'
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts'
 
 function HomePage() {
   const [sessions, setSessions] = useState([])
@@ -92,6 +94,12 @@ function HomePage() {
     toast.success(message, 8000) // Show for 8 seconds since there's more info
   }
 
+  // Keyboard shortcuts for this page
+  useKeyboardShortcuts({
+    'n': () => setShowNewSessionModal(true),
+    'g': () => setShowGenerateFilesModal(true),
+  })
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
@@ -106,27 +114,29 @@ function HomePage() {
           <button
             data-action="new-session"
             onClick={() => setShowNewSessionModal(true)}
-            className="card flex items-center p-6 hover:shadow-md transition-shadow focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2"
-            aria-label="Start a new autonomous coding session"
+            className="card flex items-center p-6 hover:shadow-md transition-shadow focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 dark:bg-gray-800 dark:hover:bg-gray-750"
+            aria-label="Start a new autonomous coding session. Keyboard shortcut: N"
           >
-            <Plus className="h-8 w-8 text-primary-600" aria-hidden="true" />
-            <div className="ml-4 text-left">
-              <h3 className="text-lg font-semibold">New Session</h3>
-              <p className="text-sm text-gray-600">Start autonomous coding session</p>
+            <Plus className="h-8 w-8 text-primary-600 dark:text-primary-400" aria-hidden="true" />
+            <div className="ml-4 text-left flex-1">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">New Session</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Start autonomous coding session</p>
             </div>
+            <KeyboardBadge shortcut="N" />
           </button>
 
           <button
             data-action="generate-files"
             onClick={() => setShowGenerateFilesModal(true)}
-            className="card flex items-center p-6 hover:shadow-md transition-shadow focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2"
-            aria-label="Generate instruction files for agents"
+            className="card flex items-center p-6 hover:shadow-md transition-shadow focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 dark:bg-gray-800 dark:hover:bg-gray-750"
+            aria-label="Generate instruction files for agents. Keyboard shortcut: G"
           >
-            <FileText className="h-8 w-8 text-primary-600" aria-hidden="true" />
-            <div className="ml-4 text-left">
-              <h3 className="text-lg font-semibold">Generate Files</h3>
-              <p className="text-sm text-gray-600">Create instruction files for agents</p>
+            <FileText className="h-8 w-8 text-primary-600 dark:text-primary-400" aria-hidden="true" />
+            <div className="ml-4 text-left flex-1">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Generate Files</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Create instruction files for agents</p>
             </div>
+            <KeyboardBadge shortcut="G" />
           </button>
         </div>
       </section>
