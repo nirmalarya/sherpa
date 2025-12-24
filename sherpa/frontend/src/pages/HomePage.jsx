@@ -5,6 +5,7 @@ import NewSessionModal from '../components/NewSessionModal'
 import GenerateFilesModal from '../components/GenerateFilesModal'
 import ErrorMessage from '../components/ErrorMessage'
 import { formatRelativeTime, formatAbsoluteTime } from '../lib/timeUtils'
+import { useToast } from '../context/ToastContext'
 
 function HomePage() {
   const [sessions, setSessions] = useState([])
@@ -16,6 +17,7 @@ function HomePage() {
   const [showNewSessionModal, setShowNewSessionModal] = useState(false)
   const [showGenerateFilesModal, setShowGenerateFilesModal] = useState(false)
   const navigate = useNavigate()
+  const toast = useToast()
 
   useEffect(() => {
     fetchActiveSessions()
@@ -85,9 +87,9 @@ function HomePage() {
 
     // Create success message with file details
     const fileList = result.files?.map(f => `  • ${f.path}`).join('\n') || ''
-    const message = `✅ Successfully generated ${result.total_files || 3} instruction files with ${result.total_snippets || 7} snippets!\n\n${fileList}`
+    const message = `Successfully generated ${result.total_files || 3} instruction files with ${result.total_snippets || 7} snippets!\n\n${fileList}`
 
-    alert(message)
+    toast.success(message, 8000) // Show for 8 seconds since there's more info
   }
 
   return (

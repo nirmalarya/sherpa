@@ -15,6 +15,9 @@ const ErrorTestPage = lazy(() => import('./pages/ErrorTestPage'))
 import CommandPalette from './components/CommandPalette'
 import DarkModeToggle from './components/DarkModeToggle'
 
+// Context providers
+import { ToastProvider } from './context/ToastContext'
+
 // Loading component for Suspense fallback
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-screen dark:bg-gray-900">
@@ -44,13 +47,14 @@ function App() {
 
   return (
     <BrowserRouter>
-      {/* Command Palette - Global keyboard shortcuts */}
-      <CommandPalette
-        isOpen={commandPaletteOpen}
-        onClose={() => setCommandPaletteOpen(false)}
-      />
+      <ToastProvider>
+        {/* Command Palette - Global keyboard shortcuts */}
+        <CommandPalette
+          isOpen={commandPaletteOpen}
+          onClose={() => setCommandPaletteOpen(false)}
+        />
 
-      <div className="min-h-screen flex flex-col bg-white dark:bg-gray-900 transition-colors">
+        <div className="min-h-screen flex flex-col bg-white dark:bg-gray-900 transition-colors">
         {/* Skip to main content link for keyboard users */}
         <a href="#main-content" className="skip-to-main">
           Skip to main content
@@ -110,7 +114,8 @@ function App() {
             </p>
           </div>
         </footer>
-      </div>
+        </div>
+      </ToastProvider>
     </BrowserRouter>
   )
 }

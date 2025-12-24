@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Loader, AlertCircle, RefreshCw, FileText, User, Calendar, Download, CheckCircle } from 'lucide-react'
 import api from '../lib/api'
+import { useToast } from '../context/ToastContext'
 
 function WorkItemsList() {
+  const toast = useToast()
   const [workItems, setWorkItems] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -73,7 +75,7 @@ function WorkItemsList() {
       }
     } catch (error) {
       console.error('Error converting work item to spec:', error)
-      alert(error.response?.data?.detail || 'Failed to convert work item to spec')
+      toast.error(error.response?.data?.detail || 'Failed to convert work item to spec')
     } finally {
       // Remove from converting state
       setConvertingIds(prev => {
