@@ -233,14 +233,21 @@ npm run test:e2e
 ### Code Quality
 
 ```bash
-# Python linting
-flake8 sherpa/
+# Install linting tools first
+pip install -r requirements.txt
+
+# Python formatting
 black sherpa/
 
-# TypeScript linting
+# Python linting
+flake8 sherpa/
+
+# Frontend linting
 cd sherpa/frontend
 npm run lint
 ```
+
+**Note:** Some linting warnings may exist (non-critical).
 
 ## 📊 Dashboard Features
 
