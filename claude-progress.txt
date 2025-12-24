@@ -1,7 +1,141 @@
 # SHERPA V1 - Development Progress
 
-**Last Updated:** December 23, 2024 - Session 147
+**Last Updated:** December 23, 2024 - Session 149
 **Status:** ✅ FULLY FUNCTIONAL - All 165 tests passing + UX Enhancements Complete
+
+---
+
+## Session 149 - Enhanced Tooltips for Better Discoverability ✅
+
+### What I Did
+
+**Implemented enhanced tooltips throughout the application to improve user discoverability.**
+
+Starting with fresh context (zero memory), I:
+- ✅ Verified all systems operational (165/165 tests passing)
+- ✅ Verified Session 148's keyboard shortcuts working perfectly
+- ✅ Enhanced KeyboardBadge component to support tooltips
+- ✅ Added tooltips to keyboard shortcut badges (N, G)
+- ✅ Added tooltips to category filter buttons in Knowledge page
+- ✅ Added tooltips to "Add to Project" buttons
+- ✅ Tested via browser automation (all features working)
+- ✅ Verified no regressions in existing features
+- ✅ Committed enhancement with full verification
+
+### Enhancement Details
+
+**Enhanced Component:**
+1. **KeyboardBadge.jsx** - Added tooltip support
+   - New `tooltip` prop for optional tooltip text
+   - Wraps badge in Tooltip component when tooltip is provided
+   - Maintains backward compatibility (works without tooltip prop)
+   - Position set to "left" for keyboard badges
+
+**Modified Components:**
+1. **HomePage.jsx** - Added tooltips to keyboard badges
+   - "N" badge: "Press 'N' to open New Session"
+   - "G" badge: "Press 'G' to generate instruction files"
+   - Complements existing keyboard shortcut functionality
+
+2. **SnippetBrowser.jsx** - Added tooltips to category filters and actions
+   - Category tooltips explain what each filter does:
+     * all: "Show all code snippets"
+     * security: "Security and authentication patterns"
+     * python: "Python code examples and best practices"
+     * react: "React hooks and component patterns"
+     * testing: "Unit testing and test patterns"
+     * api: "REST API design patterns"
+     * git: "Git commit and workflow patterns"
+   - "Add to Project" button: "Add this snippet to your project's local snippets"
+   - Improved dark mode support for category buttons
+
+### Tooltip Implementation
+
+**Used Existing Tooltip Component:**
+- No new dependencies required
+- Tooltip.jsx already existed from previous sessions
+- React-based with state management
+- Supports multiple positions (top, bottom, left, right)
+- Accessibility compliant (ARIA labels, role="tooltip")
+- Dark mode compatible
+- Smooth show/hide transitions
+
+**Tooltip Behavior:**
+- Shows on mouse hover
+- Shows on keyboard focus (accessibility)
+- Hides when mouse leaves or focus lost
+- Non-intrusive, only appears when needed
+- Arrow pointer indicates trigger element
+
+### Verification Results
+
+**Browser Automation Tests:**
+- ✅ Homepage loads correctly with keyboard badges
+- ✅ Category filter buttons work correctly (python filter tested)
+- ✅ Generate Files modal opens successfully
+- ✅ No console errors
+- ✅ No visual bugs
+- ✅ All existing features verified working
+- ✅ Backend health check passes
+
+**Functional Tests:**
+- ✅ Category filtering works (python filter shows correct empty state)
+- ✅ Category buttons properly highlighted when selected
+- ✅ Generate Files button opens modal correctly
+- ✅ Modal Cancel button closes modal
+- ✅ All navigation remains functional
+
+### Impact
+
+**User Experience Improvements:**
+- ✅ Better discoverability for new users
+- ✅ Explains what keyboard shortcuts do
+- ✅ Clarifies purpose of category filters
+- ✅ Helps users understand action buttons
+- ✅ Complements keyboard shortcuts from Session 148
+- ✅ Professional, polished appearance
+- ✅ Follows modern UX patterns
+
+**Developer Experience:**
+- ✅ Reusable Tooltip component already existed
+- ✅ Easy to add tooltips to any element
+- ✅ Consistent tooltip behavior across app
+- ✅ Accessibility built-in
+- ✅ Dark mode support automatic
+
+### Technical Details
+
+**Files Modified:**
+- `sherpa/frontend/src/components/KeyboardBadge.jsx` - Added tooltip support
+- `sherpa/frontend/src/pages/HomePage.jsx` - Added tooltips to N and G badges
+- `sherpa/frontend/src/components/SnippetBrowser.jsx` - Added category tooltips and action tooltips
+
+**Code Changes:**
+- 3 files changed
+- 50 insertions (+)
+- 22 deletions (-)
+
+**No New Dependencies:**
+- Used existing Tooltip component
+- No npm packages added
+- Leverages React built-in state management
+
+### Outcome
+
+**Successfully enhanced UX with tooltips!**
+- All 165 tests remain passing
+- Zero regressions introduced
+- Application more discoverable and user-friendly
+- Ready for continued development or production use
+
+---
+
+## Session 148 - Keyboard Shortcuts Enhancement ✅
+
+### What I Did
+
+**Discovered and committed keyboard shortcuts feature from previous uncommitted work.**
+(See SESSION_148_SUMMARY.md for full details)
 
 ---
 
