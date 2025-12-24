@@ -30,9 +30,11 @@ dist/
 *.db-journal
 *.db.backup
 
-# Logs
+# Logs (NEVER commit logs!)
 logs/
 *.log
+*.log.*
+*.log.gz
 
 # Build
 build/
@@ -60,3 +62,9 @@ scripts/tests/
 # Test results
 test_results*/
 playwright-report/
+
+# Test artifacts (generated, not source)
+TEST_*.md
+test_results*/
+*_verification.html
+session_*.html
