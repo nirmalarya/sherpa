@@ -1,11 +1,5 @@
 # 🏔️ SHERPA V1 - Autonomous Coding Orchestrator
 
-> **Built by:** [autonomous-harness](https://github.com/nirmalarya/autonomous-harness)  
-> **Build time:** 143 sessions (~15-20 hours)  
-> **Features:** 165/165 (100% complete)  
-> **Code quality:** A- grade (9.2/10)  
-> **Status:** Production-ready ✅
-
 SHERPA is an orchestration platform that enhances autonomous coding agents with organizational knowledge. It operates in two modes:
 
 1. **Generate Mode**: Create instruction files for interactive agents (Cursor, Claude, Copilot)
@@ -132,28 +126,60 @@ sherpa serve
 ### Project Structure
 
 ```
-sherpa/
-├── api/                    # FastAPI backend
-│   ├── main.py            # API entry point
-│   ├── routes/            # API endpoints
-│   └── models/            # Database models
-├── cli/                   # Click CLI commands
-│   └── commands/          # Command implementations
-├── core/                  # Core business logic
-│   ├── knowledge/         # Bedrock KB client
-│   ├── harness/          # Autonomous agent orchestration
-│   └── integrations/     # Azure DevOps, Git
-├── frontend/             # React + Vite UI
-│   ├── src/
-│   │   ├── pages/        # Route components
-│   │   ├── components/   # Shared components
-│   │   ├── lib/          # API client
-│   │   └── styles/       # Tailwind CSS
-│   └── package.json
-├── snippets/             # Project-level code snippets
-├── snippets.local/       # Local code snippets (gitignored)
-├── data/                 # SQLite database
-└── logs/                 # Application logs
+sherpa/                      # Repository root
+├── sherpa/                  # Python package (source code)
+│   ├── api/                # FastAPI backend
+│   │   ├── main.py        # API entry point
+│   │   ├── routes/        # API endpoints
+│   │   └── models/        # Database models
+│   ├── cli/               # Click CLI commands
+│   │   ├── main.py        # CLI entry point
+│   │   └── commands/      # Command implementations
+│   ├── core/              # Core business logic
+│   │   ├── bedrock_client.py    # Bedrock KB client
+│   │   ├── snippet_manager.py   # Snippet management
+│   │   ├── db.py          # Database layer
+│   │   ├── harness/       # Autonomous agent orchestration
+│   │   └── integrations/  # Azure DevOps, Git
+│   ├── frontend/          # React + Vite UI
+│   │   ├── src/
+│   │   │   ├── pages/     # Route components
+│   │   │   ├── components/# Shared components
+│   │   │   ├── lib/       # API client
+│   │   │   └── styles/    # Tailwind CSS
+│   │   └── package.json
+│   ├── snippets/          # Built-in code snippets
+│   ├── snippets.local/    # Local snippets (gitignored)
+│   ├── data/              # SQLite database (gitignored)
+│   └── logs/              # Application logs (gitignored)
+│
+├── tests/                  # Test suite
+│   ├── test_config_manager.py
+│   ├── test_database.py
+│   └── ...
+│
+├── scripts/                # Utility scripts
+│   ├── tests/             # Test verification scripts
+│   ├── debug/             # Debug utilities
+│   └── verify/            # Verification scripts
+│
+├── docs/                   # Documentation
+│   ├── CICD.md
+│   ├── DOCKER.md
+│   └── ...
+│
+└── Configuration files:
+    ├── README.md          # This file
+    ├── requirements.txt   # Python dependencies
+    ├── package.json       # Project metadata
+    ├── init.sh            # Setup script
+    ├── docker-compose.yml # Docker configuration
+    ├── Dockerfile         # Container definition
+    ├── pyproject.toml     # Python project config
+    ├── pytest.ini         # Test configuration
+    ├── CHANGELOG.md       # Version history
+    ├── LICENSE            # MIT License
+    └── .gitignore         # Git exclusions
 ```
 
 ## 📦 Snippet System
