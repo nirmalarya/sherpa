@@ -138,9 +138,7 @@ USAGE
 - **GitHub Issues Integration:** Personal project management
 - **Linear Integration:** Team collaboration and visibility
 - **GEMINI.md Generator:** Google Gemini Code Assist support
-
-**Dropped:**
-- ~~Jira Integration~~ (Not used at Bayer, deprioritized)
+- **Additional Integrations:** Extensible plugin system for other trackers
 
 ---
 

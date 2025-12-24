@@ -140,8 +140,9 @@ Input Sources → Knowledge Layer → SHERPA Core → Output
 
 **v2.0 (Future):**
 - 🟡 **GitHub Issues integration** (personal projects)
-- 🟡 **Linear integration** (team visibility)
+- 🟡 **Linear integration** (team collaboration)
 - 🟢 **GEMINI.md generator** (Google Gemini support)
+- 🟢 **Additional trackers** (extensible plugin system)
 
 ### Technology Stack
 
