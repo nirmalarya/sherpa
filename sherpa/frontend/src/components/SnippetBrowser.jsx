@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Search, Code } from 'lucide-react'
 import CodeBlock from './CodeBlock'
 import LoadingSkeleton from './LoadingSkeleton'
+import Tooltip from './Tooltip'
 
 /**
  * SnippetBrowser Component
@@ -57,6 +58,16 @@ function SnippetBrowser({ snippets = [], onAddToProject, loading = false }) {
 
   const categories = ['all', 'security', 'python', 'react', 'testing', 'api', 'git']
 
+  const categoryTooltips = {
+    all: 'Show all code snippets',
+    security: 'Security and authentication patterns',
+    python: 'Python code examples and best practices',
+    react: 'React hooks and component patterns',
+    testing: 'Unit testing and test patterns',
+    api: 'REST API design patterns',
+    git: 'Git commit and workflow patterns'
+  }
+
   return (
     <div>
       {/* Search and Filters */}
@@ -82,17 +93,18 @@ function SnippetBrowser({ snippets = [], onAddToProject, loading = false }) {
 
         <div className="flex gap-2 mt-4 flex-wrap">
           {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setCategory(cat)}
-              className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                category === cat
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              {cat}
-            </button>
+            <Tooltip key={cat} content={categoryTooltips[cat]} position="top">
+              <button
+                onClick={() => setCategory(cat)}
+                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                  category === cat
+                    ? 'bg-primary-600 text-white dark:bg-primary-500'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                }`}
+              >
+                {cat}
+              </button>
+            </Tooltip>
           ))}
         </div>
       </div>
@@ -123,12 +135,14 @@ function SnippetBrowser({ snippets = [], onAddToProject, loading = false }) {
                 <p className="text-sm text-gray-600 line-clamp-3">{snippet.description}</p>
                 {onAddToProject && (
                   <div className="mt-3 flex gap-2">
-                    <button
-                      onClick={(e) => handleAddClick(e, snippet)}
-                      className="text-xs btn-secondary flex-1"
-                    >
-                      Add to Project
-                    </button>
+                    <Tooltip content="Add this snippet to your project's local snippets" position="bottom">
+                      <button
+                        onClick={(e) => handleAddClick(e, snippet)}
+                        className="text-xs btn-secondary flex-1"
+                      >
+                        Add to Project
+                      </button>
+                    </Tooltip>
                   </div>
                 )}
               </div>

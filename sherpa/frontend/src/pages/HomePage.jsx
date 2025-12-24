@@ -122,7 +122,7 @@ function HomePage() {
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">New Session</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400">Start autonomous coding session</p>
             </div>
-            <KeyboardBadge shortcut="N" />
+            <KeyboardBadge shortcut="N" tooltip="Press 'N' to open New Session" />
           </button>
 
           <button
@@ -136,7 +136,7 @@ function HomePage() {
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Generate Files</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400">Create instruction files for agents</p>
             </div>
-            <KeyboardBadge shortcut="G" />
+            <KeyboardBadge shortcut="G" tooltip="Press 'G' to generate instruction files" />
           </button>
         </div>
       </section>
