@@ -106,6 +106,39 @@ sherpa serve
 
 ## 🏗️ Architecture
 
+> **Full architecture diagram:** See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+
+### High-Level Overview
+
+```
+Input Sources → Knowledge Layer → SHERPA Core → Output
+                                  ├─ Generate Mode (instruction files)
+                                  └─ Run Mode (autonomous harness)
+```
+
+### v1.0 Implementation Status
+
+**✅ Implemented (Production-Ready):**
+- Knowledge hierarchy (LOCAL > PROJECT > ORG > BUILT-IN)
+- Generate Mode (.cursor/rules/, CLAUDE.md, copilot-instructions.md)
+- Run Mode (autonomous harness with auto-continue)
+- Azure DevOps integration (fetch work items, sync progress)
+- Security (4 layers: bash, filesystem, MCP, credentials)
+- Real-time dashboard (SSE, progress tracking)
+- CLI (8 commands: init, generate, run, query, status, logs, serve, snippets)
+
+**⚠️ Partial:**
+- Azure DevOps PR creation (git commits only)
+- Spec normalization (basic support)
+
+**📋 Roadmap (v1.1 & Beyond):**
+- 🔴 **v1.1:** Brownfield scanner (analyze existing repos)
+- 🔴 **v1.1:** Enhancement mode (improve existing projects)
+- 🟡 **v2.0:** Jira integration
+- 🟡 **v2.0:** GitHub Issues integration
+- 🟡 **v2.0:** Linear integration
+- 🟢 **v2.0:** GEMINI.md generator
+
 ### Technology Stack
 
 **Backend (Python)**
