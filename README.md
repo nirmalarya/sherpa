@@ -36,18 +36,13 @@ cd sherpa
 ./init.sh
 ```
 
-3. Configure AWS credentials (for Bedrock):
-```bash
-export AWS_ACCESS_KEY_ID=your_key
-export AWS_SECRET_ACCESS_KEY=your_secret
-export AWS_DEFAULT_REGION=us-east-1
-```
-
-4. Initialize SHERPA:
+3. Initialize SHERPA:
 ```bash
 source venv/bin/activate
 sherpa init
 ```
+
+**Note:** SHERPA v1.0 works locally without AWS! Knowledge base uses local file search by default. AWS Bedrock is optional for production deployments.
 
 ### Running SHERPA
 
@@ -137,20 +132,23 @@ Input Sources → Knowledge Layer → SHERPA Core → Output
 - 🔴 **Brownfield scanner** (analyze existing repos for enhancement)
 - 🔴 **Enhancement mode** (improve existing projects)
 - 🔴 **AGENT.md generator** (for agent-based workflows)
+- 🔴 **Local vector DB** (Qdrant/ChromaDB - no cloud needed!)
+- 🔴 **Kubernetes deployment** (cloud-agnostic, production-ready)
 
 **v2.0 (Future):**
 - 🟡 **GitHub Issues integration** (personal projects)
 - 🟡 **Linear integration** (team collaboration)
+- 🟡 **AWS Bedrock backend** (optional for SaaS/enterprise)
 - 🟢 **GEMINI.md generator** (Google Gemini support)
-- 🟢 **Additional trackers** (extensible plugin system)
+- 🟢 **Multi-tenancy** (SaaS-ready architecture)
 
 ### Technology Stack
 
 **Backend (Python)**
 - FastAPI (async/await)
-- SQLite with aiosqlite
-- AWS Bedrock Knowledge Base
-- Azure DevOps Python SDK
+- SQLite with aiosqlite (no external DB needed!)
+- Knowledge Base: Local file search (v1.0), Qdrant/ChromaDB (v1.1 planned), AWS Bedrock (v2.0 optional)
+- Azure DevOps Python SDK (optional integration)
 - GitPython
 
 **Frontend (React)**
