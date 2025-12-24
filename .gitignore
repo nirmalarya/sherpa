@@ -5,41 +5,18 @@ __pycache__/
 *.so
 .Python
 venv/
-venv-*/
-env/
+venv-312/
 ENV/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+env/
+.venv
 
 # Node
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
-
-# Frontend build
-sherpa/frontend/dist/
-sherpa/frontend/build/
-
-# Environment variables
-.env
-.env.local
-.env.production
-.env.development
+.npm
+dist/
 
 # IDE
 .vscode/
@@ -47,24 +24,39 @@ sherpa/frontend/build/
 *.swp
 *.swo
 *~
+
+# Database
+*.db
+*.db-journal
+*.db.backup
+
+# Logs
+logs/
+*.log
+
+# Build
+build/
+*.egg-info/
+.eggs/
+
+# Cache
+.cache/
+.pytest_cache/
+__pycache__/
+
+# OS
 .DS_Store
+Thumbs.db
 
 # SHERPA specific
+sherpa/data/cache/
 sherpa/data/*.db
 sherpa/data/*.db-journal
-sherpa/snippets.local/
-sherpa/logs/*.log
-sherpa/config.json
 
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
+# Session artifacts (optional - commit if you want history)
+.sessions/
+scripts/tests/
 
-# Misc
-*.log
-*.log.gz
-.cache/
-logs/
-*-audit.json
+# Test results
+test_results*/
+playwright-report/

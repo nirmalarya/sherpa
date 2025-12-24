@@ -1,0 +1,15 @@
+{
+  "organization": "Test Org",
+  "bedrock": {
+    "knowledge_base_id": "test-kb-id",
+    "region": "us-east-1",
+    "enabled": true
+  },
+  "s3": {
+    "bucket_name": "sherpa-org-snippets-test",
+    "prefix": "snippets/",
+    "enabled": true
+  },
+  "auto_continue_delay": 3,
+  "max_iterations": 100
+}
