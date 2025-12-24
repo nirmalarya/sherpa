@@ -7,6 +7,7 @@ import Breadcrumb from '../components/Breadcrumb'
 
 function KnowledgePage() {
   const [snippets, setSnippets] = useState([])
+  const [loading, setLoading] = useState(true)
   const [alert, setAlert] = useState(null)
   const [error, setError] = useState(null)
 
@@ -16,6 +17,7 @@ function KnowledgePage() {
 
   const fetchSnippets = async () => {
     try {
+      setLoading(true)
       setError(null) // Clear any previous errors
       const response = await api.get('/api/snippets')
       const loadedSnippets = response.data.data?.snippets || []
@@ -132,6 +134,8 @@ async def create_user(user: User):
         message: 'Unable to load code snippets. Please check your connection and try again.',
         technicalDetails: `${err.message}\n\nEndpoint: GET /api/snippets\nTimestamp: ${new Date().toISOString()}\n\nNote: Displaying mock data for testing.`
       })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -197,6 +201,7 @@ async def create_user(user: User):
 
       <SnippetBrowser
         snippets={snippets}
+        loading={loading}
         onAddToProject={handleAddToProject}
       />
     </div>

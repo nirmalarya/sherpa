@@ -4,6 +4,7 @@ import { Search, Filter, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, FolderOp
 import api from '../lib/api'
 import ErrorMessage from '../components/ErrorMessage'
 import Breadcrumb from '../components/Breadcrumb'
+import LoadingSkeleton from '../components/LoadingSkeleton'
 import { formatRelativeTime, formatAbsoluteTime } from '../lib/timeUtils'
 
 function SessionsPage() {
@@ -199,10 +200,7 @@ function SessionsPage() {
       {/* Sessions Table */}
       <div className="card overflow-x-auto">
         {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading sessions...</p>
-          </div>
+          <LoadingSkeleton variant="table" count={5} />
         ) : filteredSessions.length === 0 && !error ? (
           <div className="text-center py-16 px-4">
             {/* Empty State Icon */}

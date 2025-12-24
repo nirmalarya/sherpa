@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Search, Code } from 'lucide-react'
 import CodeBlock from './CodeBlock'
+import LoadingSkeleton from './LoadingSkeleton'
 
 /**
  * SnippetBrowser Component
@@ -13,12 +14,14 @@ import CodeBlock from './CodeBlock'
  * - Click snippet to view full content in modal
  * - Copy to clipboard functionality
  * - Add to project functionality
+ * - Loading skeleton for better UX
  *
  * @param {Object} props
  * @param {Array} props.snippets - Array of snippet objects
  * @param {Function} props.onAddToProject - Callback when adding snippet to project
+ * @param {boolean} props.loading - Whether snippets are being loaded
  */
-function SnippetBrowser({ snippets = [], onAddToProject }) {
+function SnippetBrowser({ snippets = [], onAddToProject, loading = false }) {
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('all')
   const [selectedSnippet, setSelectedSnippet] = useState(null)
@@ -95,40 +98,44 @@ function SnippetBrowser({ snippets = [], onAddToProject }) {
       </div>
 
       {/* Snippets Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredSnippets.length === 0 ? (
-          <div className="col-span-full text-center py-12 text-gray-500">
-            No snippets found. Try adjusting your search or filter.
-          </div>
-        ) : (
-          filteredSnippets.map((snippet, index) => (
-            <div
-              key={index}
-              className="card hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => setSelectedSnippet(snippet)}
-            >
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Code className="h-5 w-5 text-primary-600" />
-                  <h3 className="font-semibold">{snippet.title || snippet.name}</h3>
-                </div>
-                <span className="text-xs bg-gray-100 px-2 py-1 rounded">{snippet.category}</span>
-              </div>
-              <p className="text-sm text-gray-600 line-clamp-3">{snippet.description}</p>
-              {onAddToProject && (
-                <div className="mt-3 flex gap-2">
-                  <button
-                    onClick={(e) => handleAddClick(e, snippet)}
-                    className="text-xs btn-secondary flex-1"
-                  >
-                    Add to Project
-                  </button>
-                </div>
-              )}
+      {loading ? (
+        <LoadingSkeleton variant="card" count={6} />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredSnippets.length === 0 ? (
+            <div className="col-span-full text-center py-12 text-gray-500">
+              No snippets found. Try adjusting your search or filter.
             </div>
-          ))
-        )}
-      </div>
+          ) : (
+            filteredSnippets.map((snippet, index) => (
+              <div
+                key={index}
+                className="card hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => setSelectedSnippet(snippet)}
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Code className="h-5 w-5 text-primary-600" />
+                    <h3 className="font-semibold">{snippet.title || snippet.name}</h3>
+                  </div>
+                  <span className="text-xs bg-gray-100 px-2 py-1 rounded">{snippet.category}</span>
+                </div>
+                <p className="text-sm text-gray-600 line-clamp-3">{snippet.description}</p>
+                {onAddToProject && (
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      onClick={(e) => handleAddClick(e, snippet)}
+                      className="text-xs btn-secondary flex-1"
+                    >
+                      Add to Project
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      )}
 
       {/* Snippet Preview Modal */}
       {selectedSnippet && (
