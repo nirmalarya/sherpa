@@ -42,8 +42,6 @@ source venv/bin/activate
 sherpa init
 ```
 
-**Note:** SHERPA v1.0 works locally without AWS! Knowledge base uses local file search by default. AWS Bedrock is optional for production deployments.
-
 ### Running SHERPA
 
 **Option 1: Full Stack (Backend + Frontend)**
@@ -128,28 +126,27 @@ Input Sources → Knowledge Layer → SHERPA Core → Output
 
 **📋 Roadmap:**
 
-**v1.1 (Next Release - High Priority):**
-- 🔴 **Brownfield scanner** (analyze existing repos for enhancement)
+**v1.1 (Next Release):**
+- 🔴 **Brownfield scanner** (analyze existing repos)
 - 🔴 **Enhancement mode** (improve existing projects)
-- 🔴 **AGENT.md generator** (for agent-based workflows)
-- 🔴 **Local vector DB** (Qdrant/ChromaDB - no cloud needed!)
-- 🔴 **Kubernetes deployment** (cloud-agnostic, production-ready)
+- 🔴 **AGENT.md generator** (agent workflow support)
+- 🔴 **Enhanced vector search** (better semantic search)
+- 🔴 **Kubernetes deployment** (production-ready)
 
 **v2.0 (Future):**
-- 🟡 **GitHub Issues integration** (personal projects)
-- 🟡 **Linear integration** (team collaboration)
-- 🟡 **AWS Bedrock backend** (optional for SaaS/enterprise)
-- 🟢 **GEMINI.md generator** (Google Gemini support)
-- 🟢 **Multi-tenancy** (SaaS-ready architecture)
+- 🟡 **GitHub Issues integration**
+- 🟡 **Linear integration**
+- 🟢 **GEMINI.md generator**
+- 🟢 **Additional integrations** (extensible)
 
 ### Technology Stack
 
 **Backend (Python)**
 - FastAPI (async/await)
-- SQLite with aiosqlite (no external DB needed!)
-- Knowledge Base: Local file search (v1.0), Qdrant/ChromaDB (v1.1 planned), AWS Bedrock (v2.0 optional)
-- Azure DevOps Python SDK (optional integration)
-- GitPython
+- SQLite with aiosqlite (embedded database)
+- Knowledge Base: Local file search with semantic search (v1.1: enhanced vector search)
+- Azure DevOps integration (optional)
+- Git integration
 
 **Frontend (React)**
 - React 18.3.1

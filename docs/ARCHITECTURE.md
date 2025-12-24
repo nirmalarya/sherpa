@@ -24,9 +24,11 @@ KNOWLEDGE LAYER
 │  Knowledge Resolver (hierarchy + semantic search)                   │
 │  ┌──────────┬──────────┬──────────┬──────────┐                     │
 │  │  LOCAL   │ PROJECT  │   ORG    │ BUILT-IN │                     │
-│  │ snippets │ snippets │ (S3+KB)  │ snippets │                     │
+│  │ snippets │ snippets │ (shared) │ snippets │                     │
 │  └──────────┴──────────┴──────────┴──────────┘                     │
 │  Priority: LOCAL > PROJECT > ORG > BUILT-IN                         │
+│                                                                      │
+│  Backend: File search (v1.0) → Vector DB (v1.1) → Cloud (optional)  │
 │                                                                      │
 │  ┌────────────────────────────────┐                                │
 │  │   Brownfield Scanner           │                                │
